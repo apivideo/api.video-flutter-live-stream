@@ -15,7 +15,7 @@ import java.lang.Exception
 class LiveStreamNativeView(context: Context, id: Int, creationParams: Map<String?, Any?>?, messenger: BinaryMessenger):
     PlatformView, ConnectCheckerRtmp, MethodCallHandler  {
 
-    private var channel : MethodChannel = MethodChannel(messenger, "apivideolivestream")
+    //private var channel : MethodChannel = MethodChannel(messenger, "apivideolivestream")
 
     private lateinit var view: LiveStreamView
     private var apiVideo: ApiVideoLiveStream
@@ -35,14 +35,14 @@ class LiveStreamNativeView(context: Context, id: Int, creationParams: Map<String
     }
 
     init {
-        channel.setMethodCallHandler(this)
+        //channel.setMethodCallHandler(this)
         view = LiveStreamView(context)
         apiVideo = ApiVideoLiveStream(context, this, null, null)
-        initMethodChannel(messenger, id);
+        initMethodChannel(messenger, id)
     }
 
     private fun initMethodChannel(messenger: BinaryMessenger, viewId: Int){
-        methodChannel = MethodChannel(messenger, "apivideolivestream_$viewId")
+        methodChannel = MethodChannel(messenger, "apivideolivestream")
         methodChannel!!.setMethodCallHandler(this)
     }
 

@@ -70,7 +70,7 @@ class _LiveStreamPreviewState extends State<LiveStreamPreview> {
 
   createParams() {
     var param = {};
-    param["liveStreamKey"] = widget.liveStreamKey ?? '';
+    param["liveStreamKey"] = widget.liveStreamKey;
     param["rtmpServerUrl"] = widget.rtmpServerUrl ?? 'rtmp://broadcast.api.video/s';
     param["videoFps"] = widget.videoFps ?? 30;
     param["videoResolution"] = widget.videoResolution ?? '720p';
@@ -80,17 +80,6 @@ class _LiveStreamPreviewState extends State<LiveStreamPreview> {
     param["audioMuted"] = widget.audioMuted ?? false;
     param["audioBitrate"] = widget.audioBitrate ?? -1;
     return param;
-    /*return {
-      'liveStreamKey': widget.liveStreamKey ?? '',
-      'rtmpServerUrl': widget.rtmpServerUrl ?? 'rtmp://broadcast.api.video/s',
-      'videoFps': widget.videoFps ?? "30",
-      'videoResolution': widget.videoResolution ?? '720p',
-      'videoBitrate': widget.videoBitrate ?? -1,
-      'videoCamera': widget.videoCamera ?? "front",
-      'videoOrientation': widget.videoOrientation ?? 'portrait',
-      'audioMuted': widget.audioMuted ?? false,
-      'audioBitrate': widget.audioBitrate ?? -1
-    };*/
   }
 
   @override
