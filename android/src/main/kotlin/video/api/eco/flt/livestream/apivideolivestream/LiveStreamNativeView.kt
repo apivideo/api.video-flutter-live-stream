@@ -9,13 +9,15 @@ import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.platform.PlatformView
 import net.ossrs.rtmp.ConnectCheckerRtmp
 import video.api.livestream_module.ApiVideoLiveStream
+import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import java.lang.Exception
 
 class LiveStreamNativeView(context: Context, id: Int, creationParams: Map<String?, Any?>?, messenger: BinaryMessenger):
-    PlatformView, ConnectCheckerRtmp, MethodChannel.MethodCallHandler  {
-    private var channel : MethodChannel = MethodChannel(messenger, "plugin")
+    PlatformView, ConnectCheckerRtmp, MethodCallHandler  {
 
-    private var view: LiveStreamView
+    private var channel : MethodChannel = MethodChannel(messenger, "apivideolivestream")
+
+    private lateinit var view: LiveStreamView
     private var apiVideo: ApiVideoLiveStream
     private var livestreamKey: String = ""
     private var url : String? = null
@@ -35,12 +37,12 @@ class LiveStreamNativeView(context: Context, id: Int, creationParams: Map<String
     init {
         channel.setMethodCallHandler(this)
         view = LiveStreamView(context)
-        apiVideo = ApiVideoLiveStream(context, this, view.findViewById(R.id.opengl_view), null)
+        apiVideo = ApiVideoLiveStream(context, this, null, null)
         initMethodChannel(messenger, id);
     }
 
     private fun initMethodChannel(messenger: BinaryMessenger, viewId: Int){
-        methodChannel = MethodChannel(messenger, "plugin_$viewId")
+        methodChannel = MethodChannel(messenger, "apivideolivestream_$viewId")
         methodChannel!!.setMethodCallHandler(this)
     }
 
@@ -80,11 +82,16 @@ class LiveStreamNativeView(context: Context, id: Int, creationParams: Map<String
         Log.e("startlive method","called")
         apiVideo.startStreaming(livestreamKey, url)
     }
+    private fun stopLive(){
+        Log.e("stop method","called")
+        apiVideo.stopStreaming()
+    }
 
-    override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
+     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
         when (call.method){
             "setLivestreamKey" -> livestreamKey = call.arguments.toString()
             "startStreaming" -> startLive()
+            "stopStreaming" -> stopLive()
         }
     }
 }
