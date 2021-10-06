@@ -5,6 +5,7 @@ import android.graphics.Camera
 import android.util.Log
 import android.view.View
 import com.pedro.encoder.input.video.CameraHelper
+import com.pedro.rtplibrary.view.OpenGlView
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
@@ -19,15 +20,14 @@ class LiveStreamNativeView(context: Context, id: Int, creationParams: Map<String
 
     //private var channel : MethodChannel = MethodChannel(messenger, "apivideolivestream")
 
-    private lateinit var view: LiveStreamView
+    private val glView = OpenGlView(context)
     private var apiVideo: ApiVideoLiveStream
     private var livestreamKey: String = ""
     private var url : String? = null
     private var methodChannel: MethodChannel? = null
 
-    override fun getView(): View {
-        return view.findViewById(R.id.opengl_view)
-    }
+    override fun getView() = glView
+
     override fun dispose() {
         try {
             methodChannel?.setMethodCallHandler(null)
@@ -38,8 +38,7 @@ class LiveStreamNativeView(context: Context, id: Int, creationParams: Map<String
 
     init {
         //channel.setMethodCallHandler(this)
-        view = LiveStreamView(context)
-        apiVideo = ApiVideoLiveStream(context, this, null, null)
+        apiVideo = ApiVideoLiveStream(context, this, getView(), null)
         initMethodChannel(messenger, id)
     }
 
