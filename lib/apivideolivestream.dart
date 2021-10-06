@@ -8,7 +8,7 @@ import 'package:flutter/services.dart';
 
 class Apivideolivestream {
   static const MethodChannel _channel =
-      const MethodChannel('apivideolivestream');
+      const MethodChannel('apivideolivestream_0');
 
   static Future<String?> get platformVersion async {
     final String? version = await _channel.invokeMethod('getPlatformVersion');

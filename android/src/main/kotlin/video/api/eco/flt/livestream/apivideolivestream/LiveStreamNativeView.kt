@@ -1,8 +1,10 @@
 package video.api.eco.flt.livestream.apivideolivestream
 
 import android.content.Context
+import android.graphics.Camera
 import android.util.Log
 import android.view.View
+import com.pedro.encoder.input.video.CameraHelper
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
@@ -42,7 +44,7 @@ class LiveStreamNativeView(context: Context, id: Int, creationParams: Map<String
     }
 
     private fun initMethodChannel(messenger: BinaryMessenger, viewId: Int){
-        methodChannel = MethodChannel(messenger, "apivideolivestream")
+        methodChannel = MethodChannel(messenger, "apivideolivestream_$viewId")
         methodChannel!!.setMethodCallHandler(this)
     }
 
@@ -80,11 +82,20 @@ class LiveStreamNativeView(context: Context, id: Int, creationParams: Map<String
 
     private fun startLive(){
         Log.e("startlive method","called")
+        Log.e("startlive key",livestreamKey)
         apiVideo.startStreaming(livestreamKey, url)
     }
     private fun stopLive(){
         Log.e("stop method","called")
         apiVideo.stopStreaming()
+    }
+    private fun switchCamera(){
+        Log.e("camera switch", apiVideo.videoCamera.toString())
+        if(apiVideo.videoCamera === CameraHelper.Facing.BACK){
+            apiVideo.videoCamera = CameraHelper.Facing.FRONT
+        }else{
+            apiVideo.videoCamera = CameraHelper.Facing.BACK
+        }
     }
 
      override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
@@ -92,6 +103,7 @@ class LiveStreamNativeView(context: Context, id: Int, creationParams: Map<String
             "setLivestreamKey" -> livestreamKey = call.arguments.toString()
             "startStreaming" -> startLive()
             "stopStreaming" -> stopLive()
+            "switchCamera" -> switchCamera()
         }
     }
 }

@@ -7,7 +7,7 @@ public class SwiftApivideolivestreamPlugin: NSObject, FlutterPlugin {
     public static func register(with registrar: FlutterPluginRegistrar) {
         let channel = FlutterMethodChannel(name: "apivideolivestream", binaryMessenger: registrar.messenger())
         
-        let factory = LiveStreamViewFactory(messenger: registrar.messenger(), channel: channel)
+        let factory = LiveStreamViewFactory(messenger: registrar.messenger())
         registrar.register(factory, withId: "<platform-view-type>")
         
         let instance = SwiftApivideolivestreamPlugin()
@@ -22,11 +22,9 @@ public class SwiftApivideolivestreamPlugin: NSObject, FlutterPlugin {
 
 class LiveStreamViewFactory: NSObject, FlutterPlatformViewFactory {
     private var messenger: FlutterBinaryMessenger
-    private var channel: FlutterMethodChannel
     
-    init(messenger: FlutterBinaryMessenger, channel: FlutterMethodChannel) {
+    init(messenger: FlutterBinaryMessenger) {
         self.messenger = messenger
-        self.channel = channel
         super.init()
     }
     
@@ -39,23 +37,19 @@ class LiveStreamViewFactory: NSObject, FlutterPlatformViewFactory {
             frame: frame,
             viewIdentifier: viewId,
             arguments: args,
-            binaryMessenger: messenger,
-            channel: channel
+            binaryMessenger: messenger
         )
     }
 }
 
 class LiveStreamNativeView: NSObject, FlutterPlatformView {
     private var _view: LiveStreamView
-    private var channel: FlutterMethodChannel!
     
     init(
         frame: CGRect,
         viewIdentifier viewId: Int64,
         arguments args: Any?,
-        binaryMessenger messenger: FlutterBinaryMessenger?,
-        channel: FlutterMethodChannel
-        
+        binaryMessenger messenger: FlutterBinaryMessenger?
     ) {
         _view = LiveStreamView()
         super.init()
@@ -64,11 +58,6 @@ class LiveStreamNativeView: NSObject, FlutterPlatformView {
         channelFirstConnection.setMethodCallHandler { [weak self] (call, result) -> Void in
             self?.handlerMethodCall(call, result)
         }
-        channel.setMethodCallHandler({
-            [weak self] (call: FlutterMethodCall, result: FlutterResult) -> Void in
-            // Note: this method is invoked on the UI thread.
-            self!.handlerMethodCall(call, result)
-        })
         
         // iOS views can be created here
         //createNativeView(view: _view)

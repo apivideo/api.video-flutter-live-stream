@@ -85,7 +85,7 @@ class _MyAppState extends State<MyApp> {
       child: LiveStreamPreview(
         controller: plugin,
         liveStreamKey: 'd08c582e-e251-4f9e-9894-8c8d69755d45',
-        videoResolution: '2160p',
+        videoResolution: '1080p',
       ),
     );
   }
