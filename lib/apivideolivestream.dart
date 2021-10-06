@@ -104,8 +104,16 @@ class _LiveStreamPreviewState extends State<LiveStreamPreview> {
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
         return SizedBox(
-            height: 400,
-            child: PlatformViewLink(
+          height: 400,
+          child: AndroidView(
+            viewType: viewType,
+            creationParams: createParams(),
+            onPlatformViewCreated: (viewId) {
+              _channel = MethodChannel('apivideolivestream_$viewId');
+            },
+            creationParamsCodec: const StandardMessageCodec(),
+          ),
+          /*  PlatformViewLink(
               viewType: viewType,
               surfaceFactory: (BuildContext context, dynamic controller) {
                 return AndroidViewSurface(
@@ -128,8 +136,8 @@ class _LiveStreamPreviewState extends State<LiveStreamPreview> {
                     //_channel.setMethodCallHandler(_handlerCall);
                   })
                   ..create();
-              },
-            ));
+              },*/
+        );
 
       case TargetPlatform.iOS:
         return SizedBox(
