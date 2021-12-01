@@ -79,6 +79,11 @@ class LiveStreamNativeView(context: Context, id: Int, creationParams: Map<String
         }
     }
 
+    private fun setLiveKey(key: String){
+        Log.e("LIVESTREAMKEY 888888",key)
+        livestreamKey = key
+    }
+
     private fun startLive(){
         Log.e("startlive method","called")
         Log.e("startlive key",livestreamKey)
@@ -96,11 +101,15 @@ class LiveStreamNativeView(context: Context, id: Int, creationParams: Map<String
             apiVideo.videoCamera = CameraHelper.Facing.BACK
         }
     }
-
+    var mResult: MethodChannel.Result? = null
      override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
         when (call.method){
-            "setLivestreamKey" -> livestreamKey = call.arguments.toString()
-            "startStreaming" -> startLive()
+//            "setLivestreamKey" -> livestreamKey = call.arguments.toString()
+            "setLivestreamKey" -> setLiveKey(call.arguments.toString())
+            "startStreaming" -> {
+                startLive()
+                mResult = result
+            }
             "stopStreaming" -> stopLive()
             "switchCamera" -> switchCamera()
         }
