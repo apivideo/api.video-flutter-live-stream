@@ -13,6 +13,10 @@ dependencies:
     sdk: flutter
 
   image_picker: ^0.8.3+2
+  settings_ui:
+    git:
+      url: https://github.com/yako-dev/flutter-settings-ui.git
+      ref: master
 
   apivideolivestream:
     # When depending on this package from a real application you should use:
