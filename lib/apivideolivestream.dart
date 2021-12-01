@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:ui';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -17,6 +17,7 @@ class Apivideolivestream {
 
   static Future<void> startStream() async {
     print("start stream called");
+    print("widget ? =>");
     await _channel.invokeMethod('startStreaming');
   }
 
@@ -36,7 +37,7 @@ class Apivideolivestream {
 
 class LiveStreamPreview extends StatefulWidget {
   final Apivideolivestream controller;
-  final String liveStreamKey;
+  final String? liveStreamKey;
   final String? rtmpServerUrl;
   final double? videoFps;
   final String? videoResolution;
@@ -45,10 +46,13 @@ class LiveStreamPreview extends StatefulWidget {
   final String? videoOrientation;
   final bool? audioMuted;
   final double? audioBitrate;
+  final VoidCallback? onConnectionSuccess;
+  final VoidCallback? onConnectionError;
+  final VoidCallback? onDeconnection;
 
   const LiveStreamPreview({
     required this.controller,
-    required this.liveStreamKey,
+    this.liveStreamKey,
     this.rtmpServerUrl,
     this.videoFps,
     this.videoResolution,
@@ -57,16 +61,20 @@ class LiveStreamPreview extends StatefulWidget {
     this.videoOrientation,
     this.audioMuted,
     this.audioBitrate,
+    this.onConnectionSuccess,
+    this.onConnectionError,
+    this.onDeconnection,
   });
 
   @override
   _LiveStreamPreviewState createState() => _LiveStreamPreviewState();
+
+
 }
 
 class _LiveStreamPreviewState extends State<LiveStreamPreview> {
   late MethodChannel _channel;
-  late Apivideolivestream _controller;
-  Set _updateMap = {};
+  late Apivideolivestream _controller = widget.controller;
 
   createParams() {
     var param = {};
@@ -82,10 +90,10 @@ class _LiveStreamPreviewState extends State<LiveStreamPreview> {
     return param;
   }
 
+
   @override
   void initState() {
-    _controller = widget.controller;
-    if (widget.liveStreamKey.isNotEmpty) {
+    if (widget.liveStreamKey!.isNotEmpty) {
       Future.delayed(const Duration(milliseconds: 300)).then((value) {
         _channel.invokeMethod('setLivestreamKey', widget.liveStreamKey);
       });
@@ -95,6 +103,7 @@ class _LiveStreamPreviewState extends State<LiveStreamPreview> {
     });
     super.initState();
   }
+
 
   @override
   Widget build(BuildContext context) {
