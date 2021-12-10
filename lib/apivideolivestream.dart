@@ -46,9 +46,9 @@ class LiveStreamPreview extends StatefulWidget {
   final String? videoOrientation;
   final bool? audioMuted;
   final double? audioBitrate;
-  final VoidCallback? onConnectionSuccess;
-  final VoidCallback? onConnectionError;
-  final VoidCallback? onDeconnection;
+  final Function()? onConnectionSuccess;
+  final Function(String)? onConnectionError;
+  final Function()? onDeconnection;
 
   const LiveStreamPreview({
     required this.controller,
@@ -76,6 +76,20 @@ class _LiveStreamPreviewState extends State<LiveStreamPreview> {
   late MethodChannel _channel;
   late Apivideolivestream _controller = widget.controller;
 
+
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  _prepare(){
+    if (widget.liveStreamKey!.isNotEmpty) {
+      _channel.invokeMethod('setLivestreamKey', widget.liveStreamKey);
+    }
+    createParams();
+  }
+
   createParams() {
     var param = {};
     param["liveStreamKey"] = widget.liveStreamKey;
@@ -87,21 +101,42 @@ class _LiveStreamPreviewState extends State<LiveStreamPreview> {
     param["videoOrientation"] = widget.videoOrientation ?? 'landscape';
     param["audioMuted"] = widget.audioMuted ?? false;
     param["audioBitrate"] = widget.audioBitrate ?? -1;
+
+    _channel.invokeMethod('setParam', json.encode(param));
+
     return param;
   }
 
+  Future<void> _methodCallHandler(MethodCall call) async {
+    switch (call.method) {
+      case "onConnectionSuccess":
+        //widget.onConnectionSuccess;
+        if(widget.onConnectionSuccess != null){
+          widget.onConnectionSuccess!();
+          print("on a recu le success");
+        }
+        break;
+      case "onConnectionFailed":
+       //widget.onConnectionSuccess;
+        if(widget.onConnectionError != null){
+          String error = call.arguments;
+          widget.onConnectionError!("$error");
+          print("on a recu le error");
+        }
+        break;
+      case "onDisconnect":
+      //widget.onConnectionSuccess;
+        if(widget.onDeconnection != null) {
+          widget.onDeconnection!();
+          print("on a recu le deconnection");
+        }
+        break;
 
-  @override
-  void initState() {
-    if (widget.liveStreamKey!.isNotEmpty) {
-      Future.delayed(const Duration(milliseconds: 300)).then((value) {
-        _channel.invokeMethod('setLivestreamKey', widget.liveStreamKey);
-      });
+      case "setParam":
+        createParams();
+        await _channel.invokeMethod('setParam', json.encode(createParams()));
+        break;
     }
-    Future.delayed(const Duration(milliseconds: 300)).then((value) {
-      _channel.invokeMethod('setParam', json.encode(createParams()));
-    });
-    super.initState();
   }
 
 
@@ -116,9 +151,11 @@ class _LiveStreamPreviewState extends State<LiveStreamPreview> {
           height: 400,
           child: AndroidView(
             viewType: viewType,
-            creationParams: createParams(),
             onPlatformViewCreated: (viewId) {
+              print("viewId $viewId");
               _channel = MethodChannel('apivideolivestream_$viewId');
+              _channel.setMethodCallHandler(_methodCallHandler);
+              _prepare();
             },
             creationParamsCodec: const StandardMessageCodec(),
           ),
@@ -154,9 +191,11 @@ class _LiveStreamPreviewState extends State<LiveStreamPreview> {
           child: UiKitView(
             viewType: viewType,
             layoutDirection: TextDirection.ltr,
-            creationParams: createParams(),
             onPlatformViewCreated: (viewId) {
+              print("viewId $viewId");
               _channel = MethodChannel('apivideolivestream_$viewId');
+              _channel.setMethodCallHandler(_methodCallHandler);
+              _prepare();
             },
             creationParamsCodec: const StandardMessageCodec(),
           ),

@@ -2,6 +2,7 @@ import Flutter
 import UIKit
 import LiveStreamIos
 import AVFoundation
+import Network
 
 public class SwiftApivideolivestreamPlugin: NSObject, FlutterPlugin {
     public static func register(with registrar: FlutterPluginRegistrar) {
@@ -51,14 +52,12 @@ class LiveStreamNativeView: NSObject, FlutterPlatformView {
         arguments args: Any?,
         binaryMessenger messenger: FlutterBinaryMessenger?
     ) {
-        _view = LiveStreamView()
-        super.init()
-        
         let channelFirstConnection = FlutterMethodChannel(name: "apivideolivestream_\(viewId)", binaryMessenger: messenger!)
+        _view = LiveStreamView(frame: frame, channel: channelFirstConnection)
+        super.init()
         channelFirstConnection.setMethodCallHandler { [weak self] (call, result) -> Void in
             self?.handlerMethodCall(call, result)
         }
-        
         // iOS views can be created here
         //createNativeView(view: _view)
     }
@@ -133,7 +132,9 @@ class LiveStreamNativeView: NSObject, FlutterPlatformView {
 
 class LiveStreamView: UIView{
     private var apiVideo: ApiVideoLiveStream?
-    public override init(frame: CGRect) {
+    private var channel: FlutterMethodChannel?
+    public init(frame: CGRect, channel: FlutterMethodChannel) {
+        self.channel = channel
         super.init(frame: frame)
         apiVideo = ApiVideoLiveStream(view: self)
     }
@@ -252,7 +253,18 @@ class LiveStreamView: UIView{
     }
     
     @objc func startStreaming() {
+        channel?.invokeMethod("setParam", arguments: nil)
+        print("SetParam done, ready to stream")
         apiVideo!.startLiveStreamFlux(liveStreamKey: self.liveStreamKey, rtmpServerUrl: self.rtmpServerUrl)
+        apiVideo?.onConnectionSuccess = {() in
+            self.channel?.invokeMethod("onConnectionSuccess", arguments: nil)
+        }
+        apiVideo!.onConnectionFailed = {(code) in
+            self.channel?.invokeMethod("onConnectionFailed", arguments: code)
+        }
+        apiVideo!.onDisconnect = {() in
+            self.channel?.invokeMethod("onDisconnect", arguments: nil)
+        }
     }
     
     @objc func stopStreaming() {
