@@ -1,4 +1,4 @@
-package video.api.eco.flt.livestream.apivideolivestream
+package video.api.flutter.livestream
 
 import android.content.Context
 import io.flutter.plugin.common.BinaryMessenger

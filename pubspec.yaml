@@ -27,8 +27,8 @@ flutter:
   plugin:
     platforms:
       android:
-        package: video.api.eco.flt.livestream.apivideolivestream
-        pluginClass: ApivideolivestreamPlugin
+        package: video.api.flutter.livestream
+        pluginClass: ApiVideoLiveStreamPlugin
       ios:
         pluginClass: ApiVideoLiveStreamPlugin
 

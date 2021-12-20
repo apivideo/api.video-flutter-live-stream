@@ -16,7 +16,7 @@ class _LivestreamViewWidget extends State<LivestreamViewWidget> {
   final ButtonStyle style =
       ElevatedButton.styleFrom(textStyle: const TextStyle(fontSize: 20));
 
-  Apivideolivestream? controller;
+  ApiVideoLiveStream? controller;
   bool _isStreaming = false;
   String _title = "Start";
   String text = '';
@@ -62,7 +62,7 @@ class _LivestreamViewWidget extends State<LivestreamViewWidget> {
                 ElevatedButton(
                   style: style,
                   onPressed: () {
-                    Apivideolivestream.switchCamera();
+                    ApiVideoLiveStream.switchCamera();
                   },
                   child: const Text('switch'),
                 ),
@@ -89,12 +89,12 @@ class _LivestreamViewWidget extends State<LivestreamViewWidget> {
         print("Stop Stream");
         _title = "Start";
         _isStreaming = false;
-        Apivideolivestream.stopStream();
+        ApiVideoLiveStream.stopStream();
       } else {
         print("Start Stream");
         _title = "Stop";
         _isStreaming = true;
-        Apivideolivestream.startStream();
+        ApiVideoLiveStream.startStream();
       }
     });
   }
@@ -118,7 +118,7 @@ class _LivestreamViewWidget extends State<LivestreamViewWidget> {
   }
 
   Widget _cameraPreviewWidget() {
-    final plugin = Apivideolivestream();
+    final plugin = ApiVideoLiveStream();
 
     return Container(
         color: Colors.lightBlueAccent,
