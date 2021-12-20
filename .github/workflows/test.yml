@@ -1,0 +1,32 @@
+name: Run tests
+on: [push]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Flutter
+        id: flutter
+        uses: DanTup/gh-actions/setup-flutter@master
+        with:
+          channel: stable
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Analyze project source
+        run: flutter analyze
+      - name: Run tests
+        run: flutter test
+
+  publish_test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Flutter
+        id: flutter
+        uses: DanTup/gh-actions/setup-flutter@master
+        with:
+          channel: stable
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Dry-run publishing
+        run: flutter pub publish --dry-run
