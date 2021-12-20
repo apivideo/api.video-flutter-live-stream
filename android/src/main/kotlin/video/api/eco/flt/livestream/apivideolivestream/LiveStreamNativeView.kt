@@ -4,7 +4,6 @@ import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
-import android.view.View
 import com.pedro.encoder.input.video.CameraHelper
 import com.pedro.rtplibrary.view.OpenGlView
 import io.flutter.plugin.common.BinaryMessenger
@@ -26,7 +25,6 @@ private fun getResolutionFromResolutionString(resolutionString: String?): Resolu
         "720p" -> Resolution.RESOLUTION_720
         "1080p" -> Resolution.RESOLUTION_1080
         "2160p" -> Resolution.RESOLUTION_2160
-        "240p" -> Resolution.RESOLUTION_240
         else -> Resolution.RESOLUTION_720
     }
 }
@@ -38,17 +36,15 @@ private fun getFacingFromCameraString(resolutionString: String?): CameraHelper.F
     }
 }
 
-class LiveStreamNativeView(context: Context, id: Int, creationParams: Map<String?, Any?>?, messenger: BinaryMessenger):
+class LiveStreamNativeView(context: Context, id: Int, messenger: BinaryMessenger):
     PlatformView, ConnectCheckerRtmp, MethodCallHandler  {
-
-    //private var channel : MethodChannel = MethodChannel(messenger, "apivideolivestream")
 
     private val glView = OpenGlView(context)
     private var apiVideo: ApiVideoLiveStream
     private var liveStreamKey: String = ""
     private var rtmpServerUrl : String? = null
     private var methodChannel: MethodChannel? = null
-
+    private var isStartLiveCall = false;
 
     override fun getView() = glView
 
@@ -61,9 +57,8 @@ class LiveStreamNativeView(context: Context, id: Int, creationParams: Map<String
     }
 
     init {
-        //channel.setMethodCallHandler(this)
-        apiVideo = ApiVideoLiveStream(context, this, getView(), null)
         initMethodChannel(messenger, id)
+        apiVideo = ApiVideoLiveStream(context,this, view,null)
     }
 
     private fun initMethodChannel(messenger: BinaryMessenger, viewId: Int){
@@ -81,14 +76,14 @@ class LiveStreamNativeView(context: Context, id: Int, creationParams: Map<String
         rtmpServerUrl = newRtmpServerUrl
     }
 
-    private fun setVideoFps(newVideoFps: Double) {
-        if (newVideoFps.toInt() == apiVideo.videoFps) return
-        apiVideo.videoFps = newVideoFps.toInt()
+    private fun setVideoFps(newVideoFps: Int) {
+        if (newVideoFps == apiVideo.videoFps) return
+        apiVideo.videoFps = newVideoFps
     }
 
-    private fun setVideoBitrate(newVideoBitrate: Double) {
-        if (newVideoBitrate.toInt() == apiVideo.videoBitrate) return
-        apiVideo.videoBitrate = newVideoBitrate.toInt()
+    private fun setVideoBitrate(newVideoBitrate: Int) {
+        if (newVideoBitrate == apiVideo.videoBitrate) return
+        apiVideo.videoBitrate = newVideoBitrate
     }
 
     private fun setVideoResolution(newVideoResolutionString: String) {
@@ -115,7 +110,6 @@ class LiveStreamNativeView(context: Context, id: Int, creationParams: Map<String
 
 
     override fun onConnectionSuccessRtmp() {
-        Log.i("Rtmp Connection", "success")
         Handler(Looper.getMainLooper()).post {
             methodChannel!!.invokeMethod("onConnectionSuccess", null)
         }
@@ -123,7 +117,6 @@ class LiveStreamNativeView(context: Context, id: Int, creationParams: Map<String
     }
 
     override fun onConnectionFailedRtmp(reason: String?) {
-        Log.e("Rtmp Connection", "failed")
         Handler(Looper.getMainLooper()).post {
             methodChannel!!.invokeMethod("onConnectionError", reason)
         }
@@ -135,9 +128,8 @@ class LiveStreamNativeView(context: Context, id: Int, creationParams: Map<String
     }
 
     override fun onDisconnectRtmp() {
-        Log.i("Rtmp connetion", "On disconnect")
         Handler(Looper.getMainLooper()).post {
-            methodChannel!!.invokeMethod("onDeconnection", null)
+            methodChannel!!.invokeMethod("onDisconnect", null)
         }
 
     }
@@ -158,16 +150,16 @@ class LiveStreamNativeView(context: Context, id: Int, creationParams: Map<String
         }
     }
 
-    private fun setParam(){
-        Log.e("IN SET PARAM", "8888")
-        Handler(Looper.getMainLooper()).post{
-            methodChannel!!.invokeMethod("setParam",null)
-        }
+     private fun setParam() {
+         Log.e("IN SET PARAM", "8888")
+         /*Handler(Looper.getMainLooper()).post{
+
+        }*/
+         methodChannel!!.invokeMethod("setParam",null)
     }
 
     private fun startLive(){
         Log.e("startlive method","called")
-        Log.e("startlive key",liveStreamKey)
         apiVideo.startStreaming(liveStreamKey, rtmpServerUrl)
     }
     private fun stopLive(){
@@ -183,28 +175,31 @@ class LiveStreamNativeView(context: Context, id: Int, creationParams: Map<String
         }
     }
 
-    var mResult: MethodChannel.Result? = null
+    private var mResult: MethodChannel.Result? = null
+
+
      override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
         when (call.method){
-//            "setLivestreamKey" -> livestreamKey = call.arguments.toString()
             "setLivestreamKey" -> setLiveStreamKey(call.arguments.toString())
             "startStreaming" -> {
-                Log.e("Call START STREAMING", "True")
-                //setParam()
-                startLive()
+                isStartLiveCall = true
+                setParam()
                 mResult = result
             }
             "setParam" -> {
-                var obj = JSONObject(call.arguments.toString())
+                val obj = JSONObject(call.arguments.toString())
                 setLiveStreamKey(obj.getString("liveStreamKey").toString())
                 setRtmpServerUrl(obj.getString("rtmpServerUrl").toString())
-                setVideoFps(obj.getString("videoFps").toDouble())
+                setVideoFps(obj.getString("videoFps").toInt())
                 setVideoResolution(obj.getString("videoResolution").toString())
-                setVideoBitrate(obj.getString("videoBitrate").toDouble())
+                setVideoBitrate(obj.getString("videoBitrate").toInt())
                 setVideoCamera(obj.getString("videoCamera").toString())
-                setAudioMuted(obj.getString("audioMuted").toBoolean())
+                setAudioMuted(obj.getBoolean("audioMuted"))
                 setAudioBitrate(obj.getString("audioBitrate").toDouble())
-                Log.e("PARAMETER ====> ", liveStreamKey)
+                if(isStartLiveCall){
+                    startLive()
+                    isStartLiveCall = false
+                }
             }
             "stopStreaming" -> stopLive()
             "switchCamera" -> switchCamera()
