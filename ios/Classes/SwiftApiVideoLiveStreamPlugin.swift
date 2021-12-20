@@ -16,7 +16,6 @@ public class SwiftApivideolivestreamPlugin: NSObject, FlutterPlugin {
     }
     
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
-        //print("call method : \(call.method)")
         result("iOS " + UIDevice.current.systemVersion)
     }
 }
@@ -44,7 +43,7 @@ class LiveStreamViewFactory: NSObject, FlutterPlatformViewFactory {
 }
 
 class LiveStreamNativeView: NSObject, FlutterPlatformView {
-    private var _view: LiveStreamView
+    private var liveStreamView: LiveStreamView
     
     init(
         frame: CGRect,
@@ -53,80 +52,65 @@ class LiveStreamNativeView: NSObject, FlutterPlatformView {
         binaryMessenger messenger: FlutterBinaryMessenger?
     ) {
         let channelFirstConnection = FlutterMethodChannel(name: "apivideolivestream_\(viewId)", binaryMessenger: messenger!)
-        _view = LiveStreamView(frame: frame, channel: channelFirstConnection)
+        liveStreamView = LiveStreamView(frame: frame, channel: channelFirstConnection)
         super.init()
         channelFirstConnection.setMethodCallHandler { [weak self] (call, result) -> Void in
             self?.handlerMethodCall(call, result)
         }
-        // iOS views can be created here
-        //createNativeView(view: _view)
     }
     
     func view() -> UIView {
-        return _view
+        return liveStreamView
     }
     
     func handlerMethodCall(_ call: FlutterMethodCall, _ result: FlutterResult)  {
         switch call.method {
-        case "getPlatformVersion":
-            print("getPlatformVersion")
-            result("iOS " + UIDevice.current.systemVersion)
-            break
         case "startStreaming":
-            print("start STREAMING")
-            _view.startStreaming()
+            liveStreamView.startStreaming()
             break
         case "stopStreaming":
-            print("stop STREAMING")
-            _view.stopStreaming()
+            liveStreamView.stopStreaming()
             break
         case "switchCamera":
-            if(_view.videoCamera == "back"){
-                _view.videoCamera = "front"
+            if(liveStreamView.videoCamera == "back"){
+                liveStreamView.videoCamera = "front"
             }else{
-                _view.videoCamera = "back"
+                liveStreamView.videoCamera = "back"
             }
             break
         case "setLivestreamKey":
             let key = call.arguments as! String
-            print("key: \(key)")
-            _view.liveStreamKey = key
-            print("view key: \(_view.liveStreamKey)")
+            liveStreamView.liveStreamKey = key
         case "setParam":
             let str = call.arguments as! String
-            print("Data: \(str)")
             let data = str.data(using: .utf8)
             do {
                 let param = try JSONDecoder().decode(Parameters.self, from: data!)
-                _view.liveStreamKey = param.liveStreamKey
-                _view.rtmpServerUrl = param.rtmpServerUrl
-                _view.videoFps = param.videoFps
-                _view.videoResolution = param.videoResolution
-                _view.videoBitrate = param.videoBitrate
-                _view.videoCamera = param.videoCamera
-                _view.videoOrientation = param.videoOrientation
-                _view.audioMuted = param.audioMuted
-                _view.audioBitrate = param.audioBitrate
-                print(param)
-                print(param.rtmpServerUrl)
+                liveStreamView.liveStreamKey = param.liveStreamKey
+                liveStreamView.rtmpServerUrl = param.rtmpServerUrl
+                liveStreamView.videoFps = param.videoFps
+                liveStreamView.videoResolution = param.videoResolution
+                liveStreamView.videoBitrate = param.videoBitrate
+                liveStreamView.videoCamera = param.videoCamera
+                liveStreamView.videoOrientation = param.videoOrientation
+                liveStreamView.audioMuted = param.audioMuted
+                liveStreamView.audioBitrate = param.audioBitrate
             } catch let error as NSError{
                 print(error)
             }
-            
-            
         default:
             break
         }
     }
     
-    func createNativeView(view _view: UIView){
-        _view.backgroundColor = UIColor.blue
+    func createNativeView(view nativeView: UIView){
+        nativeView.backgroundColor = UIColor.blue
         let nativeLabel = UILabel()
         nativeLabel.text = "Native text from iOS"
         nativeLabel.textColor = UIColor.white
         nativeLabel.textAlignment = .center
         nativeLabel.frame = CGRect(x: 0, y: 0, width: 180, height: 48.0)
-        _view.addSubview(nativeLabel)
+        nativeView.addSubview(nativeLabel)
     }
 }
 
@@ -215,7 +199,6 @@ class LiveStreamView: UIView{
                 return
             }
             apiVideo?.videoCamera = value
-            
         }
     }
     
@@ -234,7 +217,6 @@ class LiveStreamView: UIView{
                 return
             }
             apiVideo?.videoOrientation = value
-            
         }
     }
     
@@ -254,7 +236,6 @@ class LiveStreamView: UIView{
     
     @objc func startStreaming() {
         channel?.invokeMethod("setParam", arguments: nil)
-        print("SetParam done, ready to stream")
         apiVideo!.startLiveStreamFlux(liveStreamKey: self.liveStreamKey, rtmpServerUrl: self.rtmpServerUrl)
         apiVideo?.onConnectionSuccess = {() in
             self.channel?.invokeMethod("onConnectionSuccess", arguments: nil)
