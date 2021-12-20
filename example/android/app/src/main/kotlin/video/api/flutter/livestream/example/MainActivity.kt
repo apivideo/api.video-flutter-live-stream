@@ -1,4 +1,4 @@
-package video.api.eco.flt.livestream.apivideolivestream_example
+package video.api.flutter.livestream.example
 
 import io.flutter.embedding.android.FlutterActivity
 

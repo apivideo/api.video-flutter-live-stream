@@ -6,7 +6,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-class Apivideolivestream {
+class ApiVideoLiveStream {
   static const MethodChannel _channel =
       const MethodChannel('apivideolivestream_0');
 
@@ -33,7 +33,7 @@ class Apivideolivestream {
 }
 
 class LiveStreamPreview extends StatefulWidget {
-  final Apivideolivestream controller;
+  final ApiVideoLiveStream controller;
   final String? liveStreamKey;
   final String? rtmpServerUrl;
   final int? videoFps;

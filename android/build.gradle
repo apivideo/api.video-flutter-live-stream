@@ -1,4 +1,4 @@
-group 'video.api.eco.flt.livestream.apivideolivestream'
+group 'video.api.flutter.livestream'
 version '1.0-SNAPSHOT'
 
 buildscript {
