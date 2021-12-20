@@ -1,6 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:apivideolivestream/apivideolivestream.dart';
+import 'package:apivideo_live_stream/apivideo_live_stream.dart';
 
 void main() {
   const MethodChannel channel = MethodChannel('apivideolivestream');

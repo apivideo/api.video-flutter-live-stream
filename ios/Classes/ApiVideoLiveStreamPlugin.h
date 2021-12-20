@@ -1,4 +1,4 @@
 #import <Flutter/Flutter.h>
 
-@interface ApivideolivestreamPlugin : NSObject<FlutterPlugin>
+@interface ApiVideoLiveStreamPlugin : NSObject<FlutterPlugin>
 @end

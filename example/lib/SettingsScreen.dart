@@ -1,8 +1,8 @@
-import 'package:apivideolivestream_example/Alert/RadioAlertWidget.dart';
-import 'package:apivideolivestream_example/Alert/TextAlertWidget.dart';
-import 'package:apivideolivestream_example/Model/AudioBitrate.dart';
-import 'package:apivideolivestream_example/Model/Channel.dart';
-import 'package:apivideolivestream_example/Model/Resolution.dart';
+import 'package:apivideo_live_stream_example/Alert/RadioAlertWidget.dart';
+import 'package:apivideo_live_stream_example/Alert/TextAlertWidget.dart';
+import 'package:apivideo_live_stream_example/Model/AudioBitrate.dart';
+import 'package:apivideo_live_stream_example/Model/Channel.dart';
+import 'package:apivideo_live_stream_example/Model/Resolution.dart';
 import 'package:flutter/material.dart';
 import 'package:settings_ui/settings_ui.dart';
 

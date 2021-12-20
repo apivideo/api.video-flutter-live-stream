@@ -1,4 +1,4 @@
-import 'package:apivideolivestream_example/LiveStreamViewWidget.dart';
+import 'package:apivideo_live_stream_example/LiveStreamViewWidget.dart';
 import 'package:flutter/material.dart';
 
 void main() {
