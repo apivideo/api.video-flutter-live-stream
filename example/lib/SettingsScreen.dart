@@ -25,7 +25,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   get value => true;
   late String codeDialog;
-  static String streamkey = "";
   String valueText = "";
   List<String> allFps = ["24", "30", "60", "120", "240"];
 
@@ -83,7 +82,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               values: allFps,
                             );
                           }).then((value) {
-                        //int indexRes = widget.params.getResolutionFromIndex(value) as int;
                         setState(() {
                           widget.params.fps = int.parse(allFps[value]);
                         });
@@ -134,7 +132,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   .getAllChannelsToString(),
                             );
                           }).then((value) {
-                        //int indexRes = widget.params.getResolutionFromIndex(value) as int;
                         setState(() {
                           widget.params.channel = Channel.values[value];
                         });
@@ -241,71 +238,5 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ],
           )),
     );
-  }
-
-  Future<void> _displayTextInputDialog(BuildContext context, int id) async {
-    TextEditingController _textFieldController = TextEditingController();
-    late String title;
-    late String decoration;
-    switch (id) {
-      case 0:
-        title = 'Select Rtmp endpoint';
-        decoration = widget.params.rtmpUrl;
-        break;
-      case 1:
-        title = 'Select Stream Key';
-        decoration = streamkey;
-        break;
-      default:
-        break;
-    }
-    return showDialog(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: Text(title),
-            content: TextField(
-              onChanged: (value) {
-                setState(() {
-                  valueText = value;
-                });
-              },
-              controller: _textFieldController,
-              decoration: InputDecoration(hintText: decoration),
-            ),
-            actions: <Widget>[
-              TextButton(
-                child: Text('CANCEL'),
-                onPressed: () {
-                  setState(() {
-                    Navigator.pop(context);
-                  });
-                },
-              ),
-              TextButton(
-                child: Text('OK'),
-                onPressed: () {
-                  setState(() {
-                    if (valueText != "") {
-                      switch (id) {
-                        case 0:
-                          print("case 0");
-                          widget.params.rtmpUrl = valueText;
-                          break;
-                        case 1:
-                          print("case 1");
-                          streamkey = valueText;
-                          break;
-                        default:
-                          break;
-                      }
-                    }
-                    Navigator.pop(context);
-                  });
-                },
-              ),
-            ],
-          );
-        });
   }
 }

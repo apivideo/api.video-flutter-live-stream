@@ -17,8 +17,8 @@ class Params{
 
   Params({
   this.resolution = Resolution.RESOLUTION_720,
-  this.fps = 30,
-  this.bitrate = 5000,
+  this.fps = 24,
+  this.bitrate = 1280000,
   this.channel = Channel.stereo,
   this.audioBitrate = AudioBitrate.Kbps_128,
   this.audioSampleRate = AudioSampleRate.kHz_44_1,

@@ -1,4 +1,4 @@
-import 'package:apivideolivestream/apivideolivestream.dart';
+import 'package:apivideolivestream/Apivideolivestream.dart';
 import 'package:apivideolivestream_example/Model/Resolution.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -125,8 +125,8 @@ class _LivestreamViewWidget extends State<LivestreamViewWidget> {
           controller: plugin,
           liveStreamKey: params.streamKey,
           videoResolution: Resolution.RESOLUTION_240.getSimpleResolutionToString(params.resolution),
-          videoFps: double.parse(params.fps.toString()),
-          videoBitrate: double.parse(params.bitrate.toString()),
+          videoFps: int.parse(params.fps.toString()),
+          videoBitrate: int.parse(params.bitrate.toString()),
           onConnectionSuccess: () {
             print("onConnectionSuccess");
           },
