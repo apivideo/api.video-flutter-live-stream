@@ -1,4 +1,4 @@
-name: apivideolivestream
+name: apivideo_live_stream
 description: A new flutter plugin project.
 version: 0.0.1
 homepage:
@@ -30,7 +30,7 @@ flutter:
         package: video.api.eco.flt.livestream.apivideolivestream
         pluginClass: ApivideolivestreamPlugin
       ios:
-        pluginClass: ApivideolivestreamPlugin
+        pluginClass: ApiVideoLiveStreamPlugin
 
   # To add assets to your plugin package, add an assets section, like this:
   # assets:

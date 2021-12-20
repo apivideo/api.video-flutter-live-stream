@@ -4,14 +4,14 @@ import LiveStreamIos
 import AVFoundation
 import Network
 
-public class SwiftApivideolivestreamPlugin: NSObject, FlutterPlugin {
+public class SwiftApiVideoLiveStreamPlugin: NSObject, FlutterPlugin {
     public static func register(with registrar: FlutterPluginRegistrar) {
         let channel = FlutterMethodChannel(name: "apivideolivestream", binaryMessenger: registrar.messenger())
         
         let factory = LiveStreamViewFactory(messenger: registrar.messenger())
         registrar.register(factory, withId: "<platform-view-type>")
         
-        let instance = SwiftApivideolivestreamPlugin()
+        let instance = SwiftApiVideoLiveStreamPlugin()
         registrar.addMethodCallDelegate(instance, channel: channel)
     }
     

@@ -1,5 +1,5 @@
-import 'package:apivideolivestream/Apivideolivestream.dart';
-import 'package:apivideolivestream_example/Model/Resolution.dart';
+import 'package:apivideo_live_stream/apivideo_live_stream.dart';
+import 'package:apivideo_live_stream_example/Model/Resolution.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -113,6 +113,7 @@ class _LivestreamViewWidget extends State<LivestreamViewWidget> {
             builder: (context) => SettingsScreen(params: params)));
     setState(() {
       text = params.streamKey;
+      params = params;
     });
   }
 
