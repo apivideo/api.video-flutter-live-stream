@@ -1,11 +1,11 @@
 import 'package:apivideo_live_stream/apivideo_live_stream.dart';
-import 'package:apivideo_live_stream_example/Model/Resolution.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import 'Constants.dart';
-import 'Model/Params.dart';
-import 'SettingsScreen.dart';
+import 'types/resolution.dart';
+import 'types/params.dart';
+import 'settings_screen.dart';
 
 class LivestreamViewWidget extends StatefulWidget {
   @override

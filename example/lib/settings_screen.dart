@@ -1,13 +1,14 @@
-import 'package:apivideo_live_stream_example/Alert/RadioAlertWidget.dart';
-import 'package:apivideo_live_stream_example/Alert/TextAlertWidget.dart';
-import 'package:apivideo_live_stream_example/Model/AudioBitrate.dart';
-import 'package:apivideo_live_stream_example/Model/Channel.dart';
-import 'package:apivideo_live_stream_example/Model/Resolution.dart';
+import 'package:apivideo_live_stream_example/types/Channel.dart';
 import 'package:flutter/material.dart';
 import 'package:settings_ui/settings_ui.dart';
 
-import 'Model/AudioSampleRate.dart';
-import 'Model/Params.dart';
+import 'alert/radio_alert_widget.dart';
+import 'alert/text_alert_widget.dart';
+
+import 'types/audio_sample_rate.dart';
+import 'types/audio_bitrate.dart';
+import 'types/resolution.dart';
+import 'types/params.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({Key? key, required this.params}) : super(key: key);

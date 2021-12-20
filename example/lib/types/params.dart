@@ -1,6 +1,6 @@
-import 'package:apivideo_live_stream_example/Model/AudioBitrate.dart';
-import 'package:apivideo_live_stream_example/Model/AudioSampleRate.dart';
-import 'package:apivideo_live_stream_example/Model/Resolution.dart';
+import 'audio_bitrate.dart';
+import 'audio_sample_rate.dart';
+import 'resolution.dart';
 import 'Channel.dart';
 
 class Params {
