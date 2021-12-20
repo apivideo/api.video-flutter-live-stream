@@ -28,7 +28,7 @@ class _TextAlertWidgetState extends State<TextAlertWidget> {
               child: TextField(
                 onChanged: (value) {
                   setState(() {
-                    if(value !=""){
+                    if (value != "") {
                       valueText = value;
                     }
                   });
@@ -68,7 +68,7 @@ class _TextAlertWidgetState extends State<TextAlertWidget> {
             return TextField(
               onChanged: (value) {
                 setState(() {
-                  if(value !=""){
+                  if (value != "") {
                     valueText = value;
                   }
                 });

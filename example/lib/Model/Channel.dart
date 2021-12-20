@@ -1,12 +1,12 @@
-enum Channel{
+enum Channel {
   stereo,
   mono,
 }
 
 extension ChannelExtension on Channel {
-  List<String> getAllChannelsToString(){
+  List<String> getAllChannelsToString() {
     List<String> list = [];
-    for(final res in Channel.values){
+    for (final res in Channel.values) {
       var str = getChannelToString(res);
       list.add(str);
     }
@@ -14,9 +14,9 @@ extension ChannelExtension on Channel {
     return list;
   }
 
-  String getChannelToString(Channel channel){
+  String getChannelToString(Channel channel) {
     var result = "";
-    switch(channel){
+    switch (channel) {
       case Channel.mono:
         result = "mono";
         break;

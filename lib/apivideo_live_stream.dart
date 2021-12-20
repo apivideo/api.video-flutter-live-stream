@@ -65,8 +65,6 @@ class LiveStreamPreview extends StatefulWidget {
 
   @override
   _LiveStreamPreviewState createState() => _LiveStreamPreviewState();
-
-
 }
 
 class _LiveStreamPreviewState extends State<LiveStreamPreview> {
@@ -90,11 +88,12 @@ class _LiveStreamPreviewState extends State<LiveStreamPreview> {
   createParams() {
     var param = {};
     param["liveStreamKey"] = widget.liveStreamKey;
-    param["rtmpServerUrl"] = widget.rtmpServerUrl ?? 'rtmp://broadcast.api.video/s/';
+    param["rtmpServerUrl"] =
+        widget.rtmpServerUrl ?? 'rtmp://broadcast.api.video/s/';
     param["videoFps"] = widget.videoFps ?? 30;
     param["videoResolution"] = widget.videoResolution ?? '720p';
     param["videoBitrate"] = widget.videoBitrate ?? 128000;
-    param["videoCamera"] =  widget.videoCamera ?? "back";
+    param["videoCamera"] = widget.videoCamera ?? "back";
     param["videoOrientation"] = widget.videoOrientation ?? 'portrait';
     param["audioMuted"] = widget.audioMuted ?? false;
     param["audioBitrate"] = widget.audioBitrate ?? -1;
@@ -104,18 +103,18 @@ class _LiveStreamPreviewState extends State<LiveStreamPreview> {
   Future<void> _methodCallHandler(MethodCall call) async {
     switch (call.method) {
       case "onConnectionSuccess":
-        if(widget.onConnectionSuccess != null){
+        if (widget.onConnectionSuccess != null) {
           widget.onConnectionSuccess!();
         }
         break;
       case "onConnectionFailed":
-        if(widget.onConnectionError != null){
+        if (widget.onConnectionError != null) {
           String error = call.arguments;
           widget.onConnectionError!("$error");
         }
         break;
       case "onDisconnect":
-        if(widget.onDeconnection != null) {
+        if (widget.onDeconnection != null) {
           widget.onDeconnection!();
         }
         break;
@@ -126,7 +125,6 @@ class _LiveStreamPreviewState extends State<LiveStreamPreview> {
         break;
     }
   }
-
 
   @override
   Widget build(BuildContext context) {

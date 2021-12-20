@@ -211,8 +211,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   decoration: widget.params.rtmpUrl);
                             }).then((value) => {
                               setState(() {
-                                widget.params.rtmpUrl =
-                                    value;
+                                widget.params.rtmpUrl = value;
                               }),
                             });
                       }),
@@ -227,11 +226,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   title: "Stream key",
                                   decoration: widget.params.streamKey);
                             }).then((value) => {
-                          setState(() {
-                            widget.params.streamKey =
-                                value;
-                          }),
-                        });
+                              setState(() {
+                                widget.params.streamKey = value;
+                              }),
+                            });
                       }),
                 ],
               )

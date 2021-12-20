@@ -125,7 +125,8 @@ class _LivestreamViewWidget extends State<LivestreamViewWidget> {
         child: LiveStreamPreview(
           controller: plugin,
           liveStreamKey: params.streamKey,
-          videoResolution: Resolution.RESOLUTION_240.getSimpleResolutionToString(params.resolution),
+          videoResolution: Resolution.RESOLUTION_240
+              .getSimpleResolutionToString(params.resolution),
           videoFps: int.parse(params.fps.toString()),
           videoBitrate: int.parse(params.bitrate.toString()),
           onConnectionSuccess: () {
