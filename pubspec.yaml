@@ -1,7 +1,10 @@
 name: apivideo_live_stream
-description: A new flutter plugin project.
-version: 0.0.1
-homepage:
+description: An easy way to broadcast livestream on api.video platform as well as other RTMP platforms.
+version: 0.1.0
+repository: https://github.com/apivideo/api.video-flutter-live-stream
+issue_tracker: https://github.com/apivideo/api.video-flutter-live-stream/issues
+homepage: https://api.video
+documentation: https://docs.api.video
 
 environment:
   sdk: ">=2.12.0 <3.0.0"
