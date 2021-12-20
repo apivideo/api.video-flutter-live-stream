@@ -16,13 +16,10 @@ class Apivideolivestream {
   }
 
   static Future<void> startStream() async {
-    print("start stream called");
-    print("widget ? =>");
     await _channel.invokeMethod('startStreaming');
   }
 
   static Future<void> stopStream() async {
-    print("stop stream called");
     await _channel.invokeMethod('stopStreaming');
   }
 
@@ -39,13 +36,13 @@ class LiveStreamPreview extends StatefulWidget {
   final Apivideolivestream controller;
   final String? liveStreamKey;
   final String? rtmpServerUrl;
-  final double? videoFps;
+  final int? videoFps;
   final String? videoResolution;
-  final double? videoBitrate;
+  final int? videoBitrate;
   final String? videoCamera;
   final String? videoOrientation;
   final bool? audioMuted;
-  final double? audioBitrate;
+  final int? audioBitrate;
   final Function()? onConnectionSuccess;
   final Function(String)? onConnectionError;
   final Function()? onDeconnection;
@@ -74,67 +71,58 @@ class LiveStreamPreview extends StatefulWidget {
 
 class _LiveStreamPreviewState extends State<LiveStreamPreview> {
   late MethodChannel _channel;
-  late Apivideolivestream _controller = widget.controller;
-
-
 
   @override
   void initState() {
     super.initState();
   }
 
-  _prepare(){
+  _prepare(int viewId) async {
+    _channel = MethodChannel('apivideolivestream_$viewId');
+    _channel.setMethodCallHandler(_methodCallHandler);
+
     if (widget.liveStreamKey!.isNotEmpty) {
       _channel.invokeMethod('setLivestreamKey', widget.liveStreamKey);
     }
-    createParams();
+    await createParams();
   }
 
   createParams() {
     var param = {};
     param["liveStreamKey"] = widget.liveStreamKey;
-    param["rtmpServerUrl"] = widget.rtmpServerUrl ?? 'rtmp://broadcast.api.video/s';
+    param["rtmpServerUrl"] = widget.rtmpServerUrl ?? 'rtmp://broadcast.api.video/s/';
     param["videoFps"] = widget.videoFps ?? 30;
     param["videoResolution"] = widget.videoResolution ?? '720p';
-    param["videoBitrate"] = widget.videoBitrate ?? -1;
+    param["videoBitrate"] = widget.videoBitrate ?? 128000;
     param["videoCamera"] =  widget.videoCamera ?? "back";
-    param["videoOrientation"] = widget.videoOrientation ?? 'landscape';
+    param["videoOrientation"] = widget.videoOrientation ?? 'portrait';
     param["audioMuted"] = widget.audioMuted ?? false;
     param["audioBitrate"] = widget.audioBitrate ?? -1;
-
-    _channel.invokeMethod('setParam', json.encode(param));
-
     return param;
   }
 
   Future<void> _methodCallHandler(MethodCall call) async {
     switch (call.method) {
       case "onConnectionSuccess":
-        //widget.onConnectionSuccess;
         if(widget.onConnectionSuccess != null){
           widget.onConnectionSuccess!();
-          print("on a recu le success");
         }
         break;
       case "onConnectionFailed":
-       //widget.onConnectionSuccess;
         if(widget.onConnectionError != null){
           String error = call.arguments;
           widget.onConnectionError!("$error");
-          print("on a recu le error");
         }
         break;
       case "onDisconnect":
-      //widget.onConnectionSuccess;
         if(widget.onDeconnection != null) {
           widget.onDeconnection!();
-          print("on a recu le deconnection");
         }
         break;
 
       case "setParam":
-        createParams();
-        await _channel.invokeMethod('setParam', json.encode(createParams()));
+        var params = createParams();
+        _channel.invokeMethod('setParam', json.encode(params));
         break;
     }
   }
@@ -143,7 +131,6 @@ class _LiveStreamPreviewState extends State<LiveStreamPreview> {
   @override
   Widget build(BuildContext context) {
     final String viewType = '<platform-view-type>';
-    // Pass parameters to the platform side.
 
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
@@ -153,9 +140,7 @@ class _LiveStreamPreviewState extends State<LiveStreamPreview> {
             viewType: viewType,
             onPlatformViewCreated: (viewId) {
               print("viewId $viewId");
-              _channel = MethodChannel('apivideolivestream_$viewId');
-              _channel.setMethodCallHandler(_methodCallHandler);
-              _prepare();
+              _prepare(viewId);
             },
             creationParamsCodec: const StandardMessageCodec(),
           ),
@@ -193,9 +178,7 @@ class _LiveStreamPreviewState extends State<LiveStreamPreview> {
             layoutDirection: TextDirection.ltr,
             onPlatformViewCreated: (viewId) {
               print("viewId $viewId");
-              _channel = MethodChannel('apivideolivestream_$viewId');
-              _channel.setMethodCallHandler(_methodCallHandler);
-              _prepare();
+              _prepare(viewId);
             },
             creationParamsCodec: const StandardMessageCodec(),
           ),
