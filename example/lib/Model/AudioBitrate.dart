@@ -37,5 +37,4 @@ extension AudioBitrateExtension on AudioBitrate {
     }
     return result;
   }
-
 }

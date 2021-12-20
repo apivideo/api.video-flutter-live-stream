@@ -1,4 +1,4 @@
-enum Resolution{
+enum Resolution {
   RESOLUTION_240,
   RESOLUTION_360,
   RESOLUTION_480,
@@ -7,10 +7,10 @@ enum Resolution{
   RESOLUTION_2160,
 }
 
-extension ResolutionExtension on Resolution{
-  List<String> getAllResolutionsToString(){
+extension ResolutionExtension on Resolution {
+  List<String> getAllResolutionsToString() {
     List<String> list = [];
-    for(final res in Resolution.values){
+    for (final res in Resolution.values) {
       var str = getResolutionToString(res);
       list.add(str);
     }
@@ -18,9 +18,9 @@ extension ResolutionExtension on Resolution{
     return list;
   }
 
-  String getResolutionToString(Resolution res){
+  String getResolutionToString(Resolution res) {
     var result = "";
-    switch(res){
+    switch (res) {
       case Resolution.RESOLUTION_240:
         result = "352x240";
         break;
@@ -45,9 +45,10 @@ extension ResolutionExtension on Resolution{
     }
     return result;
   }
-  String getSimpleResolutionToString(Resolution res){
+
+  String getSimpleResolutionToString(Resolution res) {
     var result = "";
-    switch(res){
+    switch (res) {
       case Resolution.RESOLUTION_240:
         result = "240p";
         break;

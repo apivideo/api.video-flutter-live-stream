@@ -1,4 +1,4 @@
-enum AudioSampleRate{
+enum AudioSampleRate {
   kHz_8,
   kHz_16,
   kHz_32,
@@ -6,10 +6,10 @@ enum AudioSampleRate{
   kHz_48,
 }
 
-extension AudioSampleRateExtension on AudioSampleRate{
-  List<String> getAllAudioSampleRatesToString(){
+extension AudioSampleRateExtension on AudioSampleRate {
+  List<String> getAllAudioSampleRatesToString() {
     List<String> list = [];
-    for(final res in AudioSampleRate.values){
+    for (final res in AudioSampleRate.values) {
       var str = getAudioSampleRateToString(res);
       list.add(str);
     }
@@ -17,9 +17,9 @@ extension AudioSampleRateExtension on AudioSampleRate{
     return list;
   }
 
-  String getAudioSampleRateToString(AudioSampleRate sample){
+  String getAudioSampleRateToString(AudioSampleRate sample) {
     var result = "";
-    switch(sample){
+    switch (sample) {
       case AudioSampleRate.kHz_8:
         result = "8 kHz";
         break;
