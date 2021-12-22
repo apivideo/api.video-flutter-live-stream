@@ -1,22 +1,19 @@
-enum Channel {
-  stereo,
-  mono,
+import 'package:apivideo_live_stream/apivideo_live_stream.dart';
+
+List<String> channelsToPrettyString() {
+  List<String> list = [];
+  for (final res in Channel.values) {
+    var str = res.toPrettyString();
+    list.add(str);
+  }
+
+  return list;
 }
 
 extension ChannelExtension on Channel {
-  List<String> getAllChannelsToString() {
-    List<String> list = [];
-    for (final res in Channel.values) {
-      var str = getChannelToString(res);
-      list.add(str);
-    }
-
-    return list;
-  }
-
-  String getChannelToString(Channel channel) {
+  String toPrettyString() {
     var result = "";
-    switch (channel) {
+    switch (this) {
       case Channel.mono:
         result = "mono";
         break;

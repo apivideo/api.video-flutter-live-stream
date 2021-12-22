@@ -7,13 +7,11 @@ import io.flutter.plugin.common.StandardMessageCodec
 import io.flutter.plugin.platform.PlatformView
 import io.flutter.plugin.platform.PlatformViewFactory
 
-class NativeViewFactory(private val messenger: BinaryMessenger): PlatformViewFactory(
-    StandardMessageCodec.INSTANCE) {
-    private lateinit var mess : BinaryMessenger
-
+class NativeViewFactory(private val messenger: BinaryMessenger) : PlatformViewFactory(
+    StandardMessageCodec.INSTANCE
+) {
     override fun create(context: Context, viewId: Int, args: Any?): PlatformView {
-        val creationParams = args as Map<String?, Any?>?
-        this.mess = messenger
-        return LiveStreamNativeView(context, viewId, this.mess)
+        val creationParams = args as Map<String, Any>
+        return LiveStreamNativeView(context, viewId, messenger, creationParams)
     }
 }

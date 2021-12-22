@@ -1,54 +1,35 @@
-import 'audio_bitrate.dart';
-import 'audio_sample_rate.dart';
+import 'package:apivideo_live_stream/apivideo_live_stream.dart';
+import 'package:apivideo_live_stream_example/types/sample_rate.dart';
+
+import 'channel.dart';
 import 'resolution.dart';
-import 'Channel.dart';
 
 class Params {
-  Resolution resolution;
-  int fps;
-  int bitrate;
-  Channel channel;
-  AudioBitrate audioBitrate;
-  AudioSampleRate audioSampleRate;
-  bool isEchocanceled;
-  bool isNoiseSuppressed;
-  String rtmpUrl;
-  late String streamKey;
-
-  Params(
-      {this.resolution = Resolution.RESOLUTION_720,
-      this.fps = 24,
-      this.bitrate = 1280000,
-      this.channel = Channel.stereo,
-      this.audioBitrate = AudioBitrate.Kbps_128,
-      this.audioSampleRate = AudioSampleRate.kHz_44_1,
-      this.isEchocanceled = false,
-      this.isNoiseSuppressed = false,
-      this.rtmpUrl = "rtmp://broadcast.api.video/s",
-      required this.streamKey});
+  final VideoParameters video = VideoParameters(
+    bitrate: 2 * 1024 * 1024,
+    resolution: Resolution.RESOLUTION_720,
+    fps: 30,
+  );
+  final AudioParameters audio = AudioParameters(
+      bitrate: 128 * 1024,
+      channel: Channel.stereo,
+      sampleRate: SampleRate.kHz_48);
+  String? rtmpUrl;
+  String streamKey = "";
 
   String getResolutionToString() {
-    Resolution resolution = this.resolution;
-    return resolution.getResolutionToString(this.resolution);
-  }
-
-  String getSimpleResolutionToString() {
-    Resolution resolution = this.resolution;
-    return resolution.getResolutionToString(this.resolution);
+    return video.resolution.toPrettyString();
   }
 
   String getChannelToString() {
-    Channel channel = this.channel;
-    return channel.getChannelToString(this.channel);
+    return audio.channel.toPrettyString();
   }
 
-  String getAudioBitrateToString() {
-    AudioBitrate audio = this.audioBitrate;
-    return audio.getAudioBitrateToString(this.audioBitrate);
+  String getBitrateToString() {
+    return "${audio.bitrate} Kbps";
   }
 
-  String getAudioSampleRateToString() {
-    AudioSampleRate audio = this.audioSampleRate;
-    return audio.getAudioSampleRateToString(this.audioSampleRate);
+  String getSampleRateToString() {
+    return audio.sampleRate.toPrettyString();
   }
 }

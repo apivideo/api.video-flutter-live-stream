@@ -1,14 +1,13 @@
-import 'package:apivideo_live_stream_example/types/Channel.dart';
+import 'package:apivideo_live_stream/apivideo_live_stream.dart';
+import 'package:apivideo_live_stream_example/types/channel.dart';
 import 'package:flutter/material.dart';
 import 'package:settings_ui/settings_ui.dart';
 
 import 'alert/radio_alert_widget.dart';
 import 'alert/text_alert_widget.dart';
-
-import 'types/audio_sample_rate.dart';
-import 'types/audio_bitrate.dart';
-import 'types/resolution.dart';
 import 'types/params.dart';
+import 'types/resolution.dart';
+import 'types/sample_rate.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({Key? key, required this.params}) : super(key: key);
@@ -19,15 +18,10 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  bool isEchoCancelorSwitched = false;
-  bool isNoiseSuppressorSwitched = false;
-  double _bitrate = 2000;
   int resultAlert = -1;
 
-  get value => true;
-  late String codeDialog;
-  String valueText = "";
-  List<String> allFps = ["24", "30", "60", "120", "240"];
+  List<int> fpsList = [24, 30];
+  List<int> audioBitrateList = [32000, 64000, 128000, 192000];
 
   @override
   void initState() {
@@ -62,29 +56,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           builder: (context) {
                             return RadioAlertWidget(
                                 title: "Resolutions",
-                                values: widget.params.resolution
-                                    .getAllResolutionsToString());
+                                values: resolutionsToPrettyString());
                           }).then((value) {
                         setState(() {
-                          widget.params.resolution = Resolution.values[value];
+                          widget.params.video.resolution =
+                              Resolution.values[value];
                         });
                       });
                     },
                   ),
                   SettingsTile(
                     title: 'Framerate',
-                    subtitle: widget.params.fps.toString(),
+                    subtitle: widget.params.video.fps.toString(),
                     onPressed: (BuildContext context) {
                       showDialog(
                           context: context,
                           builder: (context) {
                             return RadioAlertWidget(
                               title: "Framerate",
-                              values: allFps,
+                              values: fpsList.map((e) => e.toString()).toList(),
                             );
                           }).then((value) {
                         setState(() {
-                          widget.params.fps = int.parse(allFps[value]);
+                          widget.params.video.fps = fpsList[value];
                         });
                       });
                     },
@@ -99,16 +93,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           Row(
                             children: [
                               Slider(
-                                value: _bitrate,
+                                value: (widget.params.video.bitrate / 1024)
+                                    .toDouble(),
                                 onChanged: (newValue) {
                                   setState(() {
-                                    _bitrate = newValue.roundToDouble();
+                                    widget.params.video.bitrate =
+                                        (newValue.roundToDouble() * 1024)
+                                            .toInt();
                                   });
                                 },
                                 min: 500,
                                 max: 10000,
                               ),
-                              Text('${_bitrate.toInt()}')
+                              Text('${widget.params.video.bitrate}')
                             ],
                           )
                         ],
@@ -129,69 +126,67 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           builder: (context) {
                             return RadioAlertWidget(
                               title: "Number of channels",
-                              values: widget.params.channel
-                                  .getAllChannelsToString(),
+                              values: channelsToPrettyString(),
                             );
                           }).then((value) {
                         setState(() {
-                          widget.params.channel = Channel.values[value];
+                          widget.params.audio.channel = Channel.values[value];
                         });
                       });
                     },
                   ),
                   SettingsTile(
                     title: 'Bitrate',
-                    subtitle: widget.params.getAudioBitrateToString(),
+                    subtitle: widget.params.getBitrateToString(),
                     onPressed: (BuildContext context) {
                       showDialog(
                           context: context,
                           builder: (context) {
                             return RadioAlertWidget(
                                 title: "Bitrate",
-                                values: widget.params.audioBitrate
-                                    .getAllAudioBitratesToString());
+                                values: audioBitrateList
+                                    .map((e) => "${e.toString()} bps")
+                                    .toList());
                           }).then((value) {
                         setState(() {
-                          widget.params.audioBitrate =
-                              AudioBitrate.values[value];
+                          widget.params.audio.bitrate = audioBitrateList[value];
                         });
                       });
                     },
                   ),
                   SettingsTile(
                     title: 'Sample rate',
-                    subtitle: widget.params.getAudioSampleRateToString(),
+                    subtitle: widget.params.getSampleRateToString(),
                     onPressed: (BuildContext context) {
                       showDialog(
                           context: context,
                           builder: (context) {
                             return RadioAlertWidget(
                                 title: "Sample rate",
-                                values: widget.params.audioSampleRate
-                                    .getAllAudioSampleRatesToString());
+                                values: sampleRatesToPrettyString());
                           }).then((value) {
                         setState(() {
-                          widget.params.audioSampleRate =
-                              AudioSampleRate.values[value];
+                          widget.params.audio.sampleRate =
+                              SampleRate.values[value];
                         });
                       });
                     },
                   ),
                   SettingsTile.switchTile(
                     title: 'Enable echo canceler',
-                    switchValue: widget.params.isEchocanceled,
+                    switchValue: widget.params.audio.enableEchoCanceler,
                     onToggle: (bool value) {
                       setState(() {
-                        widget.params.isEchocanceled = value;
+                        widget.params.audio.enableEchoCanceler = value;
                       });
                     },
                   ),
                   SettingsTile.switchTile(
                     title: 'Enable noise suppressor',
-                    switchValue: widget.params.isNoiseSuppressed,
+                    switchValue: widget.params.audio.enableNoiseSuppressor,
                     onToggle: (bool value) {
                       setState(() {
-                        widget.params.isNoiseSuppressed = value;
+                        widget.params.audio.enableNoiseSuppressor = value;
                       });
                     },
                   ),
@@ -209,7 +204,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             builder: (context) {
                               return TextAlertWidget(
                                   title: "RTMP endpoint",
-                                  decoration: widget.params.rtmpUrl);
+                                  decoration: widget.params.rtmpUrl ??
+                                      "rtmp://broadcast.api.video/s/");
                             }).then((value) => {
                               setState(() {
                                 widget.params.rtmpUrl = value;

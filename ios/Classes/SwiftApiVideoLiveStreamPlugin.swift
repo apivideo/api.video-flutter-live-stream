@@ -6,9 +6,9 @@ import Network
 
 public class SwiftApiVideoLiveStreamPlugin: NSObject, FlutterPlugin {
     public static func register(with registrar: FlutterPluginRegistrar) {
-        let channel = FlutterMethodChannel(name: "apivideolivestream", binaryMessenger: registrar.messenger())
+        let channel = FlutterMethodChannel(name: "video.api.livestream/controller", binaryMessenger: registrar.messenger())
         
-        let factory = LiveStreamViewFactory(messenger: registrar.messenger())
+        let factory = LiveStreamViewFactory(messenger: registrar.messenger(), channel: channel)
         registrar.register(factory, withId: "<platform-view-type>")
         
         let instance = SwiftApiVideoLiveStreamPlugin()
@@ -21,10 +21,12 @@ public class SwiftApiVideoLiveStreamPlugin: NSObject, FlutterPlugin {
 }
 
 class LiveStreamViewFactory: NSObject, FlutterPlatformViewFactory {
-    private var messenger: FlutterBinaryMessenger
+    private let messenger: FlutterBinaryMessenger
+    private let channel: FlutterMethodChannel
     
-    init(messenger: FlutterBinaryMessenger) {
+    init(messenger: FlutterBinaryMessenger, channel: FlutterMethodChannel) {
         self.messenger = messenger
+        self.channel = channel
         super.init()
     }
     
@@ -37,26 +39,26 @@ class LiveStreamViewFactory: NSObject, FlutterPlatformViewFactory {
             frame: frame,
             viewIdentifier: viewId,
             arguments: args,
-            binaryMessenger: messenger
+            binaryMessenger: messenger,
+            channel: channel
         )
     }
 }
 
 class LiveStreamNativeView: NSObject, FlutterPlatformView {
-    private var liveStreamView: LiveStreamView
+    private let liveStreamView: LiveStreamView
+    private let channel: FlutterMethodChannel
     
     init(
         frame: CGRect,
         viewIdentifier viewId: Int64,
         arguments args: Any?,
-        binaryMessenger messenger: FlutterBinaryMessenger?
+        binaryMessenger messenger: FlutterBinaryMessenger?,
+        channel: FlutterMethodChannel
     ) {
-        let channelFirstConnection = FlutterMethodChannel(name: "apivideolivestream_\(viewId)", binaryMessenger: messenger!)
-        liveStreamView = LiveStreamView(frame: frame, channel: channelFirstConnection)
+        liveStreamView = LiveStreamView(frame: frame, channel: channel)
+        self.channel = channel
         super.init()
-        channelFirstConnection.setMethodCallHandler { [weak self] (call, result) -> Void in
-            self?.handlerMethodCall(call, result)
-        }
     }
     
     func view() -> UIView {
@@ -66,7 +68,11 @@ class LiveStreamNativeView: NSObject, FlutterPlatformView {
     func handlerMethodCall(_ call: FlutterMethodCall, _ result: FlutterResult)  {
         switch call.method {
         case "startStreaming":
-            liveStreamView.startStreaming()
+            if let args = call.arguments as? Dictionary<String, Any>,
+                let streamKey = args["streamKey"] as? String,
+                let url = args["url"] as? String {
+                liveStreamView.startStreaming(streamKey: streamKey, url: url)
+            }
             break
         case "stopStreaming":
             liveStreamView.stopStreaming()
@@ -78,57 +84,35 @@ class LiveStreamNativeView: NSObject, FlutterPlatformView {
                 liveStreamView.videoCamera = "back"
             }
             break
-        case "setLivestreamKey":
-            let key = call.arguments as! String
-            liveStreamView.liveStreamKey = key
-        case "setParam":
-            let str = call.arguments as! String
-            let data = str.data(using: .utf8)
-            do {
-                let param = try JSONDecoder().decode(Parameters.self, from: data!)
-                liveStreamView.liveStreamKey = param.liveStreamKey
-                liveStreamView.rtmpServerUrl = param.rtmpServerUrl
-                liveStreamView.videoFps = param.videoFps
-                liveStreamView.videoResolution = param.videoResolution
-                liveStreamView.videoBitrate = param.videoBitrate
-                liveStreamView.videoCamera = param.videoCamera
-                liveStreamView.videoOrientation = param.videoOrientation
-                liveStreamView.audioMuted = param.audioMuted
-                liveStreamView.audioBitrate = param.audioBitrate
-            } catch let error as NSError{
-                print(error)
+        case "setVideoParameters":
+            if let args = call.arguments as? Dictionary<String, Any>,
+                let bitrate = args["bitrate"] as? Double,
+                let resolution = args["resolution"] as? String,
+                let fps = args["fps"] as? Double {
+                liveStreamView.videoBitrate = bitrate
+                liveStreamView.videoResolution = resolution
+                liveStreamView.videoFps = fps
             }
+            break
+        case "setAudioParameters":
+            if let args = call.arguments as? Dictionary<String, Any>,
+                let bitrate = args["bitrate"] as? Int {
+                liveStreamView.audioBitrate = bitrate
+            }
+            break
+            
+        case "toggleMute":
+            liveStreamView.audioMuted = !liveStreamView.audioMuted
+            break
         default:
             break
         }
     }
-    
-    func createNativeView(view nativeView: UIView){
-        nativeView.backgroundColor = UIColor.blue
-        let nativeLabel = UILabel()
-        nativeLabel.text = "Native text from iOS"
-        nativeLabel.textColor = UIColor.white
-        nativeLabel.textAlignment = .center
-        nativeLabel.frame = CGRect(x: 0, y: 0, width: 180, height: 48.0)
-        nativeView.addSubview(nativeLabel)
-    }
 }
 
-class LiveStreamView: UIView{
-    private var apiVideo: ApiVideoLiveStream?
-    private var channel: FlutterMethodChannel?
-    public init(frame: CGRect, channel: FlutterMethodChannel) {
-        self.channel = channel
-        super.init(frame: frame)
-        apiVideo = ApiVideoLiveStream(view: self)
-    }
-    
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-    
-    private func getResolutionFromString(resolutionString: String) -> ApiVideoLiveStream.Resolutions{
-        switch resolutionString {
+extension String {
+    func toResolution() -> ApiVideoLiveStream.Resolutions{
+        switch self {
         case "240p":
             return ApiVideoLiveStream.Resolutions.RESOLUTION_240
         case "360p":
@@ -146,36 +130,37 @@ class LiveStreamView: UIView{
         }
     }
     
-    @objc override func didMoveToWindow() {
-        super.didMoveToWindow()
+}
+
+class LiveStreamView: UIView{
+    private var liveStream: ApiVideoLiveStream?
+    private let channel: FlutterMethodChannel
+    public init(frame: CGRect, channel: FlutterMethodChannel) {
+        self.channel = channel
+        super.init(frame: frame)
+        self.liveStream = ApiVideoLiveStream(view: self)
     }
     
-    @objc var liveStreamKey: String = "" {
-        didSet {
-        }
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
     }
-    
-    @objc var rtmpServerUrl: String? {
-        didSet {
-        }
-    }
-    
+
     @objc var videoFps: Double = 30 {
         didSet {
-            if(videoFps == Double(apiVideo!.videoFps)){
+            if(videoFps == Double(liveStream!.videoFps)){
                 return
             }
-            apiVideo?.videoFps = videoFps
+            liveStream?.videoFps = videoFps
         }
     }
     
     @objc var videoResolution: String = "720p" {
         didSet {
-            let newResolution = getResolutionFromString(resolutionString: videoResolution)
-            if(newResolution == apiVideo!.videoResolution){
+            let newResolution = videoResolution.toResolution()
+            if(newResolution == liveStream!.videoResolution){
                 return
             }
-            apiVideo?.videoResolution = newResolution
+            liveStream?.videoResolution = newResolution
         }
     }
     
@@ -195,10 +180,10 @@ class LiveStreamView: UIView{
             default:
                 value = AVCaptureDevice.Position.back
             }
-            if(value == apiVideo?.videoCamera){
+            if(value == liveStream!.videoCamera){
                 return
             }
-            apiVideo?.videoCamera = value
+            liveStream?.videoCamera = value
         }
     }
     
@@ -213,66 +198,45 @@ class LiveStreamView: UIView{
             default:
                 value = ApiVideoLiveStream.Orientation.landscape
             }
-            if(value == apiVideo?.videoOrientation){
+            if(value == liveStream!.videoOrientation){
                 return
             }
-            apiVideo?.videoOrientation = value
+            liveStream?.videoOrientation = value
         }
     }
     
     @objc var audioMuted: Bool = false {
         didSet {
-            if(audioMuted == apiVideo!.audioMuted){
+            if(audioMuted == liveStream!.audioMuted){
                 return
             }
-            apiVideo?.audioMuted = audioMuted
+            liveStream?.audioMuted = audioMuted
         }
     }
     
-    @objc var audioBitrate: Double = -1 {
+    @objc var audioBitrate: Int = -1 {
         didSet {
+            if(audioBitrate == liveStream!.audioBitrate){
+                return
+            }
+            liveStream?.audioBitrate = audioBitrate
         }
     }
     
-    @objc func startStreaming() {
-        channel?.invokeMethod("setParam", arguments: nil)
-        apiVideo!.startLiveStreamFlux(liveStreamKey: self.liveStreamKey, rtmpServerUrl: self.rtmpServerUrl)
-        apiVideo?.onConnectionSuccess = {() in
-            self.channel?.invokeMethod("onConnectionSuccess", arguments: nil)
+    @objc func startStreaming(streamKey: String, url: String) {
+        liveStream?.onConnectionSuccess = {() in
+            self.channel.invokeMethod("onConnectionSuccess", arguments: nil)
         }
-        apiVideo!.onConnectionFailed = {(code) in
-            self.channel?.invokeMethod("onConnectionFailed", arguments: code)
+        liveStream?.onConnectionFailed = {(code) in
+            self.channel.invokeMethod("onConnectionFailed", arguments: code)
         }
-        apiVideo!.onDisconnect = {() in
-            self.channel?.invokeMethod("onDisconnect", arguments: nil)
+        liveStream?.onDisconnect = {() in
+            self.channel.invokeMethod("onDisconnect", arguments: nil)
         }
+        liveStream?.startLiveStreamFlux(liveStreamKey: streamKey, rtmpServerUrl: url)
     }
     
     @objc func stopStreaming() {
-        apiVideo!.stopLiveStreamFlux()
-    }
-}
-
-struct Parameters: Codable {
-    let liveStreamKey: String
-    let rtmpServerUrl: String
-    let videoFps: Double
-    let videoResolution: String
-    let videoBitrate: Double
-    let videoCamera: String
-    let videoOrientation: String
-    let audioMuted: Bool
-    let audioBitrate: Double
-
-    private enum CodingKeys: String, CodingKey {
-        case liveStreamKey = "liveStreamKey"
-        case videoFps = "videoFps"
-        case videoBitrate = "videoBitrate"
-        case videoOrientation = "videoOrientation"
-        case audioBitrate = "audioBitrate"
-        case rtmpServerUrl = "rtmpServerUrl"
-        case videoResolution = "videoResolution"
-        case videoCamera = "videoCamera"
-        case audioMuted = "audioMuted"
+        liveStream?.stopLiveStreamFlux()
     }
 }
