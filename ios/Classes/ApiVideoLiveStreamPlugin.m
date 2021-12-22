@@ -1,4 +1,4 @@
-#import "ApivideolivestreamPlugin.h"
+#import "ApiVideoLiveStreamPlugin.h"
 #if __has_include(<apivideo_live_stream/apivideo_live_stream-Swift.h>)
 #import <apivideo_live_stream/apivideo_live_stream-Swift.h>
 #else

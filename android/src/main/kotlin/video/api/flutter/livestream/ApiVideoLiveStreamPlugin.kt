@@ -3,7 +3,7 @@ package video.api.flutter.livestream
 import androidx.annotation.NonNull
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 
-/** ApivideolivestreamPlugin */
+/** ApiVideoLiveStreamPlugin */
 class ApiVideoLiveStreamPlugin: FlutterPlugin{
   /// The MethodChannel that will the communication between Flutter and native Android
   ///
@@ -15,7 +15,6 @@ class ApiVideoLiveStreamPlugin: FlutterPlugin{
       .platformViewRegistry
       .registerViewFactory("<platform-view-type>", NativeViewFactory(flutterPluginBinding.binaryMessenger))
   }
-
 
   override fun onDetachedFromEngine(@NonNull binding: FlutterPlugin.FlutterPluginBinding) {
   }
