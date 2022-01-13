@@ -1,10 +1,7 @@
-import 'package:apivideo_live_stream/apivideo_live_stream.dart';
 import 'package:apivideo_live_stream_example/types/channel.dart';
 import 'package:flutter/material.dart';
 import 'package:settings_ui/settings_ui.dart';
 
-import 'alert/radio_alert_widget.dart';
-import 'alert/text_alert_widget.dart';
 import 'types/params.dart';
 import 'types/resolution.dart';
 import 'types/sample_rate.dart';
@@ -19,9 +16,6 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   int resultAlert = -1;
-
-  List<int> fpsList = [24, 30];
-  List<int> audioBitrateList = [32000, 64000, 128000, 192000];
 
   @override
   void initState() {
@@ -54,14 +48,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       showDialog(
                           context: context,
                           builder: (context) {
-                            return RadioAlertWidget(
-                                title: "Resolutions",
-                                values: resolutionsToPrettyString());
+                            return PickerScreen(
+                                title: "Pick a resolution",
+                                initialValue: widget.params.video.resolution,
+                                values: getResolutionsMap());
                           }).then((value) {
                         if (value != null) {
                           setState(() {
-                            widget.params.video.resolution =
-                                Resolution.values[value];
+                            widget.params.video.resolution = value;
                           });
                         }
                       });
@@ -74,14 +68,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       showDialog(
                           context: context,
                           builder: (context) {
-                            return RadioAlertWidget(
-                              title: "Framerate",
-                              values: fpsList.map((e) => e.toString()).toList(),
-                            );
+                            return PickerScreen(
+                                title: "Pick a frame rate",
+                                initialValue:
+                                    widget.params.video.fps.toString(),
+                                values: fpsList.toMap());
                           }).then((value) {
                         if (value != null) {
                           setState(() {
-                            widget.params.video.fps = fpsList[value];
+                            widget.params.video.fps = value;
                           });
                         }
                       });
@@ -128,14 +123,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       showDialog(
                           context: context,
                           builder: (context) {
-                            return RadioAlertWidget(
-                              title: "Number of channels",
-                              values: channelsToPrettyString(),
-                            );
+                            return PickerScreen(
+                                title: "Pick the number of channels",
+                                initialValue:
+                                    widget.params.getChannelToString(),
+                                values: getChannelsMap());
                           }).then((value) {
                         if (value != null) {
                           setState(() {
-                            widget.params.audio.channel = Channel.values[value];
+                            widget.params.audio.channel = value;
                           });
                         }
                       });
@@ -148,16 +144,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       showDialog(
                           context: context,
                           builder: (context) {
-                            return RadioAlertWidget(
-                                title: "Bitrate",
-                                values: audioBitrateList
-                                    .map((e) => Params.bitrateToPrettyString(e))
-                                    .toList());
+                            return PickerScreen(
+                                title: "Pick a bitrate",
+                                initialValue:
+                                    widget.params.getChannelToString(),
+                                values: audioBitrateList.toMap(
+                                    valueTransformation: (int e) =>
+                                        bitrateToPrettyString(e)));
                           }).then((value) {
                         if (value != null) {
                           setState(() {
-                            widget.params.audio.bitrate =
-                                audioBitrateList[value];
+                            widget.params.audio.bitrate = value;
                           });
                         }
                       });
@@ -170,14 +167,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       showDialog(
                           context: context,
                           builder: (context) {
-                            return RadioAlertWidget(
-                                title: "Sample rate",
-                                values: sampleRatesToPrettyString());
+                            return PickerScreen(
+                                title: "Pick a sample rate",
+                                initialValue:
+                                    widget.params.getSampleRateToString(),
+                                values: getSampleRatesMap());
                           }).then((value) {
                         if (value != null) {
                           setState(() {
-                            widget.params.audio.sampleRate =
-                            SampleRate.values[value];
+                            widget.params.audio.sampleRate = value;
                           });
                         }
                       });
@@ -208,20 +206,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 tiles: [
                   SettingsTile(
                       title: Text('RTMP endpoint'),
-                      value: Text(widget.params.rtmpUrl ??
-                          "rtmp://broadcast.api.video/s/"),
+                      value: Text(widget.params.rtmpUrl),
                       onPressed: (BuildContext context) {
                         showDialog(
                             context: context,
                             builder: (context) {
-                              return TextAlertWidget(
-                                  title: "RTMP endpoint",
-                                  decoration: widget.params.rtmpUrl ??
-                                      "rtmp://broadcast.api.video/s/");
-                            }).then((value) => {
-                              setState(() {
-                                widget.params.rtmpUrl = value;
-                              }),
+                              return EditTextScreen(
+                                  title: "Enter RTMP endpoint URL",
+                                  initialValue: widget.params.rtmpUrl,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      widget.params.rtmpUrl = value;
+                                    });
+                                  });
                             });
                       }),
                   SettingsTile(
@@ -231,19 +228,88 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         showDialog(
                             context: context,
                             builder: (context) {
-                              return TextAlertWidget(
-                                  title: "Stream key",
-                                  decoration: widget.params.streamKey);
-                            }).then((value) => {
-                              setState(() {
-                                widget.params.streamKey = value;
-                              }),
+                              return EditTextScreen(
+                                  title: "Enter stream key",
+                                  initialValue: widget.params.streamKey,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      widget.params.streamKey = value;
+                                    });
+                                  });
                             });
                       }),
                 ],
               )
             ],
           )),
+    );
+  }
+}
+
+class PickerScreen extends StatelessWidget {
+  const PickerScreen({
+    Key? key,
+    required this.title,
+    required this.initialValue,
+    required this.values,
+  }) : super(key: key);
+
+  final String title;
+  final dynamic initialValue;
+  final Map<dynamic, String> values;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Settings')),
+      body: SettingsList(
+        sections: [
+          SettingsSection(
+            title: Text(title),
+            tiles: values.keys.map((e) {
+              final value = values[e];
+
+              return SettingsTile(
+                title: Text(value!),
+                onPressed: (_) {
+                  Navigator.of(context).pop(e);
+                },
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class EditTextScreen extends StatelessWidget {
+  const EditTextScreen(
+      {Key? key,
+      required this.title,
+      required this.initialValue,
+      required this.onChanged})
+      : super(key: key);
+
+  final String title;
+  final String initialValue;
+  final ValueChanged<String>? onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Settings')),
+      body: SettingsList(
+        sections: [
+          SettingsSection(title: Text(title), tiles: [
+            CustomSettingsTile(
+              child: TextField(
+                  controller: TextEditingController(text: initialValue),
+                  onChanged: onChanged),
+            ),
+          ]),
+        ],
+      ),
     );
   }
 }

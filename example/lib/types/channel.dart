@@ -1,13 +1,11 @@
 import 'package:apivideo_live_stream/apivideo_live_stream.dart';
 
-List<String> channelsToPrettyString() {
-  List<String> list = [];
+Map<Channel, String> getChannelsMap() {
+  Map<Channel, String> map = {};
   for (final res in Channel.values) {
-    var str = res.toPrettyString();
-    list.add(str);
+    map[res] = res.toPrettyString();
   }
-
-  return list;
+  return map;
 }
 
 extension ChannelExtension on Channel {
