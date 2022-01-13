@@ -45,11 +45,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
           child: SettingsList(
             sections: [
               SettingsSection(
-                title: 'Video',
+                title: Text('Video'),
                 tiles: [
                   SettingsTile(
-                    title: 'Resolution',
-                    subtitle: widget.params.getResolutionToString(),
+                    title: Text('Resolution'),
+                    value: Text(widget.params.getResolutionToString()),
                     onPressed: (BuildContext context) {
                       showDialog(
                           context: context,
@@ -58,16 +58,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 title: "Resolutions",
                                 values: resolutionsToPrettyString());
                           }).then((value) {
-                        setState(() {
-                          widget.params.video.resolution =
-                              Resolution.values[value];
-                        });
+                        if (value != null) {
+                          setState(() {
+                            widget.params.video.resolution =
+                                Resolution.values[value];
+                          });
+                        }
                       });
                     },
                   ),
                   SettingsTile(
-                    title: 'Framerate',
-                    subtitle: widget.params.video.fps.toString(),
+                    title: Text('Framerate'),
+                    value: Text(widget.params.video.fps.toString()),
                     onPressed: (BuildContext context) {
                       showDialog(
                           context: context,
@@ -77,18 +79,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               values: fpsList.map((e) => e.toString()).toList(),
                             );
                           }).then((value) {
-                        setState(() {
-                          widget.params.video.fps = fpsList[value];
-                        });
+                        if (value != null) {
+                          setState(() {
+                            widget.params.video.fps = fpsList[value];
+                          });
+                        }
                       });
                     },
                   ),
-                  CustomTile(
+                  CustomSettingsTile(
                     child: Container(
                       child: Column(
                         children: [
                           SettingsTile(
-                            title: 'Bitrate',
+                            title: Text('Bitrate'),
                           ),
                           Row(
                             children: [
@@ -115,11 +119,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ],
               ),
               SettingsSection(
-                title: 'Audio',
+                title: Text('Audio'),
                 tiles: [
                   SettingsTile(
-                    title: "Number of channels",
-                    subtitle: widget.params.getChannelToString(),
+                    title: Text("Number of channels"),
+                    value: Text(widget.params.getChannelToString()),
                     onPressed: (BuildContext context) {
                       showDialog(
                           context: context,
@@ -129,15 +133,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               values: channelsToPrettyString(),
                             );
                           }).then((value) {
-                        setState(() {
-                          widget.params.audio.channel = Channel.values[value];
-                        });
+                        if (value != null) {
+                          setState(() {
+                            widget.params.audio.channel = Channel.values[value];
+                          });
+                        }
                       });
                     },
                   ),
                   SettingsTile(
-                    title: 'Bitrate',
-                    subtitle: widget.params.getBitrateToString(),
+                    title: Text('Bitrate'),
+                    value: Text(widget.params.getBitrateToString()),
                     onPressed: (BuildContext context) {
                       showDialog(
                           context: context,
@@ -145,18 +151,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             return RadioAlertWidget(
                                 title: "Bitrate",
                                 values: audioBitrateList
-                                    .map((e) => "${e.toString()} bps")
+                                    .map((e) => "${e / 1000} Kbps")
                                     .toList());
                           }).then((value) {
-                        setState(() {
-                          widget.params.audio.bitrate = audioBitrateList[value];
-                        });
+                        if (value != null) {
+                          setState(() {
+                            widget.params.audio.bitrate =
+                                audioBitrateList[value];
+                          });
+                        }
                       });
                     },
                   ),
                   SettingsTile(
-                    title: 'Sample rate',
-                    subtitle: widget.params.getSampleRateToString(),
+                    title: Text('Sample rate'),
+                    value: Text(widget.params.getSampleRateToString()),
                     onPressed: (BuildContext context) {
                       showDialog(
                           context: context,
@@ -165,16 +174,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 title: "Sample rate",
                                 values: sampleRatesToPrettyString());
                           }).then((value) {
-                        setState(() {
-                          widget.params.audio.sampleRate =
-                              SampleRate.values[value];
-                        });
+                        if (value != null) {
+                          setState(() {
+                            widget.params.audio.sampleRate =
+                            SampleRate.values[value];
+                          });
+                        }
                       });
                     },
                   ),
                   SettingsTile.switchTile(
-                    title: 'Enable echo canceler',
-                    switchValue: widget.params.audio.enableEchoCanceler,
+                    title: Text('Enable echo canceler'),
+                    initialValue: widget.params.audio.enableEchoCanceler,
                     onToggle: (bool value) {
                       setState(() {
                         widget.params.audio.enableEchoCanceler = value;
@@ -182,8 +193,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     },
                   ),
                   SettingsTile.switchTile(
-                    title: 'Enable noise suppressor',
-                    switchValue: widget.params.audio.enableNoiseSuppressor,
+                    title: Text('Enable noise suppressor'),
+                    initialValue: widget.params.audio.enableNoiseSuppressor,
                     onToggle: (bool value) {
                       setState(() {
                         widget.params.audio.enableNoiseSuppressor = value;
@@ -193,11 +204,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ],
               ),
               SettingsSection(
-                title: 'Endpoint',
+                title: Text('Endpoint'),
                 tiles: [
                   SettingsTile(
-                      title: 'RTMP endpoint',
-                      subtitle: widget.params.rtmpUrl,
+                      title: Text('RTMP endpoint'),
+                      value: Text(widget.params.rtmpUrl ??
+                          "rtmp://broadcast.api.video/s/"),
                       onPressed: (BuildContext context) {
                         showDialog(
                             context: context,
@@ -213,8 +225,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             });
                       }),
                   SettingsTile(
-                      title: 'Stream key',
-                      subtitle: widget.params.streamKey,
+                      title: Text('Stream key'),
+                      value: Text(widget.params.streamKey),
                       onPressed: (BuildContext context) {
                         showDialog(
                             context: context,
