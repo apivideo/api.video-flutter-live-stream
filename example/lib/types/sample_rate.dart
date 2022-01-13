@@ -1,13 +1,11 @@
 import 'package:apivideo_live_stream/apivideo_live_stream.dart';
 
-List<String> sampleRatesToPrettyString() {
-  List<String> list = [];
+Map<SampleRate, String> getSampleRatesMap() {
+  Map<SampleRate, String> map = {};
   for (final res in SampleRate.values) {
-    var str = res.toPrettyString();
-    list.add(str);
+    map[res] = res.toPrettyString();
   }
-
-  return list;
+  return map;
 }
 
 extension SampleRateExtension on SampleRate {

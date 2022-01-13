@@ -1,13 +1,11 @@
 import 'package:apivideo_live_stream/apivideo_live_stream.dart';
 
-List<String> resolutionsToPrettyString() {
-  List<String> list = [];
+Map<Resolution, String> getResolutionsMap() {
+  Map<Resolution, String> map = {};
   for (final res in Resolution.values) {
-    var str = res.toPrettyString();
-    list.add(str);
+    map[res] = res.toPrettyString();
   }
-
-  return list;
+  return map;
 }
 
 extension ResolutionExtension on Resolution {
