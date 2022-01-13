@@ -11,7 +11,7 @@ class Params {
     fps: 30,
   );
   final AudioParameters audio = AudioParameters(
-      bitrate: 128 * 1024,
+      bitrate: 128 * 1000,
       channel: Channel.stereo,
       sampleRate: SampleRate.kHz_48);
   String? rtmpUrl;
@@ -25,8 +25,12 @@ class Params {
     return audio.channel.toPrettyString();
   }
 
+  static String bitrateToPrettyString(int bitrate) {
+    return "${bitrate / 1000} Kbps";
+  }
+
   String getBitrateToString() {
-    return "${audio.bitrate} Kbps";
+    return bitrateToPrettyString(audio.bitrate);
   }
 
   String getSampleRateToString() {

@@ -151,7 +151,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             return RadioAlertWidget(
                                 title: "Bitrate",
                                 values: audioBitrateList
-                                    .map((e) => "${e / 1000} Kbps")
+                                    .map((e) => Params.bitrateToPrettyString(e))
                                     .toList());
                           }).then((value) {
                         if (value != null) {

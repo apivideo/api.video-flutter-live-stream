@@ -3,7 +3,7 @@ import 'package:apivideo_live_stream/apivideo_live_stream.dart';
 List<String> sampleRatesToPrettyString() {
   List<String> list = [];
   for (final res in SampleRate.values) {
-    var str = res.toString();
+    var str = res.toPrettyString();
     list.add(str);
   }
 
