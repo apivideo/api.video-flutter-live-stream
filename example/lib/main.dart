@@ -2,8 +2,11 @@ import 'package:apivideo_live_stream/apivideo_live_stream.dart';
 import 'package:apivideo_live_stream_example/settings_screen.dart';
 import 'package:apivideo_live_stream_example/types/params.dart';
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import 'constants.dart';
+
+const permissions = [Permission.camera, Permission.microphone];
 
 void main() {
   runApp(MyApp());
@@ -67,7 +70,7 @@ class _LiveViewPageState extends State<LiveViewPage> {
             Center(
                 child: SizedBox(
                     height: 400,
-                    child: CameraPreview(
+                    child: CameraContainer(
                         controller: _controller,
                         initialVideoParameters: params.video,
                         initialAudioParameters: params.audio))),
@@ -131,5 +134,63 @@ class _LiveViewPageState extends State<LiveViewPage> {
     });
     _controller.setVideoParameters(params.video);
     _controller.setAudioParameters(params.audio);
+  }
+}
+
+class CameraContainer extends StatelessWidget {
+  final LiveStreamController controller;
+  final VideoParameters initialVideoParameters;
+  final AudioParameters initialAudioParameters;
+
+  CameraContainer(
+      {required this.controller,
+      required this.initialVideoParameters,
+      required this.initialAudioParameters});
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<bool>(
+        future: _requestPermission(permissions),
+        builder: (BuildContext context, AsyncSnapshot<bool> snapshot) {
+          if (!snapshot.hasData) {
+            // while data is loading:
+            return Center(
+              child: CircularProgressIndicator(),
+            );
+          } else {
+            final hasPermissionsAccepted = snapshot.data!;
+            if (hasPermissionsAccepted) {
+              return CameraPreview(
+                  controller: controller,
+                  initialVideoParameters: initialVideoParameters,
+                  initialAudioParameters: initialAudioParameters);
+            } else {
+              return Center(
+                  child: Text(
+                      "Permissions for Camera and Microphone are required"));
+            }
+          }
+        });
+  }
+
+  Future<bool> _requestPermission(List<Permission> permissions) async {
+    final statuses = await permissions.request();
+
+    var numOfPermissionsGranted = 0;
+    statuses.forEach((permission, status) {
+      if (status == PermissionStatus.granted) {
+        print('$permission permission Granted');
+        numOfPermissionsGranted++;
+      } else if (status == PermissionStatus.denied) {
+        print('$permission permission denied');
+      } else if (status == PermissionStatus.permanentlyDenied) {
+        print('$permission permission Permanently Denied');
+      }
+    });
+    if (numOfPermissionsGranted >= permissions.length) {
+      return true;
+    } else {
+      return false;
+    }
   }
 }
