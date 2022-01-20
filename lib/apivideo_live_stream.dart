@@ -13,12 +13,12 @@ class LiveStreamController {
   static const MethodChannel _channel =
   const MethodChannel('video.api.livestream/controller');
   final Function()? onConnectionSuccess;
-  final Function(String)? onConnectionError;
+  final Function(String)? onConnectionFailed;
   final Function()? onDisconnection;
 
   LiveStreamController({
     this.onConnectionSuccess,
-    this.onConnectionError,
+    this.onConnectionFailed,
     this.onDisconnection,
   }) {
     _channel.setMethodCallHandler(_methodCallHandler);
@@ -60,9 +60,9 @@ class LiveStreamController {
         }
         break;
       case "onConnectionFailed":
-        if (onConnectionError != null) {
+        if (onConnectionFailed != null) {
           String error = call.arguments;
-          onConnectionError!("$error");
+          onConnectionFailed!("$error");
         }
         break;
       case "onDisconnect":

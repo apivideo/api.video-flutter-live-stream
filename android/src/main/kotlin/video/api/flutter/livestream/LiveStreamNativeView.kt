@@ -60,7 +60,7 @@ class LiveStreamNativeView(
 
     override fun onConnectionFailed(reason: String) {
         Handler(Looper.getMainLooper()).post {
-            methodChannel.invokeMethod("onConnectionError", reason)
+            methodChannel.invokeMethod("onConnectionFailed", reason)
         }
     }
 
@@ -121,8 +121,14 @@ class LiveStreamNativeView(
                 val url = call.argument<String>("url")
                 when {
                     streamKey == null -> result.error("missing_stream_key", "Stream key is missing", null)
-                    url == null -> result.error("missing_rtmp_url", "RTMP url is missing", null)
-                    else -> startStreaming(streamKey, url)
+                    url == null -> result.error("missing_rtmp_url", "RTMP URL is missing", null)
+                    else ->
+                        try {
+                            startStreaming(streamKey, url)
+                            result.success(null)
+                        } catch (e: Exception) {
+                            result.error("failed_to_start_stream", e.message, null)
+                        }
                 }
             }
             "stopStreaming" -> stopStreaming()

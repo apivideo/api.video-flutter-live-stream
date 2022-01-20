@@ -2,6 +2,7 @@ import 'package:apivideo_live_stream/apivideo_live_stream.dart';
 import 'package:apivideo_live_stream_example/settings_screen.dart';
 import 'package:apivideo_live_stream_example/types/params.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import 'constants.dart';
@@ -28,20 +29,20 @@ class LiveViewPage extends StatefulWidget {
 
 class _LiveViewPageState extends State<LiveViewPage> {
   final ButtonStyle buttonStyle =
-      ElevatedButton.styleFrom(textStyle: const TextStyle(fontSize: 20));
+  ElevatedButton.styleFrom(textStyle: const TextStyle(fontSize: 20));
 
   bool _isStreaming = false;
   String _liveButtonTitle = "Start";
   String _rtmpStreamKey = '';
   Params params = Params();
-  final LiveStreamController _controller =
-      LiveStreamController(onConnectionError: (error) {
-    // TODO: change live button state
-  });
+  late final LiveStreamController _controller;
 
   @override
   void initState() {
-    // TODO: implement initState
+    _controller = LiveStreamController(onConnectionFailed: (error) {
+      _enableLiveButton();
+      _showDialog(context, "Connection failed", error);
+    });
     super.initState();
   }
 
@@ -101,20 +102,41 @@ class _LiveViewPageState extends State<LiveViewPage> {
     );
   }
 
-  void _toggleStream() {
-    setState(() {
-      if (_isStreaming) {
-        print("Stop Stream");
-        _liveButtonTitle = "Start";
-        _isStreaming = false;
-        _controller.stopStreaming();
-      } else {
-        print("Start Stream");
-        _liveButtonTitle = "Stop";
-        _isStreaming = true;
-        _controller.startStreaming(
-            streamKey: params.streamKey, url: params.rtmpUrl);
+  void _toggleStream() async {
+    if (_isStreaming) {
+      print("Stop Stream");
+      _enableLiveButton();
+      _controller.stopStreaming();
+    } else {
+      print("Start Stream");
+      try {
+        await _controller
+            .startStreaming(streamKey: params.streamKey, url: params.rtmpUrl);
+        _disableLiveButton();
+      } catch (error) {
+        if (error is PlatformException) {
+          _showDialog(
+              context, "Error", "Failed to start stream: ${error.message}");
+        }
+        else {
+          _showDialog(context, "Error", "Failed to start stream: $error");
+        }
       }
+    }
+  }
+
+
+  void _enableLiveButton() {
+    _isStreaming = false;
+    setState(() {
+      _liveButtonTitle = "Start";
+    });
+  }
+
+  void _disableLiveButton() {
+    _isStreaming = true;
+    setState(() {
+      _liveButtonTitle = "Stop";
     });
   }
 
@@ -142,10 +164,9 @@ class CameraContainer extends StatelessWidget {
   final VideoParameters initialVideoParameters;
   final AudioParameters initialAudioParameters;
 
-  CameraContainer(
-      {required this.controller,
-      required this.initialVideoParameters,
-      required this.initialAudioParameters});
+  CameraContainer({required this.controller,
+    required this.initialVideoParameters,
+    required this.initialAudioParameters});
 
   @override
   Widget build(BuildContext context) {
@@ -193,4 +214,28 @@ class CameraContainer extends StatelessWidget {
       return false;
     }
   }
+}
+
+Future<void> _showDialog(BuildContext context, String title,
+    String description) async {
+  return showDialog<void>(
+    context: context,
+    barrierDismissible: false, // user must tap button!
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text(title),
+        content: SingleChildScrollView(
+          child: Text(description),
+        ),
+        actions: <Widget>[
+          TextButton(
+            child: const Text('Dismiss'),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
+        ],
+      );
+    },
+  );
 }

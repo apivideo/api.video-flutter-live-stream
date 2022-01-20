@@ -68,10 +68,16 @@ class LiveStreamNativeView: NSObject, FlutterPlatformView {
     func handlerMethodCall(_ call: FlutterMethodCall, _ result: FlutterResult)  {
         switch call.method {
         case "startStreaming":
-            if let args = call.arguments as? Dictionary<String, Any>,
-                let streamKey = args["streamKey"] as? String,
-                let url = args["url"] as? String {
-                liveStreamView.startStreaming(streamKey: streamKey, url: url)
+            if let args = call.arguments as? Dictionary<String, Any> {
+                 let streamKey = args["streamKey"] as? String
+                 let url = args["url"] as? String
+                 if (streamKey == nil) {
+                    result(FlutterError.init(code: "missing_stream_key", message: "Stream key is missing", details: nil))
+                 } else if (url == nil) {
+                    result(FlutterError.init(code: "missing_rtmp_url", message:  "RTMP URL is missing", details: nil))
+                 } else {
+                    liveStreamView.startStreaming(streamKey: streamKey!, url: url!)
+                 }
             }
             break
         case "stopStreaming":
