@@ -41,7 +41,8 @@ class LiveStreamNativeView(
 
     override fun dispose() {
         try {
-            liveStream.stopStreaming()
+            stopStreaming()
+            stopPreview()
             methodChannel.setMethodCallHandler(null)
         } catch (e: Exception) {
             Log.e(TAG, "Already null")
@@ -91,17 +92,22 @@ class LiveStreamNativeView(
     }
 
     private fun startStreaming(streamKey: String, url: String) {
-        Log.d(TAG, "startlive method called")
         liveStream.startStreaming(streamKey, url)
     }
 
     private fun stopStreaming() {
-        Log.d(TAG, "stop method called")
         liveStream.stopStreaming()
     }
 
+    private fun startPreview() {
+        liveStream.startPreview()
+    }
+
+    private fun stopPreview() {
+        liveStream.stopPreview()
+    }
+
     private fun switchCamera() {
-        Log.d(TAG, "camera switch")
         if (liveStream.camera == CameraFacingDirection.BACK) {
             liveStream.camera = CameraFacingDirection.FRONT
         } else {
@@ -110,7 +116,6 @@ class LiveStreamNativeView(
     }
 
     private fun toggleMute() {
-        Log.d(TAG, "toggle microphone")
         liveStream.isMuted = !liveStream.isMuted
     }
 
@@ -120,7 +125,11 @@ class LiveStreamNativeView(
                 val streamKey = call.argument<String>("streamKey")
                 val url = call.argument<String>("url")
                 when {
-                    streamKey == null -> result.error("missing_stream_key", "Stream key is missing", null)
+                    streamKey == null -> result.error(
+                        "missing_stream_key",
+                        "Stream key is missing",
+                        null
+                    )
                     url == null -> result.error("missing_rtmp_url", "RTMP URL is missing", null)
                     else ->
                         try {
@@ -133,13 +142,30 @@ class LiveStreamNativeView(
             }
             "stopStreaming" -> stopStreaming()
             "setVideoParameters" -> {
-                setVideoParameters(call.arguments as Map<String, Any>)
+                try {
+                    setVideoParameters(call.arguments as Map<String, Any>)
+                } catch (e: Exception) {
+                    result.error("failed_to_set_video_paramters", e.message, null)
+                }
             }
             "setAudioParameters" -> {
-                setAudioParameters(call.arguments as Map<String, Any>)
+                try {
+                    setAudioParameters(call.arguments as Map<String, Any>)
+                } catch (e: Exception) {
+                    result.error("failed_to_set_audio_paramters", e.message, null)
+                }
             }
             "switchCamera" -> switchCamera()
             "toggleMute" -> toggleMute()
+            "startPreview" -> {
+                try {
+                    startPreview()
+                    result.success(null)
+                } catch (e: Exception) {
+                    result.error("failed_to_start_preview", e.message, null)
+                }
+            }
+            "stopPreview" -> stopPreview()
         }
     }
 }

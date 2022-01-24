@@ -11,7 +11,7 @@ export 'src/types.dart';
 
 class LiveStreamController {
   static const MethodChannel _channel =
-  const MethodChannel('video.api.livestream/controller');
+      const MethodChannel('video.api.livestream/controller');
   final Function()? onConnectionSuccess;
   final Function(String)? onConnectionFailed;
   final Function()? onDisconnection;
@@ -24,16 +24,19 @@ class LiveStreamController {
     _channel.setMethodCallHandler(_methodCallHandler);
   }
 
-  void setVideoParameters(VideoParameters videoParameters) {
-    _channel.invokeMethod('setVideoParameters', videoParameters.toJson());
+  Future<void> setVideoParameters(VideoParameters videoParameters) {
+    return _channel.invokeMethod(
+        'setVideoParameters', videoParameters.toJson());
   }
 
-  void setAudioParameters(AudioParameters audioParameters) {
-    _channel.invokeMethod('setAudioParameters', audioParameters.toJson());
+  Future<void> setAudioParameters(AudioParameters audioParameters) {
+    return _channel.invokeMethod(
+        'setAudioParameters', audioParameters.toJson());
   }
 
-  Future<void> startStreaming({required String streamKey,
-    String url = "rtmp://broadcast.api.video/s/"}) {
+  Future<void> startStreaming(
+      {required String streamKey,
+      String url = "rtmp://broadcast.api.video/s/"}) {
     return _channel.invokeMethod('startStreaming', <String, dynamic>{
       'streamKey': streamKey,
       'url': url,
@@ -42,6 +45,19 @@ class LiveStreamController {
 
   void stopStreaming() {
     _channel.invokeMethod('stopStreaming');
+  }
+
+  Future<void> startPreview() {
+    return _channel.invokeMethod('startPreview');
+  }
+
+  void stopPreview() {
+    _channel.invokeMethod('stopPreview');
+  }
+
+  void stop() {
+    stopStreaming();
+    stopPreview();
   }
 
   void switchCamera() {
@@ -79,9 +95,10 @@ class CameraPreview extends StatelessWidget {
   final VideoParameters initialVideoParameters;
   final AudioParameters initialAudioParameters;
 
-  const CameraPreview({required this.controller,
-    required this.initialAudioParameters,
-    required this.initialVideoParameters});
+  const CameraPreview(
+      {required this.controller,
+      required this.initialAudioParameters,
+      required this.initialVideoParameters});
 
   @override
   Widget build(BuildContext context) {

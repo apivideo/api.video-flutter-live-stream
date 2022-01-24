@@ -27,9 +27,10 @@ class LiveViewPage extends StatefulWidget {
   _LiveViewPageState createState() => new _LiveViewPageState();
 }
 
-class _LiveViewPageState extends State<LiveViewPage> {
+class _LiveViewPageState extends State<LiveViewPage>
+    with WidgetsBindingObserver {
   final ButtonStyle buttonStyle =
-  ElevatedButton.styleFrom(textStyle: const TextStyle(fontSize: 20));
+      ElevatedButton.styleFrom(textStyle: const TextStyle(fontSize: 20));
 
   bool _isStreaming = false;
   String _liveButtonTitle = "Start";
@@ -39,11 +40,26 @@ class _LiveViewPageState extends State<LiveViewPage> {
 
   @override
   void initState() {
-    _controller = LiveStreamController(onConnectionFailed: (error) {
+    WidgetsBinding.instance?.addObserver(this);
+
+    _controller =   initLiveStreamController();
+    super.initState();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.inactive) {
+      _controller.stop();
+    } else if (state == AppLifecycleState.resumed) {
+      _controller.startPreview();
+    }
+  }
+
+  LiveStreamController initLiveStreamController() {
+    return LiveStreamController(onConnectionFailed: (error) {
       _enableLiveButton();
       _showDialog(context, "Connection failed", error);
     });
-    super.initState();
   }
 
   @override
@@ -110,21 +126,19 @@ class _LiveViewPageState extends State<LiveViewPage> {
     } else {
       print("Start Stream");
       try {
-        await _controller
-            .startStreaming(streamKey: params.streamKey, url: params.rtmpUrl);
+        await _controller.startStreaming(
+            streamKey: params.streamKey, url: params.rtmpUrl);
         _disableLiveButton();
       } catch (error) {
         if (error is PlatformException) {
           _showDialog(
               context, "Error", "Failed to start stream: ${error.message}");
-        }
-        else {
+        } else {
           _showDialog(context, "Error", "Failed to start stream: $error");
         }
       }
     }
   }
-
 
   void _enableLiveButton() {
     _isStreaming = false;
@@ -164,9 +178,10 @@ class CameraContainer extends StatelessWidget {
   final VideoParameters initialVideoParameters;
   final AudioParameters initialAudioParameters;
 
-  CameraContainer({required this.controller,
-    required this.initialVideoParameters,
-    required this.initialAudioParameters});
+  CameraContainer(
+      {required this.controller,
+      required this.initialVideoParameters,
+      required this.initialAudioParameters});
 
   @override
   Widget build(BuildContext context) {
@@ -216,8 +231,8 @@ class CameraContainer extends StatelessWidget {
   }
 }
 
-Future<void> _showDialog(BuildContext context, String title,
-    String description) async {
+Future<void> _showDialog(
+    BuildContext context, String title, String description) async {
   return showDialog<void>(
     context: context,
     barrierDismissible: false, // user must tap button!
