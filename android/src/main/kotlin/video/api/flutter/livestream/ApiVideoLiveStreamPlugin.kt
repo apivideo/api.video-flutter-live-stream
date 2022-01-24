@@ -13,7 +13,7 @@ class ApiVideoLiveStreamPlugin: FlutterPlugin{
   override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
     flutterPluginBinding
       .platformViewRegistry
-      .registerViewFactory("<platform-view-type>", NativeViewFactory(flutterPluginBinding.binaryMessenger))
+      .registerViewFactory("<platform-view-type>", LiveStreamNativeViewFactory(flutterPluginBinding.binaryMessenger))
   }
 
   override fun onDetachedFromEngine(@NonNull binding: FlutterPlugin.FlutterPluginBinding) {
