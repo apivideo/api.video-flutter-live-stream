@@ -37,12 +37,13 @@ class _LiveViewPageState extends State<LiveViewPage>
   String _rtmpStreamKey = '';
   Params params = Params();
   late final LiveStreamController _controller;
+  int textureId = 0;
 
   @override
   void initState() {
     WidgetsBinding.instance?.addObserver(this);
 
-    _controller =   initLiveStreamController();
+    _controller = initLiveStreamController();
     super.initState();
   }
 
@@ -90,7 +91,8 @@ class _LiveViewPageState extends State<LiveViewPage>
                     child: CameraContainer(
                         controller: _controller,
                         initialVideoParameters: params.video,
-                        initialAudioParameters: params.audio))),
+                        initialAudioParameters: params.audio,
+                        textureId: textureId))),
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -177,14 +179,17 @@ class CameraContainer extends StatelessWidget {
   final LiveStreamController controller;
   final VideoParameters initialVideoParameters;
   final AudioParameters initialAudioParameters;
+  final int textureId;
 
   CameraContainer(
       {required this.controller,
       required this.initialVideoParameters,
-      required this.initialAudioParameters});
+      required this.initialAudioParameters,
+      required this.textureId});
 
   @override
   Widget build(BuildContext context) {
+    // Check permission
     return FutureBuilder<bool>(
         future: _requestPermission(permissions),
         builder: (BuildContext context, AsyncSnapshot<bool> snapshot) {
@@ -196,10 +201,23 @@ class CameraContainer extends StatelessWidget {
           } else {
             final hasPermissionsAccepted = snapshot.data!;
             if (hasPermissionsAccepted) {
-              return CameraPreview(
-                  controller: controller,
-                  initialVideoParameters: initialVideoParameters,
-                  initialAudioParameters: initialAudioParameters);
+              // Always create a camera before creating a [CameraPreview]
+              return FutureBuilder<int>(
+                  future: controller.create(
+                      initialAudioParameters: initialAudioParameters,
+                      initialVideoParameters: initialVideoParameters),
+                  builder:
+                      (BuildContext context, AsyncSnapshot<int> snapshot) {
+                    if (!snapshot.hasData) {
+                      // while data is loading:
+                      return Center(
+                        child: CircularProgressIndicator(),
+                      );
+                    } else {
+                      return CameraPreview(
+                          controller: controller);
+                    }
+                  });
             } else {
               return Center(
                   child: Text(

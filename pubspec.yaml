@@ -14,6 +14,7 @@ dependencies:
   flutter:
     sdk: flutter
   json_annotation: ^4.4.0
+  native_device_orientation: ^1.0.0
 
 
 dev_dependencies:

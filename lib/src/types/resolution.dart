@@ -14,3 +14,34 @@ enum Resolution {
   @JsonValue("2160p")
   RESOLUTION_2160,
 }
+
+
+extension ResolutionExtension on Resolution {
+  double getAspectRatio() {
+    var result = 0.0;
+    switch (this) {
+      case Resolution.RESOLUTION_240:
+        result = 352 / 240;
+        break;
+      case Resolution.RESOLUTION_360:
+        result = 640 / 360;
+        break;
+      case Resolution.RESOLUTION_480:
+        result = 858 / 480;
+        break;
+      case Resolution.RESOLUTION_720:
+        result = 1280 / 720;
+        break;
+      case Resolution.RESOLUTION_1080:
+        result = 1920 / 1080;
+        break;
+      case Resolution.RESOLUTION_2160:
+        result = 3860 / 2160;
+        break;
+      default:
+        result = 16 / 9;
+        break;
+    }
+    return result;
+  }
+}

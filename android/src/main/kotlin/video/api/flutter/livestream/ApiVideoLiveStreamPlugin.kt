@@ -2,20 +2,41 @@ package video.api.flutter.livestream
 
 import androidx.annotation.NonNull
 import io.flutter.embedding.engine.plugins.FlutterPlugin
+import io.flutter.embedding.engine.plugins.FlutterPlugin.FlutterPluginBinding
+import io.flutter.embedding.engine.plugins.activity.ActivityAware
+import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 
 /** ApiVideoLiveStreamPlugin */
-class ApiVideoLiveStreamPlugin: FlutterPlugin{
-  /// The MethodChannel that will the communication between Flutter and native Android
-  ///
-  /// This local reference serves to register the plugin with the Flutter Engine and unregister it
-  /// when the Flutter Engine is detached from the Activity
+class ApiVideoLiveStreamPlugin : FlutterPlugin, ActivityAware {
+    private var flutterPluginBinding: FlutterPluginBinding? = null
+    private var methodCallHandlerImpl: MethodCallHandlerImpl? = null
 
-  override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
-    flutterPluginBinding
-      .platformViewRegistry
-      .registerViewFactory("<platform-view-type>", LiveStreamNativeViewFactory(flutterPluginBinding.binaryMessenger))
-  }
+    override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPluginBinding) {
+        this.flutterPluginBinding = flutterPluginBinding
+    }
 
-  override fun onDetachedFromEngine(@NonNull binding: FlutterPlugin.FlutterPluginBinding) {
-  }
+    override fun onDetachedFromEngine(@NonNull binding: FlutterPluginBinding) {
+        this.flutterPluginBinding = null
+    }
+
+    override fun onAttachedToActivity(binding: ActivityPluginBinding) {
+        methodCallHandlerImpl = MethodCallHandlerImpl(
+            binding.activity.applicationContext,
+            flutterPluginBinding!!.binaryMessenger,
+            flutterPluginBinding!!.textureRegistry
+        )
+    }
+
+    override fun onDetachedFromActivity() {
+        methodCallHandlerImpl?.stopListening()
+        methodCallHandlerImpl = null
+    }
+
+    override fun onDetachedFromActivityForConfigChanges() {
+        onDetachedFromActivity()
+    }
+
+    override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
+        onAttachedToActivity(binding)
+    }
 }

@@ -1,12 +1,13 @@
 package video.api.flutter.livestream
 
-import video.api.livestream.enums.Resolution
-import video.api.livestream.models.AudioConfig
-import video.api.livestream.models.VideoConfig
+import android.util.Size
+import io.github.thibaultbee.streampack.data.AudioConfig
+import io.github.thibaultbee.streampack.data.VideoConfig
+
 
 fun Map<String, Any>.toVideoConfig(): VideoConfig {
     return VideoConfig(
-        bitrate = this["bitrate"] as Int,
+        startBitrate = this["bitrate"] as Int,
         resolution = (this["resolution"] as String).toResolution(),
         fps = this["fps"] as Int
     )
@@ -14,24 +15,39 @@ fun Map<String, Any>.toVideoConfig(): VideoConfig {
 
 fun Map<String, Any>.toAudioConfig(): AudioConfig {
     return AudioConfig(
-        bitrate = this["bitrate"] as Int,
+        startBitrate = this["bitrate"] as Int,
         sampleRate = this["sampleRate"] as Int,
-        stereo = this["channel"] == "stereo",
-        noiseSuppressor = this["enableNoiseSuppressor"] as Boolean,
-        echoCanceler = this["enableEchoCanceler"] as Boolean
+        channelConfig = AudioConfig.getChannelConfig(
+            if (this["channel"] == "stereo") {
+                2
+            } else {
+                1
+            }
+        ),
+        enableNoiseSuppressor = this["enableNoiseSuppressor"] as Boolean,
+        enableEchoCanceler = this["enableEchoCanceler"] as Boolean
     )
 }
 
-fun String.toResolution(): Resolution {
+fun String.toResolution(): Size {
     return when (this) {
-        "240p" -> Resolution.RESOLUTION_240
-        "360p" -> Resolution.RESOLUTION_360
-        "480p" -> Resolution.RESOLUTION_480
-        "720p" -> Resolution.RESOLUTION_720
-        "1080p" -> Resolution.RESOLUTION_1080
-        "2160p" -> Resolution.RESOLUTION_2160
-        else -> Resolution.RESOLUTION_720
+        "240p" -> Size(352, 240)
+        "360p" -> Size(640, 360)
+        "480p" -> Size(858, 480)
+        "720p" -> Size(1280, 720)
+        "1080p" -> Size(1920, 1080)
+        "2160p" -> Size(4096, 2160)
+        else -> throw IllegalArgumentException("Unknown resolution: $this")
     }
+}
+
+/**
+ * Add a slash at the end of a [String] only if it is missing.
+ *
+ * @return the given string with a trailing slash.
+ */
+fun String.addTrailingSlashIfNeeded(): String {
+    return if (this.endsWith("/")) this else "$this/"
 }
 
 
