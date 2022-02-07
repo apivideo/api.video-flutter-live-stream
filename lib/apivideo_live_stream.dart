@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:apivideo_live_stream/src/types/resolution.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:native_device_orientation/native_device_orientation.dart';
@@ -12,11 +13,11 @@ export 'src/types.dart';
 
 class LiveStreamController {
   static const MethodChannel _channel =
-      const MethodChannel('video.api.livestream/controller');
+  const MethodChannel('video.api.livestream/controller');
   final Function()? onConnectionSuccess;
   final Function(String)? onConnectionFailed;
   final Function()? onDisconnection;
-  late int textureId;
+  late int _textureId;
   double _aspectRatio = 0.0;
 
   LiveStreamController({
@@ -27,9 +28,8 @@ class LiveStreamController {
     _channel.setMethodCallHandler(_methodCallHandler);
   }
 
-  Future<int> create(
-      {required AudioParameters initialAudioParameters,
-      required VideoParameters initialVideoParameters}) async {
+  Future<int> create({required AudioParameters initialAudioParameters,
+    required VideoParameters initialVideoParameters}) async {
     final Map<String, dynamic> creationParams = <String, dynamic>{
       "audioParameters": initialAudioParameters.toJson(),
       "videoParameters": initialVideoParameters.toJson()
@@ -39,8 +39,8 @@ class LiveStreamController {
 
     final Map<String, dynamic>? reply = await _channel
         .invokeMapMethod<String, dynamic>('create', creationParams);
-    textureId = reply!['textureId']! as int;
-    return textureId;
+    _textureId = reply!['textureId']! as int;
+    return _textureId;
   }
 
   Future<void> setVideoParameters(VideoParameters videoParameters) {
@@ -55,9 +55,8 @@ class LiveStreamController {
         'setAudioParameters', audioParameters.toJson());
   }
 
-  Future<void> startStreaming(
-      {required String streamKey,
-      String url = "rtmp://broadcast.api.video/s/"}) {
+  Future<void> startStreaming({required String streamKey,
+    String url = "rtmp://broadcast.api.video/s/"}) {
     return _channel.invokeMethod('startStreaming', <String, dynamic>{
       'streamKey': streamKey,
       'url': url,
@@ -87,6 +86,10 @@ class LiveStreamController {
 
   void toggleMute() {
     _channel.invokeMethod('toggleMute');
+  }
+
+  Widget buildPreview() {
+    return Texture(textureId: _textureId);
   }
 
   Future<void> _methodCallHandler(MethodCall call) async {
@@ -130,14 +133,26 @@ class CameraPreview extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            RotatedBox(
-                quarterTurns: _getQuarterTurns(orientation),
-                child: Texture(textureId: controller.textureId)),
+            _wrapInRotatedBox(
+                orientation: orientation,
+                child: controller.buildPreview()),
             child ?? Container(),
           ],
         ),
       );
     });
+  }
+
+  Widget _wrapInRotatedBox(
+      {required NativeDeviceOrientation orientation, required Widget child}) {
+    if (defaultTargetPlatform != TargetPlatform.android) {
+      return child;
+    }
+
+    return RotatedBox(
+      quarterTurns: _getQuarterTurns(orientation),
+      child: child,
+    );
   }
 
   bool _isLandscape(NativeDeviceOrientation orientation) {
