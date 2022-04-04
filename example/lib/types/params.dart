@@ -35,7 +35,7 @@ class Params {
   final AudioParameters audio = AudioParameters(
       bitrate: 128 * 1000,
       channel: Channel.stereo,
-      sampleRate: SampleRate.kHz_48);
+      sampleRate: SampleRate.kHz_44_1);
   String rtmpUrl = "rtmp://broadcast.api.video/s/";
   String streamKey = "";
 

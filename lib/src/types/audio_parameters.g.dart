@@ -30,9 +30,7 @@ const _$ChannelEnumMap = {
 };
 
 const _$SampleRateEnumMap = {
-  SampleRate.kHz_8: 8000,
-  SampleRate.kHz_16: 16000,
-  SampleRate.kHz_32: 32000,
+  SampleRate.kHz_11: 11025,
+  SampleRate.kHz_22: 22050,
   SampleRate.kHz_44_1: 44100,
-  SampleRate.kHz_48: 48000,
 };
