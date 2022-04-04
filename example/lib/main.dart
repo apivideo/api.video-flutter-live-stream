@@ -28,10 +28,6 @@ class _LiveViewPageState extends State<LiveViewPage>
     with WidgetsBindingObserver {
   final ButtonStyle buttonStyle =
       ElevatedButton.styleFrom(textStyle: const TextStyle(fontSize: 20));
-
-  bool _isStreaming = false;
-  String _liveButtonTitle = "Start";
-  String _rtmpStreamKey = '';
   Params params = Params();
   late final LiveStreamController _controller;
   int textureId = 0;
@@ -41,6 +37,9 @@ class _LiveViewPageState extends State<LiveViewPage>
     WidgetsBinding.instance?.addObserver(this);
 
     _controller = initLiveStreamController();
+    _controller.create(
+        initialAudioParameters: params.audio,
+        initialVideoParameters: params.video);
     super.initState();
   }
 
@@ -55,14 +54,16 @@ class _LiveViewPageState extends State<LiveViewPage>
 
   LiveStreamController initLiveStreamController() {
     return LiveStreamController(onConnectionFailed: (error) {
-      _enableLiveButton();
       _showDialog(context, "Connection failed", error);
     });
   }
 
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _scaffoldKey,
       appBar: AppBar(
         title: const Text('Live Stream Example'),
         actions: <Widget>[
@@ -82,75 +83,21 @@ class _LiveViewPageState extends State<LiveViewPage>
       body: Center(
         child: Column(
           children: <Widget>[
-            Center(
-                child: SizedBox(
-                    height: 400,
-                    child: CameraContainer(
-                        controller: _controller,
-                        initialVideoParameters: params.video,
-                        initialAudioParameters: params.audio,
-                        textureId: textureId))),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ElevatedButton(
-                  style: buttonStyle,
-                  onPressed: () {
-                    _controller.switchCamera();
-                  },
-                  child: const Text('switch'),
-                ),
-                const SizedBox(width: 30),
-                ElevatedButton(
-                  style: buttonStyle,
-                  onPressed: _toggleStream,
-                  child: Text('$_liveButtonTitle'),
-                ),
-              ],
+            Expanded(
+                child: Container(
+                    child: Padding(
+                      padding: const EdgeInsets.all(1.0),
+                      child: Center(
+                        child: CameraPreview(controller: _controller),
+                      ),
+                    ),
+              ),
             ),
-            Center(
-              child: Text('$_rtmpStreamKey'),
-            )
+            _controlRowWidget()
           ],
         ),
       ),
     );
-  }
-
-  void _toggleStream() async {
-    if (_isStreaming) {
-      print("Stop Stream");
-      _enableLiveButton();
-      _controller.stopStreaming();
-    } else {
-      print("Start Stream");
-      try {
-        await _controller.startStreaming(
-            streamKey: params.streamKey, url: params.rtmpUrl);
-        _disableLiveButton();
-      } catch (error) {
-        if (error is PlatformException) {
-          _showDialog(
-              context, "Error", "Failed to start stream: ${error.message}");
-        } else {
-          _showDialog(context, "Error", "Failed to start stream: $error");
-        }
-      }
-    }
-  }
-
-  void _enableLiveButton() {
-    _isStreaming = false;
-    setState(() {
-      _liveButtonTitle = "Start";
-    });
-  }
-
-  void _disableLiveButton() {
-    _isStreaming = true;
-    setState(() {
-      _liveButtonTitle = "Stop";
-    });
   }
 
   void _onMenuSelected(String choice, BuildContext context) {
@@ -164,43 +111,170 @@ class _LiveViewPageState extends State<LiveViewPage>
         context,
         MaterialPageRoute(
             builder: (context) => SettingsScreen(params: params)));
-    setState(() {
-      _rtmpStreamKey = params.streamKey;
-    });
     _controller.setVideoParameters(params.video);
     _controller.setAudioParameters(params.audio);
   }
-}
 
-class CameraContainer extends StatelessWidget {
-  final LiveStreamController controller;
-  final VideoParameters initialVideoParameters;
-  final AudioParameters initialAudioParameters;
-  final int textureId;
+  /// Display the control bar with buttons to take pictures and record videos.
+  Widget _controlRowWidget() {
+    final LiveStreamController? liveStreamController = _controller;
 
-  CameraContainer(
-      {required this.controller,
-      required this.initialVideoParameters,
-      required this.initialAudioParameters,
-      required this.textureId});
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      mainAxisSize: MainAxisSize.max,
+      children: <Widget>[
+        IconButton(
+          icon: const Icon(Icons.cameraswitch),
+          color: Colors.orange,
+          onPressed:
+          liveStreamController != null
+              ? onSwitchCameraButtonPressed
+              : null,
+        ),
+        IconButton(
+          icon: const Icon(Icons.mic_off),
+          color: Colors.orange,
+          onPressed:
+          liveStreamController != null
+              ? onToggleMicrophoneButtonPressed
+              : null,
+        ),
+        IconButton(
+          icon: const Icon(Icons.fiber_manual_record),
+          color: Colors.red,
+          onPressed:
+              liveStreamController != null && !liveStreamController.isStreaming
+                  ? onStartStreamingButtonPressed
+                  : null,
+        ),
+        IconButton(
+          icon: const Icon(Icons.stop),
+          color: Colors.red,
+          onPressed:
+              liveStreamController != null && liveStreamController.isStreaming
+                  ? onStopStreamingButtonPressed
+                  : null,
+        ),
+      ],
+    );
+  }
 
-  @override
-  Widget build(BuildContext context) {
-    // Android permission is by the Android specific part of the plugin.
-    return FutureBuilder<int>(
-        future: controller.create(
-            initialAudioParameters: initialAudioParameters,
-            initialVideoParameters: initialVideoParameters),
-        builder: (BuildContext context, AsyncSnapshot<int> snapshot) {
-          if (!snapshot.hasData) {
-            // while data is loading:
-            return Center(
-              child: CircularProgressIndicator(),
-            );
-          } else {
-            return CameraPreview(controller: controller);
-          }
-        });
+  void showInSnackBar(String message) {
+    // ignore: deprecated_member_use
+    _scaffoldKey.currentState?.showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> switchCamera() async {
+    final LiveStreamController? liveStreamController = _controller;
+
+    if (liveStreamController == null) {
+      showInSnackBar('Error: create a camera controller first.');
+      return;
+    }
+
+    try {
+      liveStreamController.switchCamera();
+    } catch (error) {
+      if (error is PlatformException) {
+        _showDialog(
+            context, "Error", "Failed to switch camera: ${error.message}");
+      } else {
+        _showDialog(context, "Error", "Failed to switch camera: $error");
+      }
+    }
+  }
+
+  Future<void> toggleMicrophone() async {
+    final LiveStreamController? liveStreamController = _controller;
+
+    if (liveStreamController == null) {
+      showInSnackBar('Error: create a camera controller first.');
+      return;
+    }
+
+    try {
+      liveStreamController.toggleMute();
+    } catch (error) {
+      if (error is PlatformException) {
+        _showDialog(
+            context, "Error", "Failed to toggle mute: ${error.message}");
+      } else {
+        _showDialog(context, "Error", "Failed to toggle mute: $error");
+      }
+    }
+  }
+
+  Future<void> startStreaming() async {
+    final LiveStreamController? liveStreamController = _controller;
+
+    if (liveStreamController == null) {
+      showInSnackBar('Error: create a camera controller first.');
+      return;
+    }
+
+    try {
+      await liveStreamController.startStreaming(
+          streamKey: params.streamKey, url: params.rtmpUrl);
+    } catch (error) {
+      if (error is PlatformException) {
+        _showDialog(
+            context, "Error", "Failed to start stream: ${error.message}");
+      } else {
+        _showDialog(context, "Error", "Failed to start stream: $error");
+      }
+    }
+  }
+
+  Future<void> stopStreaming() async {
+    final LiveStreamController? liveStreamController = _controller;
+
+    if (liveStreamController == null) {
+      showInSnackBar('Error: create a camera controller first.');
+      return;
+    }
+
+    try {
+      liveStreamController.stopStreaming();
+    } catch (error) {
+      if (error is PlatformException) {
+        _showDialog(
+            context, "Error", "Failed to stop stream: ${error.message}");
+      } else {
+        _showDialog(context, "Error", "Failed to stop stream: $error");
+      }
+    }
+  }
+
+  void onSwitchCameraButtonPressed() {
+    switchCamera().then((_) {
+      if (mounted) {
+        setState(() {});
+      }
+    });
+  }
+
+  void onToggleMicrophoneButtonPressed() {
+    toggleMicrophone().then((_) {
+      if (mounted) {
+        setState(() {});
+      }
+    });
+  }
+
+  void onStartStreamingButtonPressed() {
+    startStreaming().then((_) {
+      if (mounted) {
+        setState(() {});
+      }
+    });
+  }
+
+  void onStopStreamingButtonPressed() {
+    stopStreaming().then((_) {
+      if (mounted) {
+        setState(() {});
+      }
+    });
   }
 }
 

@@ -13,10 +13,11 @@ export 'src/types.dart';
 
 class LiveStreamController {
   static const MethodChannel _channel =
-  const MethodChannel('video.api.livestream/controller');
+      const MethodChannel('video.api.livestream/controller');
   final Function()? onConnectionSuccess;
   final Function(String)? onConnectionFailed;
   final Function()? onDisconnection;
+  bool isStreaming = false;
   late int _textureId;
   double _aspectRatio = 0.0;
 
@@ -28,8 +29,9 @@ class LiveStreamController {
     _channel.setMethodCallHandler(_methodCallHandler);
   }
 
-  Future<int> create({required AudioParameters initialAudioParameters,
-    required VideoParameters initialVideoParameters}) async {
+  Future<int> create(
+      {required AudioParameters initialAudioParameters,
+      required VideoParameters initialVideoParameters}) async {
     final Map<String, dynamic> creationParams = <String, dynamic>{
       "audioParameters": initialAudioParameters.toJson(),
       "videoParameters": initialVideoParameters.toJson()
@@ -55,16 +57,23 @@ class LiveStreamController {
         'setAudioParameters', audioParameters.toJson());
   }
 
-  Future<void> startStreaming({required String streamKey,
-    String url = "rtmp://broadcast.api.video/s/"}) {
-    return _channel.invokeMethod('startStreaming', <String, dynamic>{
-      'streamKey': streamKey,
-      'url': url,
-    });
+  Future<void> startStreaming(
+      {required String streamKey,
+      String url = "rtmp://broadcast.api.video/s/"}) async {
+    try {
+      await _channel.invokeMethod('startStreaming', <String, dynamic>{
+        'streamKey': streamKey,
+        'url': url,
+      });
+      isStreaming = true;
+    } on PlatformException catch (e) {
+      throw e;
+    }
   }
 
   void stopStreaming() {
     _channel.invokeMethod('stopStreaming');
+    isStreaming = false;
   }
 
   Future<void> startPreview() {
@@ -100,12 +109,14 @@ class LiveStreamController {
         }
         break;
       case "onConnectionFailed":
+        isStreaming = false;
         if (onConnectionFailed != null) {
           String error = call.arguments;
           onConnectionFailed!("$error");
         }
         break;
       case "onDisconnect":
+        isStreaming = false;
         if (onDisconnection != null) {
           onDisconnection!();
         }
@@ -134,8 +145,7 @@ class CameraPreview extends StatelessWidget {
           fit: StackFit.expand,
           children: [
             _wrapInRotatedBox(
-                orientation: orientation,
-                child: controller.buildPreview()),
+                orientation: orientation, child: controller.buildPreview()),
             child ?? Container(),
           ],
         ),
