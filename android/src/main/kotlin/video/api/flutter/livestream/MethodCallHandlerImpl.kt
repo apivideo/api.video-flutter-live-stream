@@ -1,6 +1,6 @@
 package video.api.flutter.livestream
 
-import android.content.Context
+import android.app.Activity
 import android.os.Handler
 import android.os.Looper
 import android.util.Size
@@ -8,6 +8,7 @@ import android.view.Surface
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
+import io.flutter.plugin.common.PluginRegistry
 import io.flutter.view.TextureRegistry
 import io.flutter.view.TextureRegistry.SurfaceTextureEntry
 import io.github.thibaultbee.streampack.data.AudioConfig
@@ -18,10 +19,13 @@ import io.github.thibaultbee.streampack.utils.getBackCameraList
 import io.github.thibaultbee.streampack.utils.getFrontCameraList
 import io.github.thibaultbee.streampack.utils.isFrontCamera
 import kotlinx.coroutines.runBlocking
+import kotlin.reflect.KFunction1
 
 class MethodCallHandlerImpl(
-    private val context: Context,
+    private val activity: Activity,
     messenger: BinaryMessenger,
+    private val cameraPermissions: CameraPermissions,
+    private val permissionsRegistry: KFunction1<PluginRegistry.RequestPermissionsResultListener, Unit>,
     private val textureRegistry: TextureRegistry
 ) :
     MethodChannel.MethodCallHandler, OnConnectionListener {
@@ -63,42 +67,18 @@ class MethodCallHandlerImpl(
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
         when (call.method) {
             "create" -> {
-                val videoParameters = call.argument<Map<String, Any>>("videoParameters")
-                val audioParameters = call.argument<Map<String, Any>>("audioParameters")
-                when {
-                    videoParameters == null -> result.error(
-                        "missing_video_parameters",
-                        "Video parameters are missing",
-                        null
-                    )
-                    audioParameters == null -> result.error(
-                        "missing_audio_parameters",
-                        "Audio parameters are missing",
-                        null
-                    )
-                    else ->
-                        try {
-                            // Reset preview live stream if needed
-                            streamer?.stopStream()
-                            streamer?.stopPreview()
-
-                            audioConfig = audioParameters.toAudioConfig()
-                            videoConfig = videoParameters.toVideoConfig()
-
-                            flutterTexture = textureRegistry.createSurfaceTexture()
-
-                            streamer = CameraRtmpLiveStreamer(context = context).apply {
-                                configure(audioConfig, videoConfig)
-                                startPreview(getSurface(videoConfig!!.resolution))
-                            }
-
-                            val reply: MutableMap<String, Any> = HashMap()
-                            reply["textureId"] = flutterTexture!!.id()
-                            result.success(reply)
-                        } catch (e: Exception) {
-                            result.error("failed_to_create_live_stream", e.message, null)
-                        }
+                cameraPermissions.requestPermissions(
+                    activity,
+                    permissionsRegistry,
+                    true
+                ) { errCode, errDesc ->
+                    if (errCode == null) {
+                        instantiateCamera(call, result)
+                    } else {
+                        result.error(errCode, errDesc, null)
+                    }
                 }
+
             }
             "dispose" -> {
                 flutterTexture?.release()
@@ -172,6 +152,45 @@ class MethodCallHandlerImpl(
         methodChannel.setMethodCallHandler(null)
     }
 
+    private fun instantiateCamera(call: MethodCall, result: MethodChannel.Result) {
+        val videoParameters = call.argument<Map<String, Any>>("videoParameters")
+        val audioParameters = call.argument<Map<String, Any>>("audioParameters")
+        when {
+            videoParameters == null -> result.error(
+                "missing_video_parameters",
+                "Video parameters are missing",
+                null
+            )
+            audioParameters == null -> result.error(
+                "missing_audio_parameters",
+                "Audio parameters are missing",
+                null
+            )
+            else ->
+                try {
+                    // Reset preview live stream if needed
+                    streamer?.stopStream()
+                    streamer?.stopPreview()
+
+                    audioConfig = audioParameters.toAudioConfig()
+                    videoConfig = videoParameters.toVideoConfig()
+
+                    flutterTexture = textureRegistry.createSurfaceTexture()
+
+                    streamer = CameraRtmpLiveStreamer(context = activity.applicationContext).apply {
+                        configure(audioConfig, videoConfig)
+                        startPreview(getSurface(videoConfig!!.resolution))
+                    }
+
+                    val reply: MutableMap<String, Any> = HashMap()
+                    reply["textureId"] = flutterTexture!!.id()
+                    result.success(reply)
+                } catch (e: Exception) {
+                    result.error("failed_to_create_live_stream", e.message, null)
+                }
+        }
+    }
+
     private fun getSurface(resolution: Size): Surface {
         val surfaceTexture = flutterTexture!!.surfaceTexture().apply {
             setDefaultBufferSize(
@@ -183,10 +202,10 @@ class MethodCallHandlerImpl(
     }
 
     private fun switchCamera(streamer: CameraRtmpLiveStreamer) {
-        val cameraList = if (context.isFrontCamera(streamer.camera)) {
-            context.getBackCameraList()
+        val cameraList = if (activity.isFrontCamera(streamer.camera)) {
+            activity.getBackCameraList()
         } else {
-            context.getFrontCameraList()
+            activity.getFrontCameraList()
         }
         streamer.camera = cameraList[0]
     }

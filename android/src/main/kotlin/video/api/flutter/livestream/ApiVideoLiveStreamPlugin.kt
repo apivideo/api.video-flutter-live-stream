@@ -21,8 +21,10 @@ class ApiVideoLiveStreamPlugin : FlutterPlugin, ActivityAware {
 
     override fun onAttachedToActivity(binding: ActivityPluginBinding) {
         methodCallHandlerImpl = MethodCallHandlerImpl(
-            binding.activity.applicationContext,
+            binding.activity,
             flutterPluginBinding!!.binaryMessenger,
+            CameraPermissions(),
+            binding::addRequestPermissionsResultListener,
             flutterPluginBinding!!.textureRegistry
         )
     }
