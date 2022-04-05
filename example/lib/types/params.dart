@@ -6,7 +6,7 @@ import 'package:apivideo_live_stream_example/types/sample_rate.dart';
 import 'channel.dart';
 import 'resolution.dart';
 
-List<int> fpsList = [24, 30];
+List<int> fpsList = [24, 25, 30];
 List<int> audioBitrateList = [32000, 64000, 128000, 192000];
 
 String defaultValueTransformation(int e) {
