@@ -3,6 +3,7 @@ package video.api.flutter.livestream
 import android.app.Activity
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.util.Size
 import android.view.Surface
 import io.flutter.plugin.common.BinaryMessenger
@@ -13,8 +14,10 @@ import io.flutter.view.TextureRegistry
 import io.flutter.view.TextureRegistry.SurfaceTextureEntry
 import io.github.thibaultbee.streampack.data.AudioConfig
 import io.github.thibaultbee.streampack.data.VideoConfig
+import io.github.thibaultbee.streampack.error.StreamPackError
 import io.github.thibaultbee.streampack.ext.rtmp.streamers.CameraRtmpLiveStreamer
 import io.github.thibaultbee.streampack.listeners.OnConnectionListener
+import io.github.thibaultbee.streampack.listeners.OnErrorListener
 import io.github.thibaultbee.streampack.utils.getBackCameraList
 import io.github.thibaultbee.streampack.utils.getFrontCameraList
 import io.github.thibaultbee.streampack.utils.isFrontCamera
@@ -28,9 +31,9 @@ class MethodCallHandlerImpl(
     private val permissionsRegistry: KFunction1<PluginRegistry.RequestPermissionsResultListener, Unit>,
     private val textureRegistry: TextureRegistry
 ) :
-    MethodChannel.MethodCallHandler, OnConnectionListener {
+    MethodChannel.MethodCallHandler, OnConnectionListener, OnErrorListener {
     companion object {
-        const val TAG = "MethodCallHandlerImpl"
+        private const val TAG = "MethodCallHandlerImpl"
     }
 
     private var flutterTexture: SurfaceTextureEntry? = null
@@ -62,6 +65,10 @@ class MethodCallHandlerImpl(
         Handler(Looper.getMainLooper()).post {
             methodChannel.invokeMethod("onConnectionSuccess", null)
         }
+    }
+
+    override fun onError(error: StreamPackError) {
+        Log.e(TAG, "Get error", error)
     }
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
@@ -177,7 +184,10 @@ class MethodCallHandlerImpl(
 
                     flutterTexture = textureRegistry.createSurfaceTexture()
 
-                    streamer = CameraRtmpLiveStreamer(context = activity.applicationContext, initialOnConnectionListener = this).apply {
+                    streamer = CameraRtmpLiveStreamer(
+                        context = activity.applicationContext,
+                        initialOnConnectionListener = this
+                    ).apply {
                         configure(audioConfig, videoConfig)
                         startPreview(getSurface(videoConfig!!.resolution))
                     }
