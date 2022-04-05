@@ -10,9 +10,7 @@ enum Resolution {
   @JsonValue("720p")
   RESOLUTION_720,
   @JsonValue("1080")
-  RESOLUTION_1080,
-  @JsonValue("2160p")
-  RESOLUTION_2160,
+  RESOLUTION_1080
 }
 
 
@@ -34,9 +32,6 @@ extension ResolutionExtension on Resolution {
         break;
       case Resolution.RESOLUTION_1080:
         result = 1920 / 1080;
-        break;
-      case Resolution.RESOLUTION_2160:
-        result = 3860 / 2160;
         break;
       default:
         result = 16 / 9;
