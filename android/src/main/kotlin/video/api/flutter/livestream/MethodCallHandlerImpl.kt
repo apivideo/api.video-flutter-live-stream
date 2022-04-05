@@ -177,7 +177,7 @@ class MethodCallHandlerImpl(
 
                     flutterTexture = textureRegistry.createSurfaceTexture()
 
-                    streamer = CameraRtmpLiveStreamer(context = activity.applicationContext).apply {
+                    streamer = CameraRtmpLiveStreamer(context = activity.applicationContext, initialOnConnectionListener = this).apply {
                         configure(audioConfig, videoConfig)
                         startPreview(getSurface(videoConfig!!.resolution))
                     }
