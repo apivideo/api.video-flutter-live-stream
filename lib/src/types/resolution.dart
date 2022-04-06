@@ -13,7 +13,6 @@ enum Resolution {
   RESOLUTION_1080
 }
 
-
 extension ResolutionExtension on Resolution {
   double getAspectRatio() {
     var result = 0.0;

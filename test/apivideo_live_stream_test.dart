@@ -5,7 +5,8 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  const MethodChannel channel = MethodChannel("video.api.livestream/controller");
+  const MethodChannel channel =
+      MethodChannel("video.api.livestream/controller");
   final _controller = LiveStreamController();
 
   test('startStreaming', () async {

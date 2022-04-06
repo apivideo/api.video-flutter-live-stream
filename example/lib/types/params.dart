@@ -16,8 +16,8 @@ String defaultValueTransformation(int e) {
 extension ListExtension on List<int> {
   Map<int, String> toMap(
       {Function(int e) valueTransformation = defaultValueTransformation}) {
-    var map =
-        Map<int, String>.fromIterable(this, key: (e) => e, value: (e) => valueTransformation(e));
+    var map = Map<int, String>.fromIterable(this,
+        key: (e) => e, value: (e) => valueTransformation(e));
     return map;
   }
 }

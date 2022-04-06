@@ -84,13 +84,13 @@ class _LiveViewPageState extends State<LiveViewPage>
         child: Column(
           children: <Widget>[
             Expanded(
-                child: Container(
-                    child: Padding(
-                      padding: const EdgeInsets.all(1.0),
-                      child: Center(
-                        child: CameraPreview(controller: _controller),
-                      ),
-                    ),
+              child: Container(
+                child: Padding(
+                  padding: const EdgeInsets.all(1.0),
+                  child: Center(
+                    child: CameraPreview(controller: _controller),
+                  ),
+                ),
               ),
             ),
             _controlRowWidget()
@@ -127,15 +127,12 @@ class _LiveViewPageState extends State<LiveViewPage>
           icon: const Icon(Icons.cameraswitch),
           color: Colors.orange,
           onPressed:
-          liveStreamController != null
-              ? onSwitchCameraButtonPressed
-              : null,
+              liveStreamController != null ? onSwitchCameraButtonPressed : null,
         ),
         IconButton(
           icon: const Icon(Icons.mic_off),
           color: Colors.orange,
-          onPressed:
-          liveStreamController != null
+          onPressed: liveStreamController != null
               ? onToggleMicrophoneButtonPressed
               : null,
         ),
