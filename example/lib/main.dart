@@ -71,8 +71,14 @@ class _LiveViewPageState extends State<LiveViewPage>
   }
 
   LiveStreamController initLiveStreamController() {
-    return LiveStreamController(onConnectionFailed: (error) {
+    return LiveStreamController(onConnectionSuccess: () {
+      print('Connection succedded');
+    }, onConnectionFailed: (error) {
       print('Connection failed: $error');
+      _showDialog(context, 'Connection failed', '$error');
+      if (mounted) {
+        setState(() {});
+      }
     }, onDisconnection: () {
       showInSnackBar('Disconnected');
       if (mounted) {
@@ -240,10 +246,9 @@ class _LiveViewPageState extends State<LiveViewPage>
           streamKey: config.streamKey, url: config.rtmpUrl);
     } catch (error) {
       if (error is PlatformException) {
-        _showDialog(
-            context, "Error", "Failed to start stream: ${error.message}");
+        print("Error: failed to start stream: ${error.message}");
       } else {
-        _showDialog(context, "Error", "Failed to start stream: $error");
+        print("Error: failed to start stream: $error");
       }
     }
   }

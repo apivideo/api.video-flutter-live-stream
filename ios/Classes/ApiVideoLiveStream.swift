@@ -153,9 +153,6 @@ public class ApiVideoLiveStream{
     /// Stop your livestream
     /// - Returns: Void
     public func stopStreaming() -> Void{
-        if (self.onDisconnect != nil) {
-            self.onDisconnect!()
-        }
         rtmpConnection.close()
         rtmpConnection.removeEventListener(.rtmpStatus, selector: #selector(rtmpStatusHandler), observer: self)
         rtmpConnection.removeEventListener(.ioError, selector: #selector(rtmpErrorHandler), observer: self)
@@ -172,10 +169,17 @@ public class ApiVideoLiveStream{
                 self.onConnectionSuccess!()
             }
             rtmpStream.publish(self.streamKey)
-        case RTMPConnection.Code.connectFailed.rawValue, RTMPConnection.Code.connectClosed.rawValue:
+            break
+        case RTMPConnection.Code.connectClosed.rawValue:
+            if (self.onDisconnect != nil) {
+                self.onDisconnect!()
+            }
+            break
+        case RTMPConnection.Code.connectFailed.rawValue:
             if (self.onConnectionFailed != nil) {
                 self.onConnectionFailed!(code)
             }
+            break
         default:
             break
         }
