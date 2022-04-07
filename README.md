@@ -85,10 +85,12 @@ final LiveStreamController _controller = LiveStreamController();
 2. Initializes the live stream controller
 
 ```dart
-_controller.create(initialAudioConfig: AudioConfig(), initialVideoConfig: VideoConfig.withDefaultBitrate());
-``` 
+await _controller.create(initialAudioConfig: AudioConfig(), initialVideoConfig: VideoConfig.withDefaultBitrate());
+```
 
-3. Adds a CameraPreview widget as a child of your view:
+3. Adds a CameraPreview widget as a child of your view
+
+Ensure that _controller.create() has been finished before creating the CameraPreview widget.
 
 ```dart
 child: CameraPreview(controller: _controller),

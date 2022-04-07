@@ -49,13 +49,14 @@ class _LiveViewPageState extends State<LiveViewPage>
       ElevatedButton.styleFrom(textStyle: const TextStyle(fontSize: 20));
   Params config = Params();
   late final LiveStreamController _controller;
+  late final Future<int> textureId;
 
   @override
   void initState() {
     WidgetsBinding.instance?.addObserver(this);
 
     _controller = initLiveStreamController();
-    _controller.create(
+    textureId = _controller.create(
         initialAudioConfig: config.audio, initialVideoConfig: config.video);
     super.initState();
   }
@@ -110,7 +111,10 @@ class _LiveViewPageState extends State<LiveViewPage>
                 child: Padding(
                   padding: const EdgeInsets.all(1.0),
                   child: Center(
-                    child: CameraPreview(controller: _controller),
+                    child: buildPreview(
+                        controller: _controller,
+                        initialAudioConfig: config.audio,
+                        initialVideoConfig: config.video),
                   ),
                 ),
               ),
@@ -294,6 +298,25 @@ class _LiveViewPageState extends State<LiveViewPage>
         setState(() {});
       }
     });
+  }
+
+  Widget buildPreview(
+      {required LiveStreamController controller,
+      required AudioConfig initialAudioConfig,
+      required VideoConfig initialVideoConfig}) {
+    // Wait for [LiveStreamController.create] to finish.
+    return FutureBuilder<int>(
+        future: textureId,
+        builder: (BuildContext context, AsyncSnapshot<int> snapshot) {
+          if (!snapshot.hasData) {
+            // while data is loading:
+            return Center(
+              child: CircularProgressIndicator(),
+            );
+          } else {
+            return CameraPreview(controller: controller);
+          }
+        });
   }
 }
 
