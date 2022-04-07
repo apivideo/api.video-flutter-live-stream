@@ -6,6 +6,19 @@ import 'package:flutter/services.dart';
 
 import 'constants.dart';
 
+MaterialColor apiVideoOrange = const MaterialColor(0xFFFA5B30, const {
+  50: const Color(0xFFFBDDD4),
+  100: const Color(0xFFFFD6CB),
+  200: const Color(0xFFFFD1C5),
+  300: const Color(0xFFFFB39E),
+  400: const Color(0xFFFA5B30),
+  500: const Color(0xFFF8572A),
+  600: const Color(0xFFF64819),
+  700: const Color(0xFFEE4316),
+  800: const Color(0xFFEC3809),
+  900: const Color(0xFFE53101)
+});
+
 void main() {
   runApp(MyApp());
 }
@@ -13,7 +26,13 @@ void main() {
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return new MaterialApp(home: LiveViewPage());
+    return new MaterialApp(
+      home: LiveViewPage(),
+      theme: ThemeData(
+        primarySwatch: apiVideoOrange,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+      ),
+    );
   }
 }
 
@@ -124,13 +143,13 @@ class _LiveViewPageState extends State<LiveViewPage>
       children: <Widget>[
         IconButton(
           icon: const Icon(Icons.cameraswitch),
-          color: Colors.orange,
+          color: apiVideoOrange,
           onPressed:
               liveStreamController != null ? onSwitchCameraButtonPressed : null,
         ),
         IconButton(
           icon: const Icon(Icons.mic_off),
-          color: Colors.orange,
+          color: apiVideoOrange,
           onPressed: liveStreamController != null
               ? onToggleMicrophoneButtonPressed
               : null,
