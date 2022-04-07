@@ -27,12 +27,12 @@ String bitrateToPrettyString(int bitrate) {
 }
 
 class Params {
-  final VideoParameters video = VideoParameters(
+  final VideoConfig video = VideoConfig(
     bitrate: 2 * 1024 * 1024,
     resolution: Resolution.RESOLUTION_720,
     fps: 30,
   );
-  final AudioParameters audio = AudioParameters(
+  final AudioConfig audio = AudioConfig(
       bitrate: 128 * 1000,
       channel: Channel.stereo,
       sampleRate: SampleRate.kHz_44_1);

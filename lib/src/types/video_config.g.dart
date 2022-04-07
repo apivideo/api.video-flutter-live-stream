@@ -1,19 +1,18 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'video_parameters.dart';
+part of 'video_config.dart';
 
 // **************************************************************************
 // JsonSerializableGenerator
 // **************************************************************************
 
-VideoParameters _$VideoParametersFromJson(Map<String, dynamic> json) =>
-    VideoParameters(
+VideoConfig _$VideoConfigFromJson(Map<String, dynamic> json) => VideoConfig(
       bitrate: json['bitrate'] as int,
       resolution: $enumDecode(_$ResolutionEnumMap, json['resolution']),
       fps: json['fps'] as int,
     );
 
-Map<String, dynamic> _$VideoParametersToJson(VideoParameters instance) =>
+Map<String, dynamic> _$VideoConfigToJson(VideoConfig instance) =>
     <String, dynamic>{
       'bitrate': instance.bitrate,
       'resolution': _$ResolutionEnumMap[instance.resolution],

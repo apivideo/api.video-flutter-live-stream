@@ -1,5 +1,5 @@
-export 'types/audio_parameters.dart';
+export 'types/audio_config.dart';
 export 'types/channel.dart';
 export 'types/resolution.dart';
 export 'types/sample_rate.dart';
-export 'types/video_parameters.dart';
+export 'types/video_config.dart';

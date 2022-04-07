@@ -3,11 +3,11 @@ import 'package:json_annotation/json_annotation.dart';
 import 'channel.dart';
 import 'sample_rate.dart';
 
-part 'audio_parameters.g.dart';
+part 'audio_config.g.dart';
 
-/// Live streaming audio parameters
+/// Live streaming audio configuration.
 @JsonSerializable()
-class AudioParameters {
+class AudioConfig {
   /// The video bitrate in bps
   int bitrate;
 
@@ -27,21 +27,21 @@ class AudioParameters {
   /// Only available on Android
   bool enableNoiseSuppressor;
 
-  /// Creates a new [AudioParameters] instance.
+  /// Creates a new [AudioConfig] instance.
   ///
   /// [sampleRate] is only supported on Android.
   /// [channel] is only supported on Android.
-  AudioParameters(
+  AudioConfig(
       {required this.bitrate,
       required this.channel,
       required this.sampleRate,
       this.enableEchoCanceler = true,
       this.enableNoiseSuppressor = true});
 
-  /// Creates a [AudioParameters] from a [json] map.
-  factory AudioParameters.fromJson(Map<String, dynamic> json) =>
-      _$AudioParametersFromJson(json);
+  /// Creates a [AudioConfig] from a [json] map.
+  factory AudioConfig.fromJson(Map<String, dynamic> json) =>
+      _$AudioConfigFromJson(json);
 
-  /// Creates a json map from a [AudioParameters].
-  Map<String, dynamic> toJson() => _$AudioParametersToJson(this);
+  /// Creates a json map from a [AudioConfig].
+  Map<String, dynamic> toJson() => _$AudioConfigToJson(this);
 }

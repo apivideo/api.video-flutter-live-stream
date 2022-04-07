@@ -1,13 +1,12 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'audio_parameters.dart';
+part of 'audio_config.dart';
 
 // **************************************************************************
 // JsonSerializableGenerator
 // **************************************************************************
 
-AudioParameters _$AudioParametersFromJson(Map<String, dynamic> json) =>
-    AudioParameters(
+AudioConfig _$AudioConfigFromJson(Map<String, dynamic> json) => AudioConfig(
       bitrate: json['bitrate'] as int,
       channel: $enumDecode(_$ChannelEnumMap, json['channel']),
       sampleRate: $enumDecode(_$SampleRateEnumMap, json['sampleRate']),
@@ -15,7 +14,7 @@ AudioParameters _$AudioParametersFromJson(Map<String, dynamic> json) =>
       enableNoiseSuppressor: json['enableNoiseSuppressor'] as bool? ?? true,
     );
 
-Map<String, dynamic> _$AudioParametersToJson(AudioParameters instance) =>
+Map<String, dynamic> _$AudioConfigToJson(AudioConfig instance) =>
     <String, dynamic>{
       'bitrate': instance.bitrate,
       'channel': _$ChannelEnumMap[instance.channel],

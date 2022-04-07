@@ -28,7 +28,7 @@ class _LiveViewPageState extends State<LiveViewPage>
     with WidgetsBindingObserver {
   final ButtonStyle buttonStyle =
       ElevatedButton.styleFrom(textStyle: const TextStyle(fontSize: 20));
-  Params params = Params();
+  Params config = Params();
   late final LiveStreamController _controller;
   int textureId = 0;
 
@@ -38,8 +38,7 @@ class _LiveViewPageState extends State<LiveViewPage>
 
     _controller = initLiveStreamController();
     _controller.create(
-        initialAudioParameters: params.audio,
-        initialVideoParameters: params.video);
+        initialAudioConfig: config.audio, initialVideoConfig: config.video);
     super.initState();
   }
 
@@ -110,9 +109,9 @@ class _LiveViewPageState extends State<LiveViewPage>
     await Navigator.push(
         context,
         MaterialPageRoute(
-            builder: (context) => SettingsScreen(params: params)));
-    _controller.setVideoParameters(params.video);
-    _controller.setAudioParameters(params.audio);
+            builder: (context) => SettingsScreen(params: config)));
+    _controller.setVideoConfig(config.video);
+    _controller.setAudioConfig(config.audio);
   }
 
   /// Display the control bar with buttons to take pictures and record videos.
@@ -211,7 +210,7 @@ class _LiveViewPageState extends State<LiveViewPage>
 
     try {
       await liveStreamController.startStreaming(
-          streamKey: params.streamKey, url: params.rtmpUrl);
+          streamKey: config.streamKey, url: config.rtmpUrl);
     } catch (error) {
       if (error is PlatformException) {
         _showDialog(

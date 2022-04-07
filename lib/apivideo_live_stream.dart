@@ -6,8 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:native_device_orientation/native_device_orientation.dart';
 
-import 'src/types/audio_parameters.dart';
-import 'src/types/video_parameters.dart';
+import 'src/types/audio_config.dart';
+import 'src/types/video_config.dart';
 
 export 'src/types.dart';
 
@@ -39,16 +39,16 @@ class LiveStreamController {
     _channel.setMethodCallHandler(_methodCallHandler);
   }
 
-  /// Create a new live stream instance with initial audio and video parameters.
+  /// Create a new live stream instance with initial audio and video configurations.
   Future<int> create(
-      {required AudioParameters initialAudioParameters,
-      required VideoParameters initialVideoParameters}) async {
+      {required AudioConfig initialAudioConfig,
+      required VideoConfig initialVideoConfig}) async {
     final Map<String, dynamic> creationParams = <String, dynamic>{
-      "audioParameters": initialAudioParameters.toJson(),
-      "videoParameters": initialVideoParameters.toJson()
+      "audioParameters": initialAudioConfig.toJson(),
+      "videoParameters": initialVideoConfig.toJson()
     };
 
-    _aspectRatio = initialVideoParameters.resolution.getAspectRatio();
+    _aspectRatio = initialVideoConfig.resolution.getAspectRatio();
 
     final Map<String, dynamic>? reply = await _channel
         .invokeMapMethod<String, dynamic>('create', creationParams);
@@ -59,19 +59,17 @@ class LiveStreamController {
   /// Sets new video parameters.
   ///
   /// Do not call when in live or when preview is running.
-  Future<void> setVideoParameters(VideoParameters videoParameters) {
-    _aspectRatio = videoParameters.resolution.getAspectRatio();
+  Future<void> setVideoConfig(VideoConfig videoConfig) {
+    _aspectRatio = videoConfig.resolution.getAspectRatio();
 
-    return _channel.invokeMethod(
-        'setVideoParameters', videoParameters.toJson());
+    return _channel.invokeMethod('setVideoParameters', videoConfig.toJson());
   }
 
   /// Sets new audio parameters.
   ///
   /// Do not call when in live or when preview is running.
-  Future<void> setAudioParameters(AudioParameters audioParameters) {
-    return _channel.invokeMethod(
-        'setAudioParameters', audioParameters.toJson());
+  Future<void> setAudioConfig(AudioConfig audioConfig) {
+    return _channel.invokeMethod('setAudioParameters', audioConfig.toJson());
   }
 
   /// Starts the live stream to the specified "[url]/[streamKey]".
