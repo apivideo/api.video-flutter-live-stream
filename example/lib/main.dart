@@ -49,7 +49,6 @@ class _LiveViewPageState extends State<LiveViewPage>
       ElevatedButton.styleFrom(textStyle: const TextStyle(fontSize: 20));
   Params config = Params();
   late final LiveStreamController _controller;
-  int textureId = 0;
 
   @override
   void initState() {
@@ -72,7 +71,12 @@ class _LiveViewPageState extends State<LiveViewPage>
 
   LiveStreamController initLiveStreamController() {
     return LiveStreamController(onConnectionFailed: (error) {
-      _showDialog(context, "Connection failed", error);
+      print('Connection failed: $error');
+    }, onDisconnection: () {
+      showInSnackBar('Disconnected');
+      if (mounted) {
+        setState(() {});
+      }
     });
   }
 
