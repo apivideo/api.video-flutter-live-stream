@@ -32,9 +32,9 @@ class AudioConfig {
   /// [sampleRate] is only supported on Android.
   /// [channel] is only supported on Android.
   AudioConfig(
-      {required this.bitrate,
-      required this.channel,
-      required this.sampleRate,
+      {this.bitrate = 128000,
+      this.channel = Channel.stereo,
+      this.sampleRate = SampleRate.kHz_44_1,
       this.enableEchoCanceler = true,
       this.enableNoiseSuppressor = true});
 
