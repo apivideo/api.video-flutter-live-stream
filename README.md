@@ -1,9 +1,9 @@
 [![badge](https://img.shields.io/twitter/follow/api_video?style=social)](https://twitter.com/intent/follow?screen_name=api_video)
-&nbsp; [![badge](https://img.shields.io/github/stars/apivideo/api.video-reactnative-live-stream?style=social)](https://github.com/apivideo/api.video-reactnative-live-stream)
+&nbsp; [![badge](https://img.shields.io/github/stars/apivideo/api.video-flutter-live-stream?style=social)](https://github.com/apivideo/api.video-flutter-live-stream)
 &nbsp; [![badge](https://img.shields.io/discourse/topics?server=https%3A%2F%2Fcommunity.api.video)](https://community.api.video)
 ![](https://github.com/apivideo/API_OAS_file/blob/master/apivideo_banner.png)
 
-<h1 align="center">FLutter RTMP live stream client</h1>
+<h1 align="center">Flutter RTMP live stream client</h1>
 
 [api.video](https://api.video) is the video infrastructure for product builders. Lightning fast
 video APIs for integrating, scaling, and managing on-demand & low latency live streaming features in
@@ -179,5 +179,5 @@ If you have any questions, ask us here:  https://community.api.video . Or use [I
 
 [HaishinKit]: <https://github.com/shogo4405/HaishinKit.swift>
 
-[Issues]: <https://github.com/apivideo/api.video-reactnative-live-stream/issues>
+[Issues]: <https://github.com/apivideo/api.video-flutter-live-stream/issues>
 
