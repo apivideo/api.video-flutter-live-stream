@@ -31,7 +31,6 @@ target 'Runner' do
   use_frameworks!
   use_modular_headers!
 
-  pod 'ApiVideoHaishinKit', :git => 'https://github.com/apivideo/HaishinKit.swift', :branch => 'main'
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
 end
 
