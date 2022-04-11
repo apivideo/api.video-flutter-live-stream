@@ -117,10 +117,7 @@ class _LiveViewPageState extends State<LiveViewPage>
                 child: Padding(
                   padding: const EdgeInsets.all(1.0),
                   child: Center(
-                    child: buildPreview(
-                        controller: _controller,
-                        initialAudioConfig: config.audio,
-                        initialVideoConfig: config.video),
+                    child: buildPreview(controller: _controller),
                   ),
                 ),
               ),
@@ -305,10 +302,7 @@ class _LiveViewPageState extends State<LiveViewPage>
     });
   }
 
-  Widget buildPreview(
-      {required LiveStreamController controller,
-      required AudioConfig initialAudioConfig,
-      required VideoConfig initialVideoConfig}) {
+  Widget buildPreview({required LiveStreamController controller}) {
     // Wait for [LiveStreamController.create] to finish.
     return FutureBuilder<int>(
         future: textureId,
