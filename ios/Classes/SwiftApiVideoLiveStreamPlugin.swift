@@ -179,22 +179,20 @@ class PreviewTexture: HKView, FlutterTexture {
 
 
 extension String {
-    func toResolution() -> Resolutions{
+    func toResolution() -> Resolution {
         switch self {
         case "240p":
-            return Resolutions.RESOLUTION_240
+            return Resolution.RESOLUTION_240
         case "360p":
-            return Resolutions.RESOLUTION_360
+            return Resolution.RESOLUTION_360
         case "480p":
-            return Resolutions.RESOLUTION_480
+            return Resolution.RESOLUTION_480
         case "720p":
-            return Resolutions.RESOLUTION_720
+            return Resolution.RESOLUTION_720
         case "1080p":
-            return Resolutions.RESOLUTION_1080
-        case "2160p":
-            return Resolutions.RESOLUTION_2160
+            return Resolution.RESOLUTION_1080
         default:
-            return Resolutions.RESOLUTION_720
+            return Resolution.RESOLUTION_720
         }
     }
 }
@@ -205,6 +203,6 @@ extension Dictionary where Key == String {
     }
 
     func toVideoConfig() -> VideoConfig {
-        return VideoConfig(bitrate: 2000000, resolution: Resolutions.RESOLUTION_720, fps: 30)
+        return VideoConfig(bitrate: 2000000, resolution: Resolution.RESOLUTION_720, fps: 30)
     }
 }

@@ -108,10 +108,11 @@ public class ApiVideoLiveStream{
     
     private func prepareVideo() {
         rtmpStream.captureSettings = [
+            .sessionPreset: AVCaptureSession.Preset.high,
             .fps: videoConfig.fps,
             .continuousAutofocus: true,
             .continuousExposure: true,
-            .preferredVideoStabilizationMode: AVCaptureVideoStabilizationMode.auto
+           // .preferredVideoStabilizationMode: AVCaptureVideoStabilizationMode.auto // Add latency to video
         ]
         rtmpStream.videoSettings = [
             .width: self.rtmpStream.orientation.isLandscape ? videoConfig.resolution.instance.width : videoConfig.resolution.instance.height,
