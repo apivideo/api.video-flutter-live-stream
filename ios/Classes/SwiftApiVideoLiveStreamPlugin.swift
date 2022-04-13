@@ -199,10 +199,12 @@ extension String {
 
 extension Dictionary where Key == String {
     func toAudioConfig() -> AudioConfig {
-       return AudioConfig(bitrate: 128000)
+       return AudioConfig(bitrate: self["bitrate"] as! Int)
     }
 
     func toVideoConfig() -> VideoConfig {
-        return VideoConfig(bitrate: 2000000, resolution: Resolution.RESOLUTION_720, fps: 30)
+        return VideoConfig(bitrate: self["bitrate"] as! Int,
+                           resolution: (self["resolution"] as! String).toResolution(),
+                           fps: self["fps"] as! Int)
     }
 }
