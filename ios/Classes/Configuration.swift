@@ -28,7 +28,7 @@ public enum Resolution {
         case .RESOLUTION_240:
             return Size(width: 352, height: 240)
         case .RESOLUTION_360:
-            return Size(width: 480, height: 360)
+            return Size(width: 640, height: 360)
         case .RESOLUTION_480:
             return Size(width: 858, height: 480)
         case .RESOLUTION_720:

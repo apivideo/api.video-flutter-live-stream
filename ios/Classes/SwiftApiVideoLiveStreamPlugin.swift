@@ -88,14 +88,12 @@ public class SwiftApiVideoLiveStreamPlugin: NSObject, FlutterPlugin {
             }
             break
         case "setVideoParameters":
-            if let args = call.arguments as? Dictionary<String, Any>,
-                let videoParameters = args["videoParameters"] as? Dictionary<String, Any> {
+            if let videoParameters = call.arguments as? Dictionary<String, Any> {
                 liveStream?.videoConfig = videoParameters.toVideoConfig()
             }
             break
         case "setAudioParameters":
-            if let args = call.arguments as? Dictionary<String, Any>,
-               let audioParameters = args["audioParameters"] as? Dictionary<String, Any> {
+            if let audioParameters = call.arguments as? Dictionary<String, Any> {
                liveStream?.audioConfig = audioParameters.toAudioConfig()
             }
             break
