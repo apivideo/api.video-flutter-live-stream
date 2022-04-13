@@ -39,8 +39,7 @@ class MethodCallHandlerImpl(
     private var flutterTexture: SurfaceTextureEntry? = null
 
     private var streamer: CameraRtmpLiveStreamer? = null
-    private var audioConfig: AudioConfig? = null
-    private var videoConfig: VideoConfig? = null
+    private var videoConfig = VideoConfig()
 
     private var methodChannel =
         MethodChannel(messenger, "video.api.livestream/controller")
@@ -121,15 +120,15 @@ class MethodCallHandlerImpl(
             "setVideoParameters" -> {
                 try {
                     videoConfig = (call.arguments as Map<String, Any>).toVideoConfig()
-                    streamer?.configure(audioConfig, videoConfig)
+                    streamer?.configure(videoConfig)
                 } catch (e: Exception) {
                     result.error("failed_to_set_video_parameters", e.message, null)
                 }
             }
             "setAudioParameters" -> {
                 try {
-                    audioConfig = (call.arguments as Map<String, Any>).toAudioConfig()
-                    streamer?.configure(audioConfig, videoConfig)
+                    val audioConfig = (call.arguments as Map<String, Any>).toAudioConfig()
+                    streamer?.configure(audioConfig)
                 } catch (e: Exception) {
                     result.error("failed_to_set_audio_parameters", e.message, null)
                 }
@@ -179,7 +178,7 @@ class MethodCallHandlerImpl(
                     streamer?.stopStream()
                     streamer?.stopPreview()
 
-                    audioConfig = audioParameters.toAudioConfig()
+                    val audioConfig = audioParameters.toAudioConfig()
                     videoConfig = videoParameters.toVideoConfig()
 
                     flutterTexture = textureRegistry.createSurfaceTexture()
