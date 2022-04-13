@@ -36,7 +36,7 @@ In your pubspec.yaml file, add the following:
 
 ```yaml
 dependencies:
-  apivideo_live_stream: ^1.0.0
+  apivideo_live_stream: ^1.0.1
 ```
 
 In your dart file, import the package:
