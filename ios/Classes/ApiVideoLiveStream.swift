@@ -158,6 +158,20 @@ public class ApiVideoLiveStream{
         rtmpConnection.removeEventListener(.rtmpStatus, selector: #selector(rtmpStatusHandler), observer: self)
         rtmpConnection.removeEventListener(.ioError, selector: #selector(rtmpErrorHandler), observer: self)
     }
+
+    /// Stop your livestream
+    /// - Returns: Void
+    public func startPreview() -> Void {
+        attachCamera()
+        attachAudio()
+    }
+
+     /// Stop your livestream
+    /// - Returns: Void
+    public func stopPreview() -> Void {
+        rtmpStream.attachCamera(nil)
+        rtmpStream.attachAudio(nil)
+    }
     
     @objc private func rtmpStatusHandler(_ notification: Notification) {
         let e = Event.from(notification)

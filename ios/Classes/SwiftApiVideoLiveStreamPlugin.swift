@@ -75,6 +75,12 @@ public class SwiftApiVideoLiveStreamPlugin: NSObject, FlutterPlugin {
         case "stopStreaming":
             liveStream?.stopStreaming()
             break
+        case "stopPreview":
+            liveStream?.stopPreview()
+            break
+        case "startPreview":
+            liveStream?.startPreview()
+            break
         case "switchCamera":
             if let liveStream = liveStream {
                 if(liveStream.camera == .back){
