@@ -53,7 +53,7 @@ class _LiveViewPageState extends State<LiveViewPage>
 
   @override
   void initState() {
-    WidgetsBinding.instance?.addObserver(this);
+    WidgetsBinding.instance.addObserver(this);
 
     _controller = initLiveStreamController();
     textureId = _controller.create(
