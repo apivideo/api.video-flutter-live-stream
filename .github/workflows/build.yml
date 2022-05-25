@@ -28,7 +28,7 @@ jobs:
         id: flutter
         uses: DanTup/gh-actions/setup-flutter@master
         with:
-          channel: 2.5.3
+          channel: stable
       - name: Install dependencies
         run: flutter pub get
       - name: Build Android application
