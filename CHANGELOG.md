@@ -2,6 +2,11 @@
 
 All changes to this project will be documented in this file.
 
+## [1.0.3] - 2022-05-30
+
+- Android: do not obfuscate rtmpdroid classes to
+  fix [#6](https://github.com/apivideo/api.video-flutter-live-stream/issues/6)
+
 ## [1.0.2] - 2022-05-25
 
 - iOS: implements `stopPreview` and `startPreview` to
