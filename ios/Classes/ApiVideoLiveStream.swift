@@ -89,15 +89,14 @@ public class ApiVideoLiveStream{
         }
         NotificationCenter.default.addObserver(self, selector: #selector(on(_:)), name: UIDevice.orientationDidChangeNotification, object: nil)
 
-        attachCamera()
         prepareVideo()
-        attachAudio()
         prepareAudio()
-        
-        preview.attachStream(rtmpStream)
 
+        attachCamera()
+        attachAudio()
+        preview.attachStream(rtmpStream)
     }
-    
+
     private func attachCamera() {
         rtmpStream.captureSettings[.isVideoMirrored] = camera == .front
         rtmpStream.attachCamera(DeviceUtil.device(withPosition: camera)) { error in
@@ -105,7 +104,7 @@ public class ApiVideoLiveStream{
             print(error.description)
         }
     }
-    
+
     private func prepareVideo() {
         rtmpStream.captureSettings = [
             .sessionPreset: AVCaptureSession.Preset.high,
