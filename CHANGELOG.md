@@ -2,6 +2,11 @@
 
 All changes to this project will be documented in this file.
 
+## [1.0.4] - 2022-06-01
+
+- iOS: Fix the random aspect ratio of the preview and random crashes.
+  See [#7](https://github.com/apivideo/api.video-flutter-live-stream/issues/7)
+
 ## [1.0.3] - 2022-05-30
 
 - Android: do not obfuscate rtmpdroid classes to
