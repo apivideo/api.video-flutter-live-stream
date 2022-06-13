@@ -1,5 +1,6 @@
 package video.api.flutter.livestream
 
+import android.media.MediaCodecInfo
 import android.util.Size
 import io.github.thibaultbee.streampack.data.AudioConfig
 import io.github.thibaultbee.streampack.data.VideoConfig
@@ -9,7 +10,9 @@ fun Map<String, Any>.toVideoConfig(): VideoConfig {
     return VideoConfig(
         startBitrate = this["bitrate"] as Int,
         resolution = (this["resolution"] as String).toResolution(),
-        fps = this["fps"] as Int
+        fps = this["fps"] as Int,
+        profile = MediaCodecInfo.CodecProfileLevel.AVCProfileBaseline,
+        level = MediaCodecInfo.CodecProfileLevel.AVCLevel1,
     )
 }
 
