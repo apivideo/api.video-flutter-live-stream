@@ -116,7 +116,10 @@ class MethodCallHandlerImpl(
                         }
                 }
             }
-            "stopStreaming" -> streamer?.stopStream()
+            "stopStreaming" -> {
+                streamer?.stopStream()
+                streamer?.disconnect()
+            }
             "setVideoParameters" -> {
                 try {
                     videoConfig = (call.arguments as Map<String, Any>).toVideoConfig()
