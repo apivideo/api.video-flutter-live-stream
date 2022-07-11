@@ -38,7 +38,10 @@ class MethodCallHandlerImpl(
 
     private var flutterTexture: SurfaceTextureEntry? = null
 
-    private var streamer: CameraRtmpLiveStreamer? = null
+    private val streamer = CameraRtmpLiveStreamer(
+        context = activity.applicationContext,
+        initialOnConnectionListener = this
+    )
     private var videoConfig = VideoConfig()
 
     private var methodChannel =
@@ -101,29 +104,23 @@ class MethodCallHandlerImpl(
                     url == null -> result.error("missing_rtmp_url", "RTMP URL is missing", null)
                     else ->
                         try {
-                            streamer?.let {
-                                runBlocking {
-                                    it.startStream(url.addTrailingSlashIfNeeded() + streamKey)
-                                }
-                                result.success(null)
-                            } ?: result.error(
-                                "missing_live_stream",
-                                "Live stream must exist at this point",
-                                null
-                            )
+                            runBlocking {
+                                streamer.startStream(url.addTrailingSlashIfNeeded() + streamKey)
+                            }
+                            result.success(null)
                         } catch (e: Exception) {
                             result.error("failed_to_start_stream", e.message, null)
                         }
                 }
             }
             "stopStreaming" -> {
-                streamer?.stopStream()
-                streamer?.disconnect()
+                streamer.stopStream()
+                streamer.disconnect()
             }
             "setVideoParameters" -> {
                 try {
                     videoConfig = (call.arguments as Map<String, Any>).toVideoConfig()
-                    streamer?.configure(videoConfig)
+                    streamer.configure(videoConfig)
                 } catch (e: Exception) {
                     result.error("failed_to_set_video_parameters", e.message, null)
                 }
@@ -131,29 +128,22 @@ class MethodCallHandlerImpl(
             "setAudioParameters" -> {
                 try {
                     val audioConfig = (call.arguments as Map<String, Any>).toAudioConfig()
-                    streamer?.configure(audioConfig)
+                    streamer.configure(audioConfig)
                 } catch (e: Exception) {
                     result.error("failed_to_set_audio_parameters", e.message, null)
                 }
             }
-            "switchCamera" -> streamer?.let { switchCamera(it) }
-            "toggleMute" -> streamer?.let { toggleMute(it) }
+            "switchCamera" -> switchCamera()
+            "toggleMute" -> toggleMute()
             "startPreview" -> {
                 try {
-                    streamer?.let {
-                        it.startPreview(getSurface(videoConfig!!.resolution))
-                        result.success(null)
-                    } ?: result.error(
-                        "missing_live_stream",
-                        "Live stream must exist at this point",
-                        null
-                    )
+                    streamer.startPreview(getSurface(videoConfig!!.resolution))
                     result.success(null)
                 } catch (e: Exception) {
                     result.error("failed_to_start_preview", e.message, null)
                 }
             }
-            "stopPreview" -> streamer?.stopPreview()
+            "stopPreview" -> streamer.stopPreview()
         }
     }
 
@@ -178,21 +168,16 @@ class MethodCallHandlerImpl(
             else ->
                 try {
                     // Reset preview live stream if needed
-                    streamer?.stopStream()
-                    streamer?.stopPreview()
+                    streamer.stopStream()
+                    streamer.stopPreview()
 
                     val audioConfig = audioParameters.toAudioConfig()
                     videoConfig = videoParameters.toVideoConfig()
 
                     flutterTexture = textureRegistry.createSurfaceTexture()
 
-                    streamer = CameraRtmpLiveStreamer(
-                        context = activity.applicationContext,
-                        initialOnConnectionListener = this
-                    ).apply {
-                        configure(audioConfig, videoConfig)
-                        startPreview(getSurface(videoConfig!!.resolution))
-                    }
+                    streamer.configure(audioConfig, videoConfig)
+                    streamer.startPreview(getSurface(videoConfig!!.resolution))
 
                     val reply: MutableMap<String, Any> = HashMap()
                     reply["textureId"] = flutterTexture!!.id()
@@ -213,7 +198,7 @@ class MethodCallHandlerImpl(
         return Surface(surfaceTexture)
     }
 
-    private fun switchCamera(streamer: CameraRtmpLiveStreamer) {
+    private fun switchCamera() {
         val cameraList = if (activity.isFrontCamera(streamer.camera)) {
             activity.getBackCameraList()
         } else {
@@ -222,7 +207,7 @@ class MethodCallHandlerImpl(
         streamer.camera = cameraList[0]
     }
 
-    private fun toggleMute(streamer: CameraRtmpLiveStreamer) {
+    private fun toggleMute() {
         streamer.settings.audio.isMuted = !streamer.settings.audio.isMuted
     }
 }
