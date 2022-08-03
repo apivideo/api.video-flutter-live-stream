@@ -2,6 +2,12 @@
 
 All changes to this project will be documented in this file.
 
+## [1.0.5] - 2022-08-03
+
+- Few fixes on FLV/RTMP to increase compatibility
+- iOS: fix landscape orientation.
+  See [#12](https://github.com/apivideo/api.video-flutter-live-stream/issues/12)
+
 ## [1.0.4] - 2022-06-01
 
 - iOS: Fix the random aspect ratio of the preview and random crashes.
