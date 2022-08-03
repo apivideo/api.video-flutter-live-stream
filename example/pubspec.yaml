@@ -12,8 +12,8 @@ dependencies:
   flutter:
     sdk: flutter
 
-  image_picker: ^0.8.3+2
-  settings_ui: ^2.0.1
+  image_picker: ^0.8.5+3
+  settings_ui: ^2.0.2
 
   apivideo_live_stream:
     # When depending on this package from a real application you should use:
