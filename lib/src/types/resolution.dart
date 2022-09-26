@@ -19,7 +19,7 @@ enum Resolution {
   RESOLUTION_720,
 
   /// 1920x1080
-  @JsonValue("1080")
+  @JsonValue("1080p")
   RESOLUTION_1080
 }
 
