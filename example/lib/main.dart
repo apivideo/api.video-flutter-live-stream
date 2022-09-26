@@ -186,8 +186,7 @@ class _LiveViewPageState extends State<LiveViewPage>
   }
 
   void showInSnackBar(String message) {
-    // ignore: deprecated_member_use
-    _scaffoldKey.currentState?.showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> switchCamera() async {
