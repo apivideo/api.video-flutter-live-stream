@@ -1,7 +1,7 @@
 //
 //  ApiVideoLiveStream.swift
 //
-import ApiVideoHaishinKit
+import HaishinKit
 import AVFoundation
 import Foundation
 import VideoToolbox
@@ -60,7 +60,7 @@ public class ApiVideoLiveStream {
     ///   - initialAudioConfig: The ApiVideoLiveStream's new AudioConfig
     ///   - initialVideoConfig: The ApiVideoLiveStream's new VideoConfig
     ///   - preview: UiView to display the preview of camera
-    public init(initialAudioConfig: AudioConfig, initialVideoConfig: VideoConfig, preview: HKView) throws {
+    public init(initialAudioConfig: AudioConfig, initialVideoConfig: VideoConfig, preview: NetStreamDrawable) throws {
         let session = AVAudioSession.sharedInstance()
 
         // https://stackoverflow.com/questions/51010390/avaudiosession-setcategory-swift-4-2-ios-12-play-sound-on-silent

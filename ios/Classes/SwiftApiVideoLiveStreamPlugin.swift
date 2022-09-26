@@ -1,8 +1,8 @@
-import ApiVideoHaishinKit
 import AVFoundation
 import Flutter
 import Network
 import UIKit
+import HaishinKit
 
 enum ApiVideoLiveStreamError: Error {
     case invalidAVSession
@@ -37,15 +37,11 @@ public class SwiftApiVideoLiveStreamPlugin: NSObject, FlutterPlugin {
                 dispose()
                 do {
                     let videoConfig = videoParameters.toVideoConfig()
-                    previewTexture = PreviewTexture(frame: CGRect(x: 0, y: 0, width: videoConfig.resolution.instance.width, height: videoConfig.resolution.instance.height))
+                    previewTexture = PreviewTexture(registry: registry)
                     liveStream = try createLiveStream(initialAudioConfig: audioParameters.toAudioConfig(), initialVideoConfig: videoConfig, preview: previewTexture!)
 
-                    textureId = registry.register(previewTexture!)
-                    if let textureId = textureId {
-                        previewTexture!.onFrameAvailable = {
-                            self.registry.textureFrameAvailable(textureId)
-                        }
-                        result(["textureId": textureId])
+                    if let previewTexture = previewTexture {
+                        result(["textureId": previewTexture.id])
                     } else {
                         result(FlutterError(code: "failed_to_create_live_stream", message: "Failed to create camera preview surface", details: nil))
                     }
@@ -110,7 +106,7 @@ public class SwiftApiVideoLiveStreamPlugin: NSObject, FlutterPlugin {
         }
     }
 
-    func createLiveStream(initialAudioConfig: AudioConfig, initialVideoConfig: VideoConfig, preview: HKView) throws -> ApiVideoLiveStream {
+    func createLiveStream(initialAudioConfig: AudioConfig, initialVideoConfig: VideoConfig, preview: NetStreamDrawable) throws -> ApiVideoLiveStream {
         let liveStream = try ApiVideoLiveStream(initialAudioConfig: initialAudioConfig, initialVideoConfig: initialVideoConfig, preview: preview)
         liveStream.onConnectionSuccess = { () in
             self.channel.invokeMethod("onConnectionSuccess", arguments: nil)
@@ -127,48 +123,6 @@ public class SwiftApiVideoLiveStreamPlugin: NSObject, FlutterPlugin {
     func dispose() {
         liveStream?.stopStreaming()
         previewTexture?.close()
-        if let textureId = textureId {
-            registry.unregisterTexture(textureId)
-        }
-    }
-}
-
-class PreviewTexture: HKView, FlutterTexture {
-    let queue = DispatchQueue(label: "api.video.flutter.livestream.pixelBufferSynchronizationQueue")
-
-    override public init(frame: CGRect) {
-        super.init(frame: frame)
-        newSampleBuffer = { currentSampleBuffer in
-            let newPixelBuffer = CMSampleBufferGetImageBuffer(currentSampleBuffer)
-            self.queue.sync {
-                self.latestPixelBuffer = newPixelBuffer
-            }
-            self.onFrameAvailable?()
-        }
-    }
-
-    @available(*, unavailable)
-    required init?(coder _: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-
-    var onFrameAvailable: (() -> Void)?
-
-    private var latestPixelBuffer: CVPixelBuffer?
-
-    func copyPixelBuffer() -> Unmanaged<CVPixelBuffer>? {
-        var pixelBuffer: Unmanaged<CVPixelBuffer>?
-        if let latestPixelBuffer = latestPixelBuffer {
-            queue.sync {
-                pixelBuffer = Unmanaged<CVPixelBuffer>.passRetained(latestPixelBuffer)
-                self.latestPixelBuffer = nil
-            }
-        }
-        return pixelBuffer
-    }
-
-    func close() {
-        latestPixelBuffer = nil
     }
 }
 
