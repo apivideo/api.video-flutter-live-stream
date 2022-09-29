@@ -2,6 +2,7 @@ import AVFoundation
 import Flutter
 import Network
 import UIKit
+import ApiVideoLiveStream
 import HaishinKit
 
 enum ApiVideoLiveStreamError: Error {
@@ -59,7 +60,11 @@ public class SwiftApiVideoLiveStreamPlugin: NSObject, FlutterPlugin {
                     result(FlutterError(code: "missing_rtmp_url", message: "RTMP URL is missing", details: nil))
                 } else {
                     if let liveStream = liveStream {
-                        liveStream.startStreaming(streamKey: streamKey!, url: url!)
+                        do {
+                            try liveStream.startStreaming(streamKey: streamKey!, url: url!)
+                        } catch {
+                            result(FlutterError(code: "missing_live_stream", message: error.localizedDescription, details: nil))
+                        }
                         result(nil)
                     } else {
                         result(FlutterError(code: "missing_live_stream", message: "Live stream must exist at this point", details: nil))
