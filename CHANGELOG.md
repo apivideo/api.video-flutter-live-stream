@@ -2,6 +2,12 @@
 
 All changes to this project will be documented in this file.
 
+## [1.0.6] - 2022-09-30
+
+- Fix 1080p configuration. See [#16](https://github.com/apivideo/api.video-flutter-live-stream/issues/16)
+- Upgrade HaishinKit to 1.3.0. See [#15](https://github.com/apivideo/api.video-flutter-live-stream/issues/15)
+- Upgrade dependencies
+
 ## [1.0.5] - 2022-08-03
 
 - Few fixes on FLV/RTMP to increase compatibility

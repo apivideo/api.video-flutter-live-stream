@@ -1,6 +1,6 @@
 # apivideolivestream_example
 
-Demonstrates how to use the apivideolivestream plugin.
+Demonstrates how to use the apivideo_live_stream plugin.
 
 ## Getting Started
 
