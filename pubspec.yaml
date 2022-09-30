@@ -1,5 +1,5 @@
 name: apivideo_live_stream
-description: Flutter RTMP live stream client.
+description: Flutter RTMP live stream client for your audio/video application. Made with ♥ by api.video.
 version: 1.0.5
 repository: https://github.com/apivideo/api.video-flutter-live-stream
 issue_tracker: https://github.com/apivideo/api.video-flutter-live-stream/issues
