@@ -4,7 +4,6 @@ version: 1.0.6
 repository: https://github.com/apivideo/api.video-flutter-live-stream
 issue_tracker: https://github.com/apivideo/api.video-flutter-live-stream/issues
 homepage: https://api.video
-documentation: https://docs.api.video
 
 environment:
   sdk: ">=2.12.0 <3.0.0"
