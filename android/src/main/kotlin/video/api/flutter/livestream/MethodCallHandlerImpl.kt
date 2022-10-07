@@ -12,7 +12,6 @@ import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.PluginRegistry
 import io.flutter.view.TextureRegistry
 import io.flutter.view.TextureRegistry.SurfaceTextureEntry
-import io.github.thibaultbee.streampack.data.AudioConfig
 import io.github.thibaultbee.streampack.data.VideoConfig
 import io.github.thibaultbee.streampack.error.StreamPackError
 import io.github.thibaultbee.streampack.ext.rtmp.streamers.CameraRtmpLiveStreamer
@@ -137,7 +136,7 @@ class MethodCallHandlerImpl(
             "toggleMute" -> toggleMute()
             "startPreview" -> {
                 try {
-                    streamer.startPreview(getSurface(videoConfig!!.resolution))
+                    streamer.startPreview(getSurface(videoConfig.resolution))
                     result.success(null)
                 } catch (e: Exception) {
                     result.error("failed_to_start_preview", e.message, null)
@@ -177,7 +176,7 @@ class MethodCallHandlerImpl(
                     flutterTexture = textureRegistry.createSurfaceTexture()
 
                     streamer.configure(audioConfig, videoConfig)
-                    streamer.startPreview(getSurface(videoConfig!!.resolution))
+                    streamer.startPreview(getSurface(videoConfig.resolution))
 
                     val reply: MutableMap<String, Any> = HashMap()
                     reply["textureId"] = flutterTexture!!.id()
