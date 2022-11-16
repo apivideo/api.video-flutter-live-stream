@@ -15,6 +15,7 @@ ApiVideoLiveStreamPlatform get _platform {
 class ApiVideoLiveStreamController {
   final VideoConfig _initialVideoConfig;
   final AudioConfig _initialAudioConfig;
+  final CameraPosition _initialCameraPosition;
 
   static const int kUninitializedTextureId = -1;
   int _textureId = kUninitializedTextureId;
@@ -37,12 +38,14 @@ class ApiVideoLiveStreamController {
   ApiVideoLiveStreamController(
       {required AudioConfig initialAudioConfig,
       required VideoConfig initialVideoConfig,
+      CameraPosition initialCameraPosition = CameraPosition.back,
       VoidCallback? onConnectionSuccess,
       Function(String)? onConnectionFailed,
       VoidCallback? onDisconnection,
       Function(Exception)? onError})
       : _initialVideoConfig = initialVideoConfig,
-        _initialAudioConfig = initialAudioConfig {
+        _initialAudioConfig = initialAudioConfig,
+        _initialCameraPosition = initialCameraPosition {
     _eventsListeners.add(ApiVideoLiveStreamEventsListener(
         onConnectionSuccess: onConnectionSuccess,
         onConnectionFailed: onConnectionFailed,
@@ -53,9 +56,11 @@ class ApiVideoLiveStreamController {
   ApiVideoLiveStreamController.fromListener(
       {required AudioConfig initialAudioConfig,
       required VideoConfig initialVideoConfig,
+      CameraPosition initialCameraPosition = CameraPosition.back,
       ApiVideoLiveStreamEventsListener? listener})
       : _initialVideoConfig = initialVideoConfig,
-        _initialAudioConfig = initialAudioConfig {
+        _initialAudioConfig = initialAudioConfig,
+        _initialCameraPosition = initialCameraPosition {
     if (listener != null) {
       _eventsListeners.add(listener);
     }
@@ -75,10 +80,11 @@ class ApiVideoLiveStreamController {
       }
     }
 
-    setVideoConfig(_initialVideoConfig);
-    setAudioConfig(_initialAudioConfig);
+    await setCameraPosition(_initialCameraPosition);
+    await setVideoConfig(_initialVideoConfig);
+    await setAudioConfig(_initialAudioConfig);
 
-    startPreview();
+    await startPreview();
     _isInitialized = true;
     return;
   }
