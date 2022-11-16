@@ -1,212 +1,195 @@
 package video.api.flutter.livestream
 
+import android.Manifest
 import android.app.Activity
-import android.os.Handler
-import android.os.Looper
-import android.util.Log
-import android.util.Size
-import android.view.Surface
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.PluginRegistry
 import io.flutter.view.TextureRegistry
-import io.flutter.view.TextureRegistry.SurfaceTextureEntry
-import io.github.thibaultbee.streampack.data.VideoConfig
-import io.github.thibaultbee.streampack.error.StreamPackError
-import io.github.thibaultbee.streampack.ext.rtmp.streamers.CameraRtmpLiveStreamer
-import io.github.thibaultbee.streampack.listeners.OnConnectionListener
-import io.github.thibaultbee.streampack.listeners.OnErrorListener
-import io.github.thibaultbee.streampack.utils.getBackCameraList
-import io.github.thibaultbee.streampack.utils.getFrontCameraList
-import io.github.thibaultbee.streampack.utils.isFrontCamera
-import kotlinx.coroutines.runBlocking
 import kotlin.reflect.KFunction1
 
 class MethodCallHandlerImpl(
     private val activity: Activity,
-    messenger: BinaryMessenger,
-    private val cameraPermissions: CameraPermissions,
+    private val messenger: BinaryMessenger,
     private val permissionsRegistry: KFunction1<PluginRegistry.RequestPermissionsResultListener, Unit>,
     private val textureRegistry: TextureRegistry
-) :
-    MethodChannel.MethodCallHandler, OnConnectionListener, OnErrorListener {
-    companion object {
-        private const val TAG = "MethodCallHandlerImpl"
-    }
+) : MethodChannel.MethodCallHandler {
+    private val audioCameraPermissionsManager =
+        PermissionsManager(listOf(Manifest.permission.RECORD_AUDIO, Manifest.permission.CAMERA))
+    private val audioPermissionsManager =
+        PermissionsManager(listOf(Manifest.permission.RECORD_AUDIO))
+    private val cameraPermissionsManager = PermissionsManager(listOf(Manifest.permission.CAMERA))
 
-    private var flutterTexture: SurfaceTextureEntry? = null
-
-    private val streamer = CameraRtmpLiveStreamer(
-        context = activity.applicationContext,
-        initialOnConnectionListener = this
-    )
-    private var videoConfig = VideoConfig()
-
-    private var methodChannel =
-        MethodChannel(messenger, "video.api.livestream/controller")
+    private val methodChannel = MethodChannel(messenger, "video.api.livestream/controller")
+    private var flutterView: FlutterLiveStreamView? = null
 
     init {
         methodChannel.setMethodCallHandler(this)
     }
 
-    override fun onFailed(message: String) {
-        Handler(Looper.getMainLooper()).post {
-            methodChannel.invokeMethod("onConnectionFailed", message)
-        }
-    }
-
-    override fun onLost(message: String) {
-        Handler(Looper.getMainLooper()).post {
-            methodChannel.invokeMethod("onDisconnect", null)
-        }
-    }
-
-    override fun onSuccess() {
-        Handler(Looper.getMainLooper()).post {
-            methodChannel.invokeMethod("onConnectionSuccess", null)
-        }
-    }
-
-    override fun onError(error: StreamPackError) {
-        Log.e(TAG, "Get error", error)
-    }
-
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
         when (call.method) {
             "create" -> {
-                cameraPermissions.requestPermissions(
-                    activity,
-                    permissionsRegistry,
-                    true
-                ) { errCode, errDesc ->
-                    if (errCode == null) {
-                        instantiateCamera(call, result)
-                    } else {
-                        result.error(errCode, errDesc, null)
+                try {
+                    ensurePermissions(audioCameraPermissionsManager, result) {
+                        flutterView?.dispose()
+                        flutterView = FlutterLiveStreamView(
+                            activity.applicationContext, textureRegistry, messenger
+                        )
+                        result.success(mapOf("textureId" to flutterView!!.textureId))
                     }
+                } catch (e: Exception) {
+                    result.error("failed_to_create_live_stream", e.message, null)
                 }
-
             }
             "dispose" -> {
-                flutterTexture?.release()
+                flutterView!!.dispose()
+                flutterView = null
+            }
+            "setVideoConfig" -> {
+                try {
+                    if (PermissionsManager.hasCameraPermission(activity)) {
+                        val videoConfig = (call.arguments as Map<String, Any>).toVideoConfig()
+                        flutterView!!.videoConfig = videoConfig
+                        result.success(null)
+                    } else {
+                        result.error(
+                            "camera_permission_denied",
+                            "Camera permission is denied",
+                            null
+                        )
+                    }
+                } catch (e: Exception) {
+                    result.error("failed_to_set_video_config", e.message, null)
+                }
+            }
+            "setAudioConfig" -> {
+                try {
+                    if (PermissionsManager.hasMicrophonePermission(activity)) {
+                        val audioConfig = (call.arguments as Map<String, Any>).toAudioConfig()
+                        flutterView!!.audioConfig = audioConfig
+                        result.success(null)
+                    } else {
+                        result.error(
+                            "microphone_permission_denied",
+                            "Microphone permission is denied",
+                            null
+                        )
+                    }
+                } catch (e: Exception) {
+                    result.error("failed_to_set_audio_config", e.message, null)
+                }
+            }
+            "startPreview" -> {
+                try {
+                    if (PermissionsManager.hasCameraPermission(activity)) {
+                        flutterView!!.startPreview()
+                        result.success(null)
+                    } else {
+                        result.error(
+                            "camera_permission_denied",
+                            "Camera permission is denied",
+                            null
+                        )
+                    }
+                } catch (e: Exception) {
+                    result.error("failed_to_start_preview", e.message, null)
+                }
+            }
+            "stopPreview" -> {
+                flutterView!!.stopPreview()
+                result.success(null)
             }
             "startStreaming" -> {
                 val streamKey = call.argument<String>("streamKey")
                 val url = call.argument<String>("url")
                 when {
                     streamKey == null -> result.error(
-                        "missing_stream_key",
-                        "Stream key is missing",
+                        "missing_stream_key", "Stream key is missing", null
+                    )
+                    url == null -> result.error(
+                        "missing_rtmp_url",
+                        "RTMP URL is missing",
                         null
                     )
-                    url == null -> result.error("missing_rtmp_url", "RTMP URL is missing", null)
-                    else ->
-                        try {
-                            runBlocking {
-                                streamer.startStream(url.addTrailingSlashIfNeeded() + streamKey)
-                            }
-                            result.success(null)
-                        } catch (e: Exception) {
-                            result.error("failed_to_start_stream", e.message, null)
-                        }
+                    else -> try {
+                        flutterView!!.startStream(url.addTrailingSlashIfNeeded() + streamKey)
+                        result.success(null)
+                    } catch (e: Exception) {
+                        result.error("failed_to_start_stream", e.message, null)
+                    }
                 }
             }
             "stopStreaming" -> {
-                streamer.stopStream()
-                streamer.disconnect()
+                flutterView!!.stopStream()
             }
-            "setVideoParameters" -> {
+            "getIsStreaming" -> result.success(mapOf("isStreaming" to flutterView!!.isStreaming))
+            "getCameraPosition" -> {
                 try {
-                    videoConfig = (call.arguments as Map<String, Any>).toVideoConfig()
-                    streamer.configure(videoConfig)
+                    result.success(mapOf("position" to flutterView!!.cameraPosition))
                 } catch (e: Exception) {
-                    result.error("failed_to_set_video_parameters", e.message, null)
+                    result.error("failed_to_get_camera_position", e.message, null)
                 }
             }
-            "setAudioParameters" -> {
-                try {
-                    val audioConfig = (call.arguments as Map<String, Any>).toAudioConfig()
-                    streamer.configure(audioConfig)
+            "setCameraPosition" -> {
+                val cameraPosition = try {
+                    ((call.arguments as Map<*, *>)["position"] as String)
                 } catch (e: Exception) {
-                    result.error("failed_to_set_audio_parameters", e.message, null)
+                    result.error("invalid_parameter", "Invalid camera position", e)
+                    return
                 }
+                flutterView!!.cameraPosition = cameraPosition
+                result.success(null)
             }
-            "switchCamera" -> switchCamera()
-            "toggleMute" -> toggleMute()
-            "startPreview" -> {
-                try {
-                    streamer.startPreview(getSurface(videoConfig.resolution))
-                    result.success(null)
+            "getIsMuted" -> {
+                result.success(mapOf("isMuted" to flutterView!!.isMuted))
+            }
+            "setIsMuted" -> {
+                val isMuted = try {
+                    ((call.arguments as Map<*, *>)["isMuted"] as Boolean)
                 } catch (e: Exception) {
-                    result.error("failed_to_start_preview", e.message, null)
+                    result.error("invalid_parameter", "Invalid isMuted", e)
+                    return
                 }
+                flutterView!!.isMuted = isMuted
+                result.success(null)
             }
-            "stopPreview" -> streamer.stopPreview()
+            "getVideoSize" -> {
+                val videoSize = flutterView!!.videoConfig.resolution
+                result.success(
+                    mapOf(
+                        "width" to videoSize.width,
+                        "height" to videoSize.height
+                    )
+                )
+            }
+            else -> result.notImplemented()
         }
     }
 
-    fun stopListening() {
+    private fun ensurePermissions(
+        permissionsManager: PermissionsManager,
+        result: MethodChannel.Result,
+        onPermissionGranted: () -> Unit
+    ) {
+        permissionsManager.requestPermissions(
+            activity,
+            permissionsRegistry,
+        ) { errCode, errDesc ->
+            if (errCode == null) {
+                onPermissionGranted()
+            } else {
+                result.error(errCode, errDesc, null)
+            }
+        }
+    }
+
+    fun dispose() {
         methodChannel.setMethodCallHandler(null)
     }
 
-    private fun instantiateCamera(call: MethodCall, result: MethodChannel.Result) {
-        val videoParameters = call.argument<Map<String, Any>>("videoParameters")
-        val audioParameters = call.argument<Map<String, Any>>("audioParameters")
-        when {
-            videoParameters == null -> result.error(
-                "missing_video_parameters",
-                "Video parameters are missing",
-                null
-            )
-            audioParameters == null -> result.error(
-                "missing_audio_parameters",
-                "Audio parameters are missing",
-                null
-            )
-            else ->
-                try {
-                    // Reset preview live stream if needed
-                    streamer.stopStream()
-                    streamer.stopPreview()
-
-                    val audioConfig = audioParameters.toAudioConfig()
-                    videoConfig = videoParameters.toVideoConfig()
-
-                    flutterTexture = textureRegistry.createSurfaceTexture()
-
-                    streamer.configure(audioConfig, videoConfig)
-                    streamer.startPreview(getSurface(videoConfig.resolution))
-
-                    val reply: MutableMap<String, Any> = HashMap()
-                    reply["textureId"] = flutterTexture!!.id()
-                    result.success(reply)
-                } catch (e: Exception) {
-                    result.error("failed_to_create_live_stream", e.message, null)
-                }
-        }
-    }
-
-    private fun getSurface(resolution: Size): Surface {
-        val surfaceTexture = flutterTexture!!.surfaceTexture().apply {
-            setDefaultBufferSize(
-                resolution.width,
-                resolution.height
-            )
-        }
-        return Surface(surfaceTexture)
-    }
-
-    private fun switchCamera() {
-        val cameraList = if (activity.isFrontCamera(streamer.camera)) {
-            activity.getBackCameraList()
-        } else {
-            activity.getFrontCameraList()
-        }
-        streamer.camera = cameraList[0]
-    }
-
-    private fun toggleMute() {
-        streamer.settings.audio.isMuted = !streamer.settings.audio.isMuted
+    companion object {
+        private const val TAG = "MethodCallHandlerImpl"
     }
 }

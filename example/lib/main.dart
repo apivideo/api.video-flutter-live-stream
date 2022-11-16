@@ -48,16 +48,18 @@ class _LiveViewPageState extends State<LiveViewPage>
   final ButtonStyle buttonStyle =
       ElevatedButton.styleFrom(textStyle: const TextStyle(fontSize: 20));
   Params config = Params();
-  late final LiveStreamController _controller;
-  late final Future<int> textureId;
+  late final ApiVideoLiveStreamController _controller;
+  bool _isStreaming = false;
 
   @override
   void initState() {
     WidgetsBinding.instance.addObserver(this);
 
-    _controller = initLiveStreamController();
-    textureId = _controller.create(
-        initialAudioConfig: config.audio, initialVideoConfig: config.video);
+    _controller = createLiveStreamController();
+
+    _controller.initialize().catchError((e) { 
+      showInSnackBar(e.toString());
+    });
     super.initState();
   }
 
@@ -70,21 +72,27 @@ class _LiveViewPageState extends State<LiveViewPage>
     }
   }
 
-  LiveStreamController initLiveStreamController() {
-    return LiveStreamController(onConnectionSuccess: () {
-      print('Connection succedded');
-    }, onConnectionFailed: (error) {
-      print('Connection failed: $error');
-      _showDialog(context, 'Connection failed', '$error');
-      if (mounted) {
-        setState(() {});
-      }
-    }, onDisconnection: () {
-      showInSnackBar('Disconnected');
-      if (mounted) {
-        setState(() {});
-      }
-    });
+  ApiVideoLiveStreamController createLiveStreamController() {
+    return ApiVideoLiveStreamController(
+      initialAudioConfig: config.audio,
+      initialVideoConfig: config.video,
+      onConnectionSuccess: () {
+        print('Connection succeeded');
+      },
+      onConnectionFailed: (error) {
+        print('Connection failed: $error');
+        _showDialog(context, 'Connection failed', '$error');
+        if (mounted) {
+          setIsStreaming(false);
+        }
+      },
+      onDisconnection: () {
+        showInSnackBar('Disconnected');
+        if (mounted) {
+          setIsStreaming(false);
+        }
+      },
+    );
   }
 
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
@@ -117,7 +125,7 @@ class _LiveViewPageState extends State<LiveViewPage>
                 child: Padding(
                   padding: const EdgeInsets.all(1.0),
                   child: Center(
-                    child: buildPreview(controller: _controller),
+                    child: ApiVideoCameraPreview(controller: _controller),
                   ),
                 ),
               ),
@@ -146,7 +154,7 @@ class _LiveViewPageState extends State<LiveViewPage>
 
   /// Display the control bar with buttons to take pictures and record videos.
   Widget _controlRowWidget() {
-    final LiveStreamController? liveStreamController = _controller;
+    final ApiVideoLiveStreamController? liveStreamController = _controller;
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -168,29 +176,27 @@ class _LiveViewPageState extends State<LiveViewPage>
         IconButton(
           icon: const Icon(Icons.fiber_manual_record),
           color: Colors.red,
-          onPressed:
-              liveStreamController != null && !liveStreamController.isStreaming
-                  ? onStartStreamingButtonPressed
-                  : null,
+          onPressed: liveStreamController != null && !_isStreaming
+              ? onStartStreamingButtonPressed
+              : null,
         ),
         IconButton(
-          icon: const Icon(Icons.stop),
-          color: Colors.red,
-          onPressed:
-              liveStreamController != null && liveStreamController.isStreaming
-                  ? onStopStreamingButtonPressed
-                  : null,
-        ),
+            icon: const Icon(Icons.stop),
+            color: Colors.red,
+            onPressed: liveStreamController != null && _isStreaming
+                ? onStopStreamingButtonPressed
+                : null),
       ],
     );
   }
 
   void showInSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> switchCamera() async {
-    final LiveStreamController? liveStreamController = _controller;
+    final ApiVideoLiveStreamController? liveStreamController = _controller;
 
     if (liveStreamController == null) {
       showInSnackBar('Error: create a camera controller first.');
@@ -210,7 +216,7 @@ class _LiveViewPageState extends State<LiveViewPage>
   }
 
   Future<void> toggleMicrophone() async {
-    final LiveStreamController? liveStreamController = _controller;
+    final ApiVideoLiveStreamController? liveStreamController = _controller;
 
     if (liveStreamController == null) {
       showInSnackBar('Error: create a camera controller first.');
@@ -230,7 +236,7 @@ class _LiveViewPageState extends State<LiveViewPage>
   }
 
   Future<void> startStreaming() async {
-    final LiveStreamController? liveStreamController = _controller;
+    final ApiVideoLiveStreamController? liveStreamController = _controller;
 
     if (liveStreamController == null) {
       showInSnackBar('Error: create a camera controller first.');
@@ -241,6 +247,7 @@ class _LiveViewPageState extends State<LiveViewPage>
       await liveStreamController.startStreaming(
           streamKey: config.streamKey, url: config.rtmpUrl);
     } catch (error) {
+      setIsStreaming(false);
       if (error is PlatformException) {
         print("Error: failed to start stream: ${error.message}");
       } else {
@@ -250,7 +257,7 @@ class _LiveViewPageState extends State<LiveViewPage>
   }
 
   Future<void> stopStreaming() async {
-    final LiveStreamController? liveStreamController = _controller;
+    final ApiVideoLiveStreamController? liveStreamController = _controller;
 
     if (liveStreamController == null) {
       showInSnackBar('Error: create a camera controller first.');
@@ -288,7 +295,7 @@ class _LiveViewPageState extends State<LiveViewPage>
   void onStartStreamingButtonPressed() {
     startStreaming().then((_) {
       if (mounted) {
-        setState(() {});
+        setIsStreaming(true);
       }
     });
   }
@@ -296,25 +303,15 @@ class _LiveViewPageState extends State<LiveViewPage>
   void onStopStreamingButtonPressed() {
     stopStreaming().then((_) {
       if (mounted) {
-        setState(() {});
+        setIsStreaming(false);
       }
     });
   }
 
-  Widget buildPreview({required LiveStreamController controller}) {
-    // Wait for [LiveStreamController.create] to finish.
-    return FutureBuilder<int>(
-        future: textureId,
-        builder: (BuildContext context, AsyncSnapshot<int> snapshot) {
-          if (!snapshot.hasData) {
-            // while data is loading:
-            return Center(
-              child: CircularProgressIndicator(),
-            );
-          } else {
-            return CameraPreview(controller: controller);
-          }
-        });
+  void setIsStreaming(bool isStreaming) {
+    setState(() {
+      _isStreaming = isStreaming;
+    });
   }
 }
 

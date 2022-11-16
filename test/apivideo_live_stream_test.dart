@@ -7,7 +7,9 @@ void main() {
 
   const MethodChannel channel =
       MethodChannel("video.api.livestream/controller");
-  final _controller = LiveStreamController();
+  final _controller = ApiVideoLiveStreamController(
+      initialVideoConfig: VideoConfig.withDefaultBitrate(),
+      initialAudioConfig: AudioConfig());
 
   test('startStreaming', () async {
     final url = "rtmp://test";

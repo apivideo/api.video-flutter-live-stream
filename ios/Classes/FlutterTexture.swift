@@ -11,12 +11,12 @@ class PreviewTexture: NSObject, FlutterTexture {
     private let registry: FlutterTextureRegistry
     private let queue = DispatchQueue(label: "api.video.flutter.livestream.pixelBufferSynchronizationQueue")
     private var currentStream: NetStream?
-    private(set) var id: Int64 = 0
+    private(set) var textureId: Int64 = 0
 
     public init(registry: FlutterTextureRegistry) {
         self.registry = registry
         super.init()
-        id = self.registry.register(self)
+        textureId = self.registry.register(self)
     }
 
     func copyPixelBuffer() -> Unmanaged<CVPixelBuffer>? {
@@ -32,8 +32,8 @@ class PreviewTexture: NSObject, FlutterTexture {
         return pixelBuffer
     }
     
-    func close() {
-        registry.unregisterTexture(id)
+    func dispose() {
+        registry.unregisterTexture(textureId)
     }
 }
 
@@ -53,6 +53,6 @@ extension PreviewTexture: NetStreamDrawable {
 
     func enqueue(_ sampleBuffer: CMSampleBuffer?) {
         currentSampleBuffer = sampleBuffer
-        self.registry.textureFrameAvailable(id)
+        self.registry.textureFrameAvailable(textureId)
     }
 }

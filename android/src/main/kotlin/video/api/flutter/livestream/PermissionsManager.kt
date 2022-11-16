@@ -12,7 +12,7 @@ import androidx.core.content.ContextCompat
 import io.flutter.plugin.common.PluginRegistry.RequestPermissionsResultListener
 import kotlin.reflect.KFunction1
 
-class CameraPermissions {
+class PermissionsManager(private val permissions: List<String>) {
     interface ResultCallback {
         fun onResult(errorCode: String?, errorDescription: String?)
     }
@@ -21,13 +21,12 @@ class CameraPermissions {
     fun requestPermissions(
         activity: Activity,
         permissionsRegistry: KFunction1<RequestPermissionsResultListener, Unit>,
-        enableAudio: Boolean,
         callback: (String?, String?) -> Unit
     ) {
         if (ongoing) {
             callback("camera_permission", "Camera permission request ongoing")
         }
-        if (!hasCameraPermission(activity) || enableAudio && !hasAudioPermission(activity)) {
+        if (!hasAllPermissions(activity, permissions)) {
             permissionsRegistry(
                 CameraRequestPermissionsListener(
                     object : ResultCallback {
@@ -40,12 +39,7 @@ class CameraPermissions {
             ongoing = true
             ActivityCompat.requestPermissions(
                 activity,
-                if (enableAudio) arrayOf(
-                    Manifest.permission.CAMERA,
-                    Manifest.permission.RECORD_AUDIO
-                ) else arrayOf(
-                    Manifest.permission.CAMERA
-                ),
+                permissions.toTypedArray(),
                 CAMERA_REQUEST_ID
             )
         } else {
@@ -54,13 +48,12 @@ class CameraPermissions {
         }
     }
 
-    private fun hasCameraPermission(activity: Activity): Boolean {
-        return (ContextCompat.checkSelfPermission(activity, Manifest.permission.CAMERA)
-                == PackageManager.PERMISSION_GRANTED)
+    private fun hasAllPermissions(activity: Activity, permissions: List<String>): Boolean {
+        return permissions.all { hasPermission(activity, it) }
     }
 
-    private fun hasAudioPermission(activity: Activity): Boolean {
-        return (ContextCompat.checkSelfPermission(activity, Manifest.permission.RECORD_AUDIO)
+    private fun hasPermission(activity: Activity, permission: String): Boolean {
+        return (ContextCompat.checkSelfPermission(activity, permission)
                 == PackageManager.PERMISSION_GRANTED)
     }
 
@@ -81,12 +74,19 @@ class CameraPermissions {
                 return false
             }
             alreadyCalled = true
-            if (grantResults[0] != PackageManager.PERMISSION_GRANTED) {
-                callback.onResult("camera_permission", "MediaRecorderCamera permission not granted")
-            } else if (grantResults.size > 1 && grantResults[1] != PackageManager.PERMISSION_GRANTED) {
-                callback.onResult("camera_permission", "MediaRecorderAudio permission not granted")
-            } else {
+            val notGrantedPermission = mutableListOf<String>()
+            List(grantResults.filter { result ->
+                result != PackageManager.PERMISSION_GRANTED
+            }.size) { index ->
+                notGrantedPermission.add(permissions[index])
+            }
+            if (notGrantedPermission.isEmpty()) {
                 callback.onResult(null, null)
+            } else {
+                callback.onResult(
+                    "camera_permission",
+                    "The user did not grant the permission(s): $notGrantedPermission"
+                )
             }
             return true
         }
@@ -94,5 +94,16 @@ class CameraPermissions {
 
     companion object {
         private const val CAMERA_REQUEST_ID = 9799
+
+
+        fun hasCameraPermission(activity: Activity): Boolean {
+            return (ContextCompat.checkSelfPermission(activity, Manifest.permission.CAMERA)
+                    == PackageManager.PERMISSION_GRANTED)
+        }
+
+        fun hasMicrophonePermission(activity: Activity): Boolean {
+            return (ContextCompat.checkSelfPermission(activity, Manifest.permission.RECORD_AUDIO)
+                    == PackageManager.PERMISSION_GRANTED)
+        }
     }
 }

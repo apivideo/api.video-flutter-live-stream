@@ -23,14 +23,13 @@ class ApiVideoLiveStreamPlugin : FlutterPlugin, ActivityAware {
         methodCallHandlerImpl = MethodCallHandlerImpl(
             binding.activity,
             flutterPluginBinding!!.binaryMessenger,
-            CameraPermissions(),
             binding::addRequestPermissionsResultListener,
             flutterPluginBinding!!.textureRegistry
         )
     }
 
     override fun onDetachedFromActivity() {
-        methodCallHandlerImpl?.stopListening()
+        methodCallHandlerImpl?.dispose()
         methodCallHandlerImpl = null
     }
 

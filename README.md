@@ -66,11 +66,9 @@ The library will require android.permission.CAMERA and android.permission.RECORD
 
 ```xml
 
-<key>NSCameraUsageDescription</key>
-<string>Your own description of the purpose</string>
+<key>NSCameraUsageDescription</key><string>Your own description of the purpose</string>
 
-<key>NSMicrophoneUsageDescription</key>
-<string>Your own description of the purpose</string>
+<key>NSMicrophoneUsageDescription</key><string>Your own description of the purpose</string>
 ```
 
 ## Code sample
@@ -79,13 +77,14 @@ The library will require android.permission.CAMERA and android.permission.RECORD
 
 ```dart
 
-final LiveStreamController _controller = LiveStreamController();
+final ApiVideoLiveStreamController _controller = ApiVideoLiveStreamController(
+    initialAudioConfig: AudioConfig(), initialVideoConfig: VideoConfig.withDefaultBitrate());
 ```
 
 2. Initializes the live stream controller
 
 ```dart
-await _controller.create(initialAudioConfig: AudioConfig(), initialVideoConfig: VideoConfig.withDefaultBitrate());
+await _controller.initialize();
 ```
 
 3. Adds a CameraPreview widget as a child of your view
@@ -93,7 +92,7 @@ await _controller.create(initialAudioConfig: AudioConfig(), initialVideoConfig: 
 Ensure that _controller.create() has been finished before creating the CameraPreview widget.
 
 ```dart
-child: CameraPreview(controller: _controller),
+child: ApiVideoCameraPreview(controller: _controller),
 ```
 
 4. Starts a live stream
@@ -171,13 +170,14 @@ api.video Flutter live stream library is using external native library:
 
 # FAQ
 
-If you have any questions, ask us here:  https://community.api.video . Or use [Issues].
+# FAQ
+
+If you have any questions, ask us in the [community](https://community.api.video). Or
+use [issues](https://github.com/apivideo/api.video-flutter-live-stream/issues).
 
 [//]: # (These are reference links used in the body of this note and get stripped out when the markdown processor does its job. There is no need to format nicely because it shouldn't be seen. Thanks SO - http://stackoverflow.com/questions/4823468/store-comments-in-markdown-syntax)
 
 [StreamPack]: <https://github.com/ThibaultBee/StreamPack>
 
 [HaishinKit]: <https://github.com/shogo4405/HaishinKit.swift>
-
-[Issues]: <https://github.com/apivideo/api.video-flutter-live-stream/issues>
 

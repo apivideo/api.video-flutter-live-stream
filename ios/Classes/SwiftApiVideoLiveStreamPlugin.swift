@@ -2,54 +2,85 @@ import AVFoundation
 import Flutter
 import Network
 import UIKit
-import ApiVideoLiveStream
 import HaishinKit
+import ApiVideoLiveStream
 
 enum ApiVideoLiveStreamError: Error {
     case invalidAVSession
 }
 
 public class SwiftApiVideoLiveStreamPlugin: NSObject, FlutterPlugin {
+    private let binaryMessenger: FlutterBinaryMessenger
     private let channel: FlutterMethodChannel
     private let registry: FlutterTextureRegistry
-    private var liveStream: ApiVideoLiveStream?
-    private var previewTexture: PreviewTexture?
-    private var textureId: Int64?
+    private var flutterView: FlutterLiveStreamView?
 
     public static func register(with registrar: FlutterPluginRegistrar) {
-        let channel = FlutterMethodChannel(name: "video.api.livestream/controller", binaryMessenger: registrar.messenger())
-
-        let instance = SwiftApiVideoLiveStreamPlugin(channel: channel, registry: registrar.textures())
-        registrar.addMethodCallDelegate(instance, channel: channel)
+        let instance = SwiftApiVideoLiveStreamPlugin(registrar: registrar)
+        registrar.publish(instance)
     }
 
-    public init(channel: FlutterMethodChannel, registry: FlutterTextureRegistry) {
-        self.channel = channel
-        self.registry = registry
+    public init(registrar: FlutterPluginRegistrar) {
+        self.binaryMessenger = registrar.messenger()
+        self.channel = FlutterMethodChannel(name: "video.api.livestream/controller", binaryMessenger: binaryMessenger)
+        self.registry = registrar.textures()
+        super.init()
+        
+        registrar.addMethodCallDelegate(self, channel: channel)
     }
 
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
         switch call.method {
         case "create":
-            if let args = call.arguments as? [String: Any],
-               let audioParameters = args["audioParameters"] as? [String: Any],
-               let videoParameters = args["videoParameters"] as? [String: Any]
-            {
-                dispose()
-                do {
-                    let videoConfig = videoParameters.toVideoConfig()
-                    previewTexture = PreviewTexture(registry: registry)
-                    liveStream = try createLiveStream(initialAudioConfig: audioParameters.toAudioConfig(), initialVideoConfig: videoConfig, preview: previewTexture!)
-
-                    if let previewTexture = previewTexture {
-                        result(["textureId": previewTexture.id])
-                    } else {
-                        result(FlutterError(code: "failed_to_create_live_stream", message: "Failed to create camera preview surface", details: nil))
-                    }
-                } catch {
-                    result(FlutterError(code: "failed_to_create_live_stream", message: error.localizedDescription, details: nil))
+            flutterView?.dispose()
+            do {
+                flutterView = try FlutterLiveStreamView(binaryMessenger: binaryMessenger, textureRegistry: registry)
+                if let previewTexture = flutterView?.textureId {
+                    result(["textureId": previewTexture])
+                } else {
+                    result(FlutterError(code: "failed_to_create_live_stream", message: "Failed to create camera preview surface", details: nil))
                 }
+            } catch {
+                result(FlutterError(code: "failed_to_create_live_stream", message: error.localizedDescription, details: nil))
             }
+        case "dispose":
+            flutterView?.dispose()
+        case "setVideoConfig":
+            guard let flutterView = flutterView else {
+                result(FlutterError(code: "missing_live_stream", message: "Live stream must exist at this point", details: nil))
+                return
+            }
+            guard let videoParameters = call.arguments as? [String: Any] else {
+                result(FlutterError(code: "invalid_parameter", message: "Invalid video config", details: nil))
+                return
+            }
+            flutterView.videoConfig = videoParameters.toVideoConfig()
+            result(nil)
+        case "setAudioConfig":
+            guard let flutterView = flutterView else {
+                result(FlutterError(code: "missing_live_stream", message: "Live stream must exist at this point", details: nil))
+                return
+            }
+            guard let audioParameters = call.arguments as? [String: Any] else {
+                result(FlutterError(code: "invalid_parameter", message: "Invalid audio config", details: nil))
+                return
+            }
+            flutterView.audioConfig = audioParameters.toAudioConfig()
+            result(nil)
+        case "startPreview":
+            guard let flutterView = flutterView else {
+                result(FlutterError(code: "missing_live_stream", message: "Live stream must exist at this point", details: nil))
+                return
+            }
+            flutterView.startPreview()
+            result(nil)
+        case "stopPreview":
+            guard let flutterView = flutterView else {
+                result(FlutterError(code: "missing_live_stream", message: "Live stream must exist at this point", details: nil))
+                return
+            }
+            flutterView.stopPreview()
+            result(nil)
         case "startStreaming":
             if let args = call.arguments as? [String: Any] {
                 let streamKey = args["streamKey"] as? String
@@ -59,75 +90,70 @@ public class SwiftApiVideoLiveStreamPlugin: NSObject, FlutterPlugin {
                 } else if url == nil {
                     result(FlutterError(code: "missing_rtmp_url", message: "RTMP URL is missing", details: nil))
                 } else {
-                    if let liveStream = liveStream {
-                        do {
-                            try liveStream.startStreaming(streamKey: streamKey!, url: url!)
-                        } catch {
-                            result(FlutterError(code: "missing_live_stream", message: error.localizedDescription, details: nil))
-                        }
-                        result(nil)
-                    } else {
+                    guard let flutterView = flutterView else {
                         result(FlutterError(code: "missing_live_stream", message: "Live stream must exist at this point", details: nil))
+                        return
+                    }
+                    do {
+                        try flutterView.startStreaming(streamKey: streamKey!, url: url!)
+                        result(nil)
+                    } catch {
+                        result(FlutterError(code: "missing_live_stream", message: error.localizedDescription, details: nil))
                     }
                 }
             }
         case "stopStreaming":
-            liveStream?.stopStreaming()
-        case "stopPreview":
-            liveStream?.stopPreview()
-        case "startPreview":
-            liveStream?.startPreview()
-        case "switchCamera":
-            if let liveStream = liveStream {
-                if liveStream.camera == .back {
-                    liveStream.camera = .front
-                } else {
-                    liveStream.camera = .back
-                }
-                result(nil)
-            } else {
+            guard let flutterView = flutterView else {
                 result(FlutterError(code: "missing_live_stream", message: "Live stream must exist at this point", details: nil))
+                return
             }
-        case "setVideoParameters":
-            if let videoParameters = call.arguments as? [String: Any] {
-                liveStream?.videoConfig = videoParameters.toVideoConfig()
-            }
-        case "setAudioParameters":
-            if let audioParameters = call.arguments as? [String: Any] {
-                liveStream?.audioConfig = audioParameters.toAudioConfig()
-            }
-
-        case "toggleMute":
-            if let liveStream = liveStream {
-                liveStream.isMuted = !liveStream.isMuted
-                result(nil)
-            } else {
+            flutterView.stopStreaming()
+            result(nil)
+        case "getIsStreaming":
+            guard let flutterView = flutterView else {
                 result(FlutterError(code: "missing_live_stream", message: "Live stream must exist at this point", details: nil))
+                return
             }
-        case "dispose":
-            dispose()
+            result(["isStreaming": flutterView.isStreaming])
+        case "getCameraPosition":
+            guard let flutterView = flutterView else {
+                result(FlutterError(code: "missing_live_stream", message: "Live stream must exist at this point", details: nil))
+                return
+            }
+            result(["position": flutterView.cameraPosition])
+        case "setCameraPosition":
+            guard let flutterView = flutterView else {
+                result(FlutterError(code: "missing_live_stream", message: "Live stream must exist at this point", details: nil))
+                return
+            }
+            guard let args = call.arguments as? [String: Any],
+                 let cameraPosition = args["position"] as? String else {
+                result(FlutterError(code: "invalid_parameter", message: "Invalid camera position", details: nil))
+                return
+            }
+            flutterView.cameraPosition = cameraPosition
+            result(nil)
+        case "getIsMuted":
+            guard let flutterView = flutterView else {
+                result(FlutterError(code: "missing_live_stream", message: "Live stream must exist at this point", details: nil))
+                return
+            }
+            result(["isMuted": flutterView.isMuted])
+        case "setIsMuted":
+            guard let flutterView = flutterView else {
+                result(FlutterError(code: "missing_live_stream", message: "Live stream must exist at this point", details: nil))
+                return
+            }
+            guard let args = call.arguments as? [String: Any],
+                 let isMuted = args["isMuted"] as? Bool else {
+                result(FlutterError(code: "invalid_parameter", message: "Invalid isMuted", details: nil))
+                return
+            }
+            flutterView.isMuted = isMuted
+            result(nil)
         default:
-            break
+            result(FlutterMethodNotImplemented)
         }
-    }
-
-    func createLiveStream(initialAudioConfig: AudioConfig, initialVideoConfig: VideoConfig, preview: NetStreamDrawable) throws -> ApiVideoLiveStream {
-        let liveStream = try ApiVideoLiveStream(initialAudioConfig: initialAudioConfig, initialVideoConfig: initialVideoConfig, preview: preview)
-        liveStream.onConnectionSuccess = { () in
-            self.channel.invokeMethod("onConnectionSuccess", arguments: nil)
-        }
-        liveStream.onConnectionFailed = { code in
-            self.channel.invokeMethod("onConnectionFailed", arguments: code)
-        }
-        liveStream.onDisconnect = { () in
-            self.channel.invokeMethod("onDisconnect", arguments: nil)
-        }
-        return liveStream
-    }
-
-    func dispose() {
-        liveStream?.stopStreaming()
-        previewTexture?.close()
     }
 }
 
