@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:apivideo_live_stream/apivideo_live_stream.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:meta/meta.dart';
 
 import 'apivideo_live_stream_platform_interface.dart';
 import 'types.dart';
@@ -21,7 +22,7 @@ class ApiVideoLiveStreamController {
   int _textureId = kUninitializedTextureId;
 
   /// This is just exposed for testing. Do not use it.
-  @visibleForTesting
+  @internal
   int get textureId => _textureId;
 
   bool _isInitialized = false;
@@ -192,7 +193,7 @@ class ApiVideoLiveStreamController {
   }
 
   /// Builds the preview widget.
-  @visibleForTesting
+  @internal
   Widget buildPreview() {
     return Texture(textureId: textureId);
   }
@@ -206,13 +207,13 @@ class ApiVideoLiveStreamController {
   }
 
   /// This is exposed for internal use only. Do not use it.
-  @visibleForTesting
+  @internal
   void addWidgetListener(ApiVideoLiveStreamWidgetListener listener) {
     _widgetListeners.add(listener);
   }
 
   /// This is exposed for internal use only. Do not use it.
-  @visibleForTesting
+  @internal
   void removeWidgetListener(ApiVideoLiveStreamWidgetListener listener) {
     _widgetListeners.remove(listener);
   }
