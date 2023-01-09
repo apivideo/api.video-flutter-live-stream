@@ -1,0 +1,15 @@
+name: Build iOS
+
+on:
+  push:
+    paths:
+      - '**.dart'
+      - '**.yaml'
+      - 'ios/**'
+
+jobs:
+  build_ios:
+    name: Build iOS
+    uses: apivideo/.github/.github/workflows/flutter_build_ios.yml@main
+    with:
+      cache: true

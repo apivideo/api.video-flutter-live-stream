@@ -1,32 +1,74 @@
-name: Run tests
-on: [push]
+name: Tests and analysis
+
+on: [ push ]
+
 jobs:
-  test:
+  run_tests:
+    name: Run tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Setup Flutter
-        id: flutter
-        uses: DanTup/gh-actions/setup-flutter@master
+        id: flutter-action
+        uses: subosito/flutter-action@v2
         with:
-          channel: stable
+          channel: 'stable'
+          cache: ${{ inputs.cache }}
+          cache-key: flutter-:os:-:channel:-:version:-:arch:-:hash:-${{ hashFiles('**/pubspec.yaml') }}
       - name: Install dependencies
         run: flutter pub get
-      - name: Analyze project source
-        run: flutter analyze
       - name: Run tests
         run: flutter test
 
-  publish_test:
+  analyze_code:
+    name: Analyze code
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Setup Flutter
-        id: flutter
-        uses: DanTup/gh-actions/setup-flutter@master
+        id: flutter-action
+        uses: subosito/flutter-action@v2
         with:
-          channel: stable
+          channel: 'stable'
+          cache: ${{ inputs.cache }}
+          cache-key: flutter-:os:-:channel:-:version:-:arch:-:hash:-${{ hashFiles('**/pubspec.yaml') }}
       - name: Install dependencies
         run: flutter pub get
-      - name: Dry-run publishing
+      - name: Flutter analyze
+        run: flutter analyze
+
+  calculate_score:
+    name: Calculate score
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Flutter
+        id: flutter-action
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: ${{ inputs.cache }}
+          cache-key: flutter-:os:-:channel:-:version:-:arch:-:hash:-${{ hashFiles('**/pubspec.yaml') }}
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Install pana
+        run: flutter pub global activate pana
+      - name: Calculate pub points
+        run: flutter pub pub global run pana  --exit-code-threshold 0 .
+
+  test_publishing:
+    name: Test publishing
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Flutter
+        id: flutter-action
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: ${{ inputs.cache }}
+          cache-key: flutter-:os:-:channel:-:version:-:arch:-:hash:-${{ hashFiles('**/pubspec.yaml') }}
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Flutter publish dry run
         run: flutter pub publish --dry-run

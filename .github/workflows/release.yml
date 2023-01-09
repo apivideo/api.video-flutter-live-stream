@@ -3,16 +3,22 @@ on:
   release:
     types: [ published ]
 jobs:
+  build_ios:
+    name: Build iOS
+    uses: apivideo/.github/.github/workflows/flutter_build_ios.yml@main
+  build_android:
+    name: Build Android
+    uses: apivideo/.github/.github/workflows/flutter_build_android.yml@main
   publish:
+    name: Publish to pub.dev
+    needs: [ build_ios, build_android, build_web ]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: Setup Flutter
-        id: flutter
-        uses: DanTup/gh-actions/setup-flutter@master
+      - uses: actions/checkout@v3
+      - name: Publish
+        uses: sakebook/actions-flutter-pub-publisher@v1.4.1
         with:
-          channel: stable
-      - name: Install dependencies
-        run: flutter pub get
-      - name: Publishing
-        run: flutter pub publish -f
+          credential: ${{ secrets.CREDENTIAL_JSON }}
+          flutter_package: true
+          skip_test: false
+          dry_run: false
