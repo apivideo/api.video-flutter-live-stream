@@ -184,6 +184,6 @@ extension Dictionary where Key == String {
     func toVideoConfig() -> VideoConfig {
         return VideoConfig(bitrate: self["bitrate"] as! Int,
                            resolution: (self["resolution"] as! String).toResolution(),
-                           fps: self["fps"] as! Int)
+                           fps: self["fps"] as! Float64)
     }
 }

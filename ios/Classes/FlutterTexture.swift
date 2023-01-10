@@ -3,7 +3,7 @@ import HaishinKit
 import AVFoundation
 
 class PreviewTexture: NSObject, FlutterTexture {
-    var orientation: AVCaptureVideoOrientation = .portrait
+    var videoOrientation: AVCaptureVideoOrientation = .portrait
     var position: AVCaptureDevice.Position = .back
     var videoFormatDescription: CMVideoFormatDescription?
 

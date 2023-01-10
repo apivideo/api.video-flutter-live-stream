@@ -2,7 +2,7 @@ import Foundation
 import ApiVideoLiveStream
 import AVFoundation
 
-class FlutterLiveStreamView: NSObject, FlutterStreamHandler {
+class FlutterLiveStreamView: NSObject {
     private let previewTexture: PreviewTexture
     private let liveStream: ApiVideoLiveStream
     
@@ -11,24 +11,13 @@ class FlutterLiveStreamView: NSObject, FlutterStreamHandler {
     
     init(binaryMessenger: FlutterBinaryMessenger, textureRegistry: FlutterTextureRegistry) throws {
         previewTexture = PreviewTexture(registry: textureRegistry)
-        liveStream = try ApiVideoLiveStream(initialAudioConfig: nil, initialVideoConfig: nil, preview: previewTexture)
+        liveStream = try ApiVideoLiveStream(preview: previewTexture, initialAudioConfig: nil, initialVideoConfig: nil, initialCamera: nil)
         eventChannel = FlutterEventChannel(name: "video.api.livestream/events", binaryMessenger: binaryMessenger)
         
         super.init()
         
+        liveStream.delegate = self
         eventChannel.setStreamHandler(self)
-        
-        liveStream.onConnectionSuccess = { () in
-            self.eventSink?(["type": "connected"])
-        }
-        liveStream.onDisconnect = { () in
-            self.isStreaming = false
-            self.eventSink?(["type": "disconnected"])
-        }
-        liveStream.onConnectionFailed = { code in
-            self.isStreaming = false
-            self.eventSink?(["type": "connectionFailed"])
-        }
     }
     
    
@@ -43,7 +32,7 @@ class FlutterLiveStreamView: NSObject, FlutterStreamHandler {
             liveStream.videoConfig
         }
         set {
-            self.eventSink?(["type": "videoSizeChanged", "width": Double(newValue.resolution.instance.width), "height": Double(newValue.resolution.instance.height)])
+            self.eventSink?(["type": "videoSizeChanged", "width": Double(newValue.resolution.size.width), "height": Double(newValue.resolution.size.height)])
             
             liveStream.videoConfig = newValue
         }
@@ -69,9 +58,9 @@ class FlutterLiveStreamView: NSObject, FlutterStreamHandler {
     
     var cameraPosition: String {
         get {
-            if (liveStream.camera == AVCaptureDevice.Position.back) {
+            if (liveStream.cameraPosition == AVCaptureDevice.Position.back) {
                 return "back"
-            } else if (liveStream.camera == AVCaptureDevice.Position.front) {
+            } else if (liveStream.cameraPosition == AVCaptureDevice.Position.front) {
                 return "front"
             } else {
                 return "other"
@@ -79,9 +68,9 @@ class FlutterLiveStreamView: NSObject, FlutterStreamHandler {
         }
         set {
             if (newValue == "back") {
-                liveStream.camera = AVCaptureDevice.Position.back
+                liveStream.cameraPosition = AVCaptureDevice.Position.back
             } else if (newValue == "front") {
-                liveStream.camera = AVCaptureDevice.Position.front
+                liveStream.cameraPosition = AVCaptureDevice.Position.front
             }
         }
     }
@@ -110,7 +99,9 @@ class FlutterLiveStreamView: NSObject, FlutterStreamHandler {
         liveStream.stopStreaming()
         isStreaming = false
     }
-    
+}
+
+extension FlutterLiveStreamView: FlutterStreamHandler {
     func onListen(withArguments _: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {
         eventSink = events
        return nil
@@ -120,4 +111,34 @@ class FlutterLiveStreamView: NSObject, FlutterStreamHandler {
        eventSink = nil
        return nil
    }
+}
+
+
+extension FlutterLiveStreamView: ApiVideoLiveStreamDelegate {
+    /// Called when the connection to the rtmp server is successful
+    func connectionSuccess() {
+        self.eventSink?(["type": "connected"])
+    }
+
+    /// Called when the connection to the rtmp server failed
+    func connectionFailed(_ code: String) {
+        self.isStreaming = false
+        self.eventSink?(["type": "connectionFailed"])
+    }
+
+    /// Called when the connection to the rtmp server is closed
+    func disconnection() {
+        self.isStreaming = false
+        self.eventSink?(["type": "disconnected"])
+    }
+
+    /// Called if an error happened during the audio configuration
+    func audioError(_ error: Error) {
+        print("audio error: \(error)")
+    }
+
+    /// Called if an error happened during the video configuration
+    func videoError(_ error: Error) {
+        print("video error: \(error)")
+    }
 }
