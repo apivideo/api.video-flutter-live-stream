@@ -35,11 +35,11 @@ flutter:
   plugin:
     platforms:
       android:
-        dartPluginClass: ApiVideoMobileLiveStream
+        dartPluginClass: ApiVideoMobileLiveStreamPlatform
         package: video.api.flutter.livestream
         pluginClass: ApiVideoLiveStreamPlugin
       ios:
-        dartPluginClass: ApiVideoMobileLiveStream
+        dartPluginClass: ApiVideoMobileLiveStreamPlatform
         pluginClass: ApiVideoLiveStreamPlugin
 
   # To add assets to your plugin package, add an assets section, like this:

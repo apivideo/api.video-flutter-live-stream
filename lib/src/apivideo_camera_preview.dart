@@ -8,7 +8,8 @@ import 'apivideo_live_stream_controller.dart';
 ///
 class ApiVideoCameraPreview extends StatefulWidget {
   /// Creates a new [ApiVideoCameraPreview] instance for [controller] and a [child] overlay.
-  const ApiVideoCameraPreview({super.key, required this.controller, this.child});
+  const ApiVideoCameraPreview(
+      {super.key, required this.controller, this.child});
 
   /// A widget to overlay on top of the camera preview
   final Widget? child;

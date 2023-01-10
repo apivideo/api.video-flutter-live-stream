@@ -57,7 +57,7 @@ class _LiveViewPageState extends State<LiveViewPage>
 
     _controller = createLiveStreamController();
 
-    _controller.initialize().catchError((e) { 
+    _controller.initialize().catchError((e) {
       showInSnackBar(e.toString());
     });
     super.initState();

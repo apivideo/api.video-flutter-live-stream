@@ -5,11 +5,12 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  /// The mocked method channel
   const MethodChannel channel =
       MethodChannel("video.api.livestream/controller");
-  final _controller = ApiVideoLiveStreamController(
-      initialVideoConfig: VideoConfig.withDefaultBitrate(),
-      initialAudioConfig: AudioConfig());
+
+  /// The platform to test
+  final _platform = ApiVideoMobileLiveStreamPlatform();
 
   test('startStreaming', () async {
     final url = "rtmp://test";
@@ -20,7 +21,7 @@ void main() {
       expect(methodCall.arguments["streamKey"], streamKey);
       return;
     });
-    _controller.startStreaming(streamKey: streamKey, url: url);
+    _platform.startStreaming(streamKey: streamKey, url: url);
     channel.setMockMethodCallHandler(null);
   });
 
@@ -29,7 +30,8 @@ void main() {
       throw Exception();
     });
 
-    expect(_controller.startStreaming(streamKey: "abcde"), throwsException);
+    expect(_platform.startStreaming(streamKey: "streamKey", url: "url"),
+        throwsException);
     channel.setMockMethodCallHandler(null);
   });
 }

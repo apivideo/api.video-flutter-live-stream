@@ -5,13 +5,13 @@ import 'apivideo_live_stream_platform_interface.dart';
 import 'types.dart';
 
 /// Controller of the live streaming
-class ApiVideoMobileLiveStream extends ApiVideoLiveStreamPlatform {
+class ApiVideoMobileLiveStreamPlatform extends ApiVideoLiveStreamPlatform {
   final MethodChannel _channel =
       const MethodChannel('video.api.livestream/controller');
 
   /// Registers this class as the default instance of [PathProviderPlatform].
   static void registerWith() {
-    ApiVideoLiveStreamPlatform.instance = ApiVideoMobileLiveStream();
+    ApiVideoLiveStreamPlatform.instance = ApiVideoMobileLiveStreamPlatform();
   }
 
   @override
