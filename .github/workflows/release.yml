@@ -11,7 +11,7 @@ jobs:
     uses: apivideo/.github/.github/workflows/flutter_build_android.yml@main
   publish:
     name: Publish to pub.dev
-    needs: [ build_ios, build_android, build_web ]
+    needs: [ build_ios, build_android ]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
