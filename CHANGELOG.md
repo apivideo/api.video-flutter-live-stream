@@ -2,6 +2,16 @@
 
 All changes to this project will be documented in this file.
 
+## [1.1.0] - 2023-01-11
+
+- Major refactor:
+    - use `initialize` instead of `create` and pass default parameters
+      to `ApiVideoLiveStreamController` constructor
+    - simplified usage of `CameraPreview` (and renamed to `ApiVideoCameraPreview`)
+- Getter for properties such as `isMuted`, `cameraPosition`, ... (
+  see [#13](https://github.com/apivideo/api.video-flutter-live-stream/issues/13))
+- Few fixes on Android and iOS
+
 ## [1.0.7] - 2022-10-12
 
 - Fix crash on `stopStreaming`.
