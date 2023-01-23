@@ -2,6 +2,10 @@
 
 All changes to this project will be documented in this file.
 
+## [1.1.1] - 2023-01-23
+
+- iOS: fix the orientation when device is turned
+
 ## [1.1.0] - 2023-01-11
 
 - Major refactor:
