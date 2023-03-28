@@ -203,16 +203,7 @@ class _LiveViewPageState extends State<LiveViewPage>
       return;
     }
 
-    try {
-      liveStreamController.switchCamera();
-    } catch (error) {
-      if (error is PlatformException) {
-        _showDialog(
-            context, "Error", "Failed to switch camera: ${error.message}");
-      } else {
-        _showDialog(context, "Error", "Failed to switch camera: $error");
-      }
-    }
+    return await liveStreamController.switchCamera();
   }
 
   Future<void> toggleMicrophone() async {
@@ -223,63 +214,43 @@ class _LiveViewPageState extends State<LiveViewPage>
       return;
     }
 
-    try {
-      liveStreamController.toggleMute();
-    } catch (error) {
-      if (error is PlatformException) {
-        _showDialog(
-            context, "Error", "Failed to toggle mute: ${error.message}");
-      } else {
-        _showDialog(context, "Error", "Failed to toggle mute: $error");
-      }
-    }
+    return await liveStreamController.toggleMute();
   }
 
   Future<void> startStreaming() async {
-    final ApiVideoLiveStreamController? liveStreamController = _controller;
+    final ApiVideoLiveStreamController? controller = _controller;
 
-    if (liveStreamController == null) {
-      showInSnackBar('Error: create a camera controller first.');
+    if (controller == null) {
+      print('Error: create a camera controller first.');
       return;
     }
 
-    try {
-      await liveStreamController.startStreaming(
-          streamKey: config.streamKey, url: config.rtmpUrl);
-    } catch (error) {
-      setIsStreaming(false);
-      if (error is PlatformException) {
-        print("Error: failed to start stream: ${error.message}");
-      } else {
-        print("Error: failed to start stream: $error");
-      }
-    }
+    return await controller.startStreaming(
+        streamKey: config.streamKey, url: config.rtmpUrl);
   }
 
   Future<void> stopStreaming() async {
-    final ApiVideoLiveStreamController? liveStreamController = _controller;
+    final ApiVideoLiveStreamController? controller = _controller;
 
-    if (liveStreamController == null) {
-      showInSnackBar('Error: create a camera controller first.');
+    if (controller == null) {
+      print('Error: create a camera controller first.');
       return;
     }
 
-    try {
-      liveStreamController.stopStreaming();
-    } catch (error) {
-      if (error is PlatformException) {
-        _showDialog(
-            context, "Error", "Failed to stop stream: ${error.message}");
-      } else {
-        _showDialog(context, "Error", "Failed to stop stream: $error");
-      }
-    }
+    return await controller.stopStreaming();
   }
 
   void onSwitchCameraButtonPressed() {
     switchCamera().then((_) {
       if (mounted) {
         setState(() {});
+      }
+    }).catchError((error) {
+      if (error is PlatformException) {
+        _showDialog(
+            context, "Error", "Failed to switch camera: ${error.message}");
+      } else {
+        _showDialog(context, "Error", "Failed to switch camera: $error");
       }
     });
   }
@@ -289,6 +260,13 @@ class _LiveViewPageState extends State<LiveViewPage>
       if (mounted) {
         setState(() {});
       }
+    }).catchError((error) {
+      if (error is PlatformException) {
+        _showDialog(
+            context, "Error", "Failed to toggle mute: ${error.message}");
+      } else {
+        _showDialog(context, "Error", "Failed to toggle mute: $error");
+      }
     });
   }
 
@@ -297,6 +275,13 @@ class _LiveViewPageState extends State<LiveViewPage>
       if (mounted) {
         setIsStreaming(true);
       }
+    }).catchError((error) {
+      if (error is PlatformException) {
+        _showDialog(
+            context, "Error", "Failed to start stream: ${error.message}");
+      } else {
+        _showDialog(context, "Error", "Failed to start stream: $error");
+      }
     });
   }
 
@@ -304,6 +289,13 @@ class _LiveViewPageState extends State<LiveViewPage>
     stopStreaming().then((_) {
       if (mounted) {
         setIsStreaming(false);
+      }
+    }).catchError((error) {
+      if (error is PlatformException) {
+        _showDialog(
+            context, "Error", "Failed to stop stream: ${error.message}");
+      } else {
+        _showDialog(context, "Error", "Failed to stop stream: $error");
       }
     });
   }
