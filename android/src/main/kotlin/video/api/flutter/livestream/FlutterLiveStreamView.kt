@@ -127,8 +127,15 @@ class FlutterLiveStreamView(
 
     fun startStream(url: String) {
         runBlocking {
-            streamer.startStream(url)
-            _isStreaming = true
+            streamer.connect(url)
+            try {
+                streamer.startStream()
+                _isStreaming = true
+            } catch (e: Exception) {
+                streamer.disconnect()
+                onLost("Failed to start stream: ${e.message}")
+                throw e
+            }
         }
     }
 
@@ -173,15 +180,19 @@ class FlutterLiveStreamView(
     }
 
     override fun onFailed(message: String) {
-        Handler(Looper.getMainLooper()).post {
-            eventSink?.success(mapOf("type" to "connectionFailed", "message" to message))
-        }
+        sendConnectionFailed(message)
     }
 
     override fun onError(error: StreamPackError) {
         _isStreaming = false
         Handler(Looper.getMainLooper()).post {
             eventSink?.error(error::class.java.name, error.message, error)
+        }
+    }
+
+    private fun sendConnectionFailed(message: String) {
+        Handler(Looper.getMainLooper()).post {
+            eventSink?.success(mapOf("type" to "connectionFailed", "message" to message))
         }
     }
 
