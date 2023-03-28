@@ -163,12 +163,10 @@ identifier.
 
 api.video Flutter live stream library is using external native library:
 
-| Plugin | README |
-| ------ | ------ |
+| Plugin     | README       |
+|------------|--------------|
 | StreamPack | [StreamPack] |
 | HaishinKit | [HaishinKit] |
-
-# FAQ
 
 # FAQ
 
