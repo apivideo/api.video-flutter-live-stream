@@ -123,7 +123,7 @@ extension FlutterLiveStreamView: ApiVideoLiveStreamDelegate {
     /// Called when the connection to the rtmp server failed
     func connectionFailed(_ code: String) {
         self.isStreaming = false
-        self.eventSink?(["type": "connectionFailed"])
+        self.eventSink?(["type": "connectionFailed", "message": "Failed to connect"])
     }
 
     /// Called when the connection to the rtmp server is closed
