@@ -11,11 +11,11 @@ class ApiVideoLiveStreamPlugin : FlutterPlugin, ActivityAware {
     private var flutterPluginBinding: FlutterPluginBinding? = null
     private var methodCallHandlerImpl: MethodCallHandlerImpl? = null
 
-    override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPluginBinding) {
+    override fun onAttachedToEngine(flutterPluginBinding: FlutterPluginBinding) {
         this.flutterPluginBinding = flutterPluginBinding
     }
 
-    override fun onDetachedFromEngine(@NonNull binding: FlutterPluginBinding) {
+    override fun onDetachedFromEngine(binding: FlutterPluginBinding) {
         this.flutterPluginBinding = null
     }
 
