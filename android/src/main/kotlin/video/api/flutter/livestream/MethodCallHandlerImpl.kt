@@ -123,6 +123,7 @@ class MethodCallHandlerImpl(
             }
             "stopStreaming" -> {
                 flutterView!!.stopStream()
+                result.success(null)
             }
             "getIsStreaming" -> result.success(mapOf("isStreaming" to flutterView!!.isStreaming))
             "getCameraPosition" -> {
