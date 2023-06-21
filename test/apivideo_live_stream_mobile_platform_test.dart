@@ -15,23 +15,21 @@ void main() {
   test('startStreaming', () async {
     final url = "rtmp://test";
     final streamKey = "abcde";
-    channel.setMockMethodCallHandler((MethodCall methodCall) async {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(channel, (MethodCall methodCall) async {
       expect(methodCall.method, "startStreaming");
       expect(methodCall.arguments["url"], url);
       expect(methodCall.arguments["streamKey"], streamKey);
       return;
     });
     _platform.startStreaming(streamKey: streamKey, url: url);
-    channel.setMockMethodCallHandler(null);
   });
 
   test('startStreaming with exception', () async {
-    channel.setMockMethodCallHandler((MethodCall methodCall) async {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(channel, (MethodCall methodCall) async {
       throw Exception();
     });
 
     expect(_platform.startStreaming(streamKey: "streamKey", url: "url"),
         throwsException);
-    channel.setMockMethodCallHandler(null);
   });
 }
