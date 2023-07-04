@@ -160,8 +160,8 @@ class MethodCallHandlerImpl(
                 val videoSize = flutterView!!.videoConfig.resolution
                 result.success(
                     mapOf(
-                        "width" to videoSize.width,
-                        "height" to videoSize.height
+                        "width" to videoSize.width.toDouble(),
+                        "height" to videoSize.height.toDouble()
                     )
                 )
             }
