@@ -2,6 +2,10 @@
 
 All changes to this project will be documented in this file.
 
+## [1.1.2] - 2023-08-16
+
+- Android: fix the `videoSize` cast
+
 ## [1.1.1] - 2023-01-23
 
 - iOS: fix the orientation when device is turned
