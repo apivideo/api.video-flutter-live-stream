@@ -140,8 +140,12 @@ class FlutterLiveStreamView(
     }
 
     fun stopStream() {
+        val isConnected = streamer.isConnected
         streamer.stopStream()
         streamer.disconnect()
+        if (isConnected) {
+            sendDisconnected()
+        }
         _isStreaming = false
     }
 
@@ -168,15 +172,11 @@ class FlutterLiveStreamView(
 
 
     override fun onSuccess() {
-        Handler(Looper.getMainLooper()).post {
-            eventSink?.success(mapOf("type" to "connected"))
-        }
+        sendConnected()
     }
 
     override fun onLost(message: String) {
-        Handler(Looper.getMainLooper()).post {
-            eventSink?.success(mapOf("type" to "disconnected"))
-        }
+        sendDisconnected()
     }
 
     override fun onFailed(message: String) {
@@ -188,6 +188,20 @@ class FlutterLiveStreamView(
         Handler(Looper.getMainLooper()).post {
             eventSink?.error(error::class.java.name, error.message, error)
         }
+    }
+
+    private fun sendEvent(type: String) {
+        Handler(Looper.getMainLooper()).post {
+            eventSink?.success(mapOf("type" to type))
+        }
+    }
+
+    private fun sendConnected() {
+        sendEvent("connected")
+    }
+
+    private fun sendDisconnected() {
+        sendEvent("disconnected")
     }
 
     private fun sendConnectionFailed(message: String) {
