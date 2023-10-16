@@ -2,6 +2,11 @@
 
 All changes to this project will be documented in this file.
 
+## [1.1.3] - 2023-10-16
+
+- Android: call `disconnect` event when `stopStream` is explicitly called
+- Add api.video application icon for Android and iOS
+
 ## [1.1.2] - 2023-08-16
 
 - Android: fix the `videoSize` cast
