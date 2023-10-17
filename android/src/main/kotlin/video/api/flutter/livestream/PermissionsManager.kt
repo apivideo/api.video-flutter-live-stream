@@ -95,7 +95,6 @@ class PermissionsManager(private val permissions: List<String>) {
     companion object {
         private const val CAMERA_REQUEST_ID = 9799
 
-
         fun hasCameraPermission(activity: Activity): Boolean {
             return (ContextCompat.checkSelfPermission(activity, Manifest.permission.CAMERA)
                     == PackageManager.PERMISSION_GRANTED)

@@ -43,64 +43,52 @@ class MethodCallHandlerImpl(
                     result.error("failed_to_create_live_stream", e.message, null)
                 }
             }
+
             "dispose" -> {
                 flutterView!!.dispose()
                 flutterView = null
             }
+
             "setVideoConfig" -> {
                 try {
-                    if (PermissionsManager.hasCameraPermission(activity)) {
+                    ensurePermissions(cameraPermissionsManager, result) {
                         val videoConfig = (call.arguments as Map<String, Any>).toVideoConfig()
                         flutterView!!.videoConfig = videoConfig
                         result.success(null)
-                    } else {
-                        result.error(
-                            "camera_permission_denied",
-                            "Camera permission is denied",
-                            null
-                        )
                     }
                 } catch (e: Exception) {
                     result.error("failed_to_set_video_config", e.message, null)
                 }
             }
+
             "setAudioConfig" -> {
                 try {
-                    if (PermissionsManager.hasMicrophonePermission(activity)) {
+                    ensurePermissions(audioPermissionsManager, result) {
                         val audioConfig = (call.arguments as Map<String, Any>).toAudioConfig()
                         flutterView!!.audioConfig = audioConfig
                         result.success(null)
-                    } else {
-                        result.error(
-                            "microphone_permission_denied",
-                            "Microphone permission is denied",
-                            null
-                        )
                     }
                 } catch (e: Exception) {
                     result.error("failed_to_set_audio_config", e.message, null)
                 }
             }
+
             "startPreview" -> {
                 try {
-                    if (PermissionsManager.hasCameraPermission(activity)) {
+                    ensurePermissions(cameraPermissionsManager, result) {
                         flutterView!!.startPreview()
                         result.success(null)
-                    } else {
-                        result.error(
-                            "camera_permission_denied",
-                            "Camera permission is denied",
-                            null
-                        )
                     }
                 } catch (e: Exception) {
                     result.error("failed_to_start_preview", e.message, null)
                 }
             }
+
             "stopPreview" -> {
                 flutterView!!.stopPreview()
                 result.success(null)
             }
+
             "startStreaming" -> {
                 val streamKey = call.argument<String>("streamKey")
                 val url = call.argument<String>("url")
@@ -108,23 +96,35 @@ class MethodCallHandlerImpl(
                     streamKey == null -> result.error(
                         "missing_stream_key", "Stream key is missing", null
                     )
+
+                    streamKey.isEmpty() -> result.error(
+                        "empty_stream_key", "Stream key is empty", null
+                    )
+
                     url == null -> result.error(
                         "missing_rtmp_url",
                         "RTMP URL is missing",
                         null
                     )
-                    else -> try {
-                        flutterView!!.startStream(url.addTrailingSlashIfNeeded() + streamKey)
-                        result.success(null)
-                    } catch (e: Exception) {
-                        result.error("failed_to_start_stream", e.message, null)
+
+                    url.isEmpty() -> result.error("empty_rtmp_url", "RTMP URL is empty", null)
+
+                    else -> ensurePermissions(audioCameraPermissionsManager, result) {
+                        try {
+                            flutterView!!.startStream(url.addTrailingSlashIfNeeded() + streamKey)
+                            result.success(null)
+                        } catch (e: Exception) {
+                            result.error("failed_to_start_stream", e.message, null)
+                        }
                     }
                 }
             }
+
             "stopStreaming" -> {
                 flutterView!!.stopStream()
                 result.success(null)
             }
+
             "getIsStreaming" -> result.success(mapOf("isStreaming" to flutterView!!.isStreaming))
             "getCameraPosition" -> {
                 try {
@@ -133,6 +133,7 @@ class MethodCallHandlerImpl(
                     result.error("failed_to_get_camera_position", e.message, null)
                 }
             }
+
             "setCameraPosition" -> {
                 val cameraPosition = try {
                     ((call.arguments as Map<*, *>)["position"] as String)
@@ -143,9 +144,11 @@ class MethodCallHandlerImpl(
                 flutterView!!.cameraPosition = cameraPosition
                 result.success(null)
             }
+
             "getIsMuted" -> {
                 result.success(mapOf("isMuted" to flutterView!!.isMuted))
             }
+
             "setIsMuted" -> {
                 val isMuted = try {
                     ((call.arguments as Map<*, *>)["isMuted"] as Boolean)
@@ -156,6 +159,7 @@ class MethodCallHandlerImpl(
                 flutterView!!.isMuted = isMuted
                 result.success(null)
             }
+
             "getVideoSize" -> {
                 val videoSize = flutterView!!.videoConfig.resolution
                 result.success(
@@ -165,6 +169,7 @@ class MethodCallHandlerImpl(
                     )
                 )
             }
+
             else -> result.notImplemented()
         }
     }
