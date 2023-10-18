@@ -92,6 +92,13 @@ class _LiveViewPageState extends State<LiveViewPage>
           setIsStreaming(false);
         }
       },
+      onError: (error) {
+        // Get error such as missing permission,...
+        _showDialog(context, 'Error', '$error');
+        if (mounted) {
+          setIsStreaming(false);
+        }
+      }
     );
   }
 
