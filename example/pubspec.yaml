@@ -12,7 +12,6 @@ dependencies:
   flutter:
     sdk: flutter
 
-  image_picker: ^0.8.5+3
   settings_ui: ^2.0.2
 
   apivideo_live_stream:
