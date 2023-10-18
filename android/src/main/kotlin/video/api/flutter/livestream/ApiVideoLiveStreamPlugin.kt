@@ -1,6 +1,5 @@
 package video.api.flutter.livestream
 
-import androidx.annotation.NonNull
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.FlutterPlugin.FlutterPluginBinding
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
@@ -8,36 +7,48 @@ import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 
 /** ApiVideoLiveStreamPlugin */
 class ApiVideoLiveStreamPlugin : FlutterPlugin, ActivityAware {
-    private var flutterPluginBinding: FlutterPluginBinding? = null
+    private var permissionsManager: PermissionsManager? = null
     private var methodCallHandlerImpl: MethodCallHandlerImpl? = null
 
-    override fun onAttachedToEngine(flutterPluginBinding: FlutterPluginBinding) {
-        this.flutterPluginBinding = flutterPluginBinding
+    override fun onAttachedToEngine(binding: FlutterPluginBinding) {
+        permissionsManager = PermissionsManager(binding.applicationContext).apply {
+            methodCallHandlerImpl = MethodCallHandlerImpl(
+                binding.applicationContext,
+                binding.binaryMessenger,
+                this,
+                binding.textureRegistry
+            ).apply {
+                startListening()
+            }
+        }
     }
 
     override fun onDetachedFromEngine(binding: FlutterPluginBinding) {
-        this.flutterPluginBinding = null
+        methodCallHandlerImpl?.stopListening()
+        methodCallHandlerImpl = null
+        permissionsManager = null
     }
 
     override fun onAttachedToActivity(binding: ActivityPluginBinding) {
-        methodCallHandlerImpl = MethodCallHandlerImpl(
-            binding.activity,
-            flutterPluginBinding!!.binaryMessenger,
-            binding::addRequestPermissionsResultListener,
-            flutterPluginBinding!!.textureRegistry
-        )
-    }
-
-    override fun onDetachedFromActivity() {
-        methodCallHandlerImpl?.dispose()
-        methodCallHandlerImpl = null
+        val activity = binding.activity
+        permissionsManager?.let {
+            it.activity = activity
+            binding.addRequestPermissionsResultListener(it)
+        }
     }
 
     override fun onDetachedFromActivityForConfigChanges() {
-        onDetachedFromActivity()
+        permissionsManager?.activity = null
     }
 
     override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
-        onAttachedToActivity(binding)
+        permissionsManager?.let {
+            it.activity = null
+            binding.addRequestPermissionsResultListener(it)
+        }
+    }
+
+    override fun onDetachedFromActivity() {
+        permissionsManager?.activity = null
     }
 }

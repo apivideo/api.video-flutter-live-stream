@@ -2,13 +2,8 @@ package video.api.flutter.livestream
 
 import android.Manifest
 import android.content.Context
-import android.os.Handler
-import android.os.Looper
 import android.util.Size
 import android.view.Surface
-import androidx.annotation.RequiresPermission
-import io.flutter.plugin.common.BinaryMessenger
-import io.flutter.plugin.common.EventChannel
 import io.flutter.view.TextureRegistry
 import io.github.thibaultbee.streampack.data.AudioConfig
 import io.github.thibaultbee.streampack.data.VideoConfig
@@ -16,13 +11,23 @@ import io.github.thibaultbee.streampack.error.StreamPackError
 import io.github.thibaultbee.streampack.ext.rtmp.streamers.CameraRtmpLiveStreamer
 import io.github.thibaultbee.streampack.listeners.OnConnectionListener
 import io.github.thibaultbee.streampack.listeners.OnErrorListener
-import io.github.thibaultbee.streampack.utils.*
+import io.github.thibaultbee.streampack.utils.getBackCameraList
+import io.github.thibaultbee.streampack.utils.getExternalCameraList
+import io.github.thibaultbee.streampack.utils.getFrontCameraList
+import io.github.thibaultbee.streampack.utils.isBackCamera
+import io.github.thibaultbee.streampack.utils.isExternalCamera
+import io.github.thibaultbee.streampack.utils.isFrontCamera
 import kotlinx.coroutines.runBlocking
 
 class FlutterLiveStreamView(
     private val context: Context,
     textureRegistry: TextureRegistry,
-    messenger: BinaryMessenger
+    private val permissionsManager: PermissionsManager,
+    private val onConnectionSucceeded: () -> Unit,
+    private val onDisconnected: () -> Unit,
+    private val onConnectionFailed: (String) -> Unit,
+    private val onGenericError: (Exception) -> Unit,
+    private val onVideoSizeChanged: (Size) -> Unit,
 ) :
     OnConnectionListener, OnErrorListener {
     private val flutterTexture = textureRegistry.createSurfaceTexture()
@@ -40,34 +45,13 @@ class FlutterLiveStreamView(
     val isStreaming: Boolean
         get() = _isStreaming
 
-    private var eventSink: EventChannel.EventSink? = null
-    private val eventChannel = EventChannel(messenger, "video.api.livestream/events")
-
-    init {
-        eventChannel.setStreamHandler(object : EventChannel.StreamHandler {
-            override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
-                eventSink = events
-            }
-
-            override fun onCancel(arguments: Any?) {
-                eventSink?.endOfStream()
-                eventSink = null
-            }
-        })
-    }
-
     var videoConfig = VideoConfig()
         set(value) {
             if (isStreaming) {
                 throw UnsupportedOperationException("You have to stop streaming first")
             }
-            eventSink?.success(
-                mapOf(
-                    "type" to "videoSizeChanged",
-                    "width" to value.resolution.width.toDouble(),
-                    "height" to value.resolution.height.toDouble() // Dart size fields are in double
-                )
-            )
+
+            onVideoSizeChanged(value.resolution)
 
             val wasPreviewing = _isPreviewing
             if (wasPreviewing) {
@@ -80,14 +64,31 @@ class FlutterLiveStreamView(
             }
         }
 
-    @RequiresPermission(Manifest.permission.RECORD_AUDIO)
     var audioConfig = AudioConfig()
         set(value) {
             if (isStreaming) {
                 throw UnsupportedOperationException("You have to stop streaming first")
             }
-            streamer.configure(value)
-            field = value
+            permissionsManager.requestPermission(
+                Manifest.permission.RECORD_AUDIO,
+                onGranted = {
+                    streamer.configure(value)
+                },
+                onShowPermissionRationale = { onRequiredPermissionLastTime ->
+                    /**
+                     * Require an AppCompat theme to use MaterialAlertDialogBuilder
+                     *
+                    context.showDialog(
+                        R.string.permission_required,
+                        R.string.record_audio_permission_required_message,
+                        android.R.string.ok,
+                        onPositiveButtonClick = { onRequiredPermissionLastTime() }
+                    ) */
+                    onGenericError(SecurityException("Missing permission Manifest.permission.RECORD_AUDIO"))
+                },
+                onDenied = {
+                    onGenericError(SecurityException("Missing permission Manifest.permission.RECORD_AUDIO"))
+                })
         }
 
     var isMuted: Boolean
@@ -144,15 +145,33 @@ class FlutterLiveStreamView(
         streamer.stopStream()
         streamer.disconnect()
         if (isConnected) {
-            sendDisconnected()
+            onDisconnected()
         }
         _isStreaming = false
     }
 
-    @RequiresPermission(Manifest.permission.CAMERA)
     fun startPreview() {
-        streamer.startPreview(getSurface(videoConfig.resolution))
-        _isPreviewing = true
+        permissionsManager.requestPermission(
+            Manifest.permission.CAMERA,
+            onGranted = {
+                streamer.startPreview(getSurface(videoConfig.resolution))
+                _isPreviewing = true
+            },
+            onShowPermissionRationale = { onRequiredPermissionLastTime ->
+                /**
+                 * Require an AppCompat theme to use MaterialAlertDialogBuilder
+                 *
+                 * context.showDialog(
+                    R.string.permission_required,
+                    R.string.camera_permission_required_message,
+                    android.R.string.ok,
+                    onPositiveButtonClick = { onRequiredPermissionLastTime() }
+                )*/
+                onGenericError(SecurityException("Missing permission Manifest.permission.CAMERA"))
+            },
+            onDenied = {
+                onGenericError(SecurityException("Missing permission Manifest.permission.CAMERA"))
+            })
     }
 
     fun stopPreview() {
@@ -172,45 +191,19 @@ class FlutterLiveStreamView(
 
 
     override fun onSuccess() {
-        sendConnected()
+        onConnectionSucceeded()
     }
 
     override fun onLost(message: String) {
-        sendDisconnected()
+        onDisconnected()
     }
 
     override fun onFailed(message: String) {
-        sendConnectionFailed(message)
+        onConnectionFailed(message)
     }
 
     override fun onError(error: StreamPackError) {
         _isStreaming = false
-        Handler(Looper.getMainLooper()).post {
-            eventSink?.error(error::class.java.name, error.message, error)
-        }
-    }
-
-    private fun sendEvent(type: String) {
-        Handler(Looper.getMainLooper()).post {
-            eventSink?.success(mapOf("type" to type))
-        }
-    }
-
-    private fun sendConnected() {
-        sendEvent("connected")
-    }
-
-    private fun sendDisconnected() {
-        sendEvent("disconnected")
-    }
-
-    private fun sendConnectionFailed(message: String) {
-        Handler(Looper.getMainLooper()).post {
-            eventSink?.success(mapOf("type" to "connectionFailed", "message" to message))
-        }
-    }
-
-    companion object {
-        private const val TAG = "FlutterLiveStreamView"
+        onGenericError(error)
     }
 }

@@ -1,108 +1,159 @@
-// Copyright 2013 The Flutter Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
 package video.api.flutter.livestream
 
-import android.Manifest
 import android.app.Activity
+import android.content.Context
 import android.content.pm.PackageManager
-import androidx.annotation.VisibleForTesting
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import io.flutter.plugin.common.PluginRegistry.RequestPermissionsResultListener
-import kotlin.reflect.KFunction1
+import io.flutter.plugin.common.PluginRegistry
 
-class PermissionsManager(private val permissions: List<String>) {
-    interface ResultCallback {
-        fun onResult(errorCode: String?, errorDescription: String?)
+/**
+ * Check if the app has the given permissions.
+ * For a single permission or multiple permissions.
+ */
+class PermissionsManager(
+    private val context: Context,
+) : PluginRegistry.RequestPermissionsResultListener {
+    private var uniqueRequestCode = 1
+
+    // To request permission, we need the activity
+    var activity: Activity? = null
+
+    private val listeners = mutableMapOf<Int, IListener>()
+    private fun hasPermission(permission: String) =
+        ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
+
+    private fun hasAllPermissions(permissions: List<String>) = permissions.all { permission ->
+        ContextCompat.checkSelfPermission(
+            context,
+            permission
+        ) == PackageManager.PERMISSION_GRANTED
     }
 
-    private var ongoing = false
-    fun requestPermissions(
+    private fun shouldShowRequestPermissionRationale(
         activity: Activity,
-        permissionsRegistry: KFunction1<RequestPermissionsResultListener, Unit>,
-        callback: (String?, String?) -> Unit
-    ) {
-        if (ongoing) {
-            callback("camera_permission", "Camera permission request ongoing")
+        permissions: List<String>
+    ) =
+        permissions.filter { permission ->
+            ActivityCompat.shouldShowRequestPermissionRationale(activity, permission)
         }
-        if (!hasAllPermissions(activity, permissions)) {
-            permissionsRegistry(
-                CameraRequestPermissionsListener(
-                    object : ResultCallback {
-                        override fun onResult(errorCode: String?, errorDescription: String?) {
-                            ongoing = false
-                            callback(errorCode, errorDescription)
-                        }
-                    })
-            )
-            ongoing = true
-            ActivityCompat.requestPermissions(
+
+    fun requestPermissions(
+        permissions: List<String>,
+        onAllGranted: () -> Unit,
+        onShowPermissionRationale: (List<String>, () -> Unit) -> Unit,
+        onAtLeastOnePermissionDenied: () -> Unit
+    ) {
+        activity?.let {
+            requestPermissions(it, permissions, object : IListener {
+                override fun onAllGranted() {
+                    onAllGranted()
+                }
+
+                override fun onShowPermissionRationale(
+                    permissions: List<String>,
+                    onRequiredPermissionLastTime: () -> Unit
+                ) {
+                    onShowPermissionRationale(permissions, onRequiredPermissionLastTime)
+                }
+
+                override fun onAtLeastOnePermissionDenied() {
+                    onAtLeastOnePermissionDenied()
+                }
+            })
+        } ?: throw IllegalStateException("Missing Activity")
+    }
+
+    private fun requestPermissions(
+        activity: Activity,
+        permissions: List<String>,
+        listener: IListener
+    ) {
+        val currentRequestCode = synchronized(this) {
+            uniqueRequestCode++
+        }
+        listeners[currentRequestCode] = listener
+        when {
+            hasAllPermissions(permissions) -> listener.onAllGranted()
+            shouldShowRequestPermissionRationale(activity, permissions).isNotEmpty() -> {
+                val missingPermissions = shouldShowRequestPermissionRationale(activity, permissions)
+                listener.onShowPermissionRationale(missingPermissions) {
+                    ActivityCompat.requestPermissions(
+                        activity,
+                        missingPermissions.toTypedArray(),
+                        currentRequestCode
+                    )
+                }
+            }
+
+            else -> ActivityCompat.requestPermissions(
                 activity,
                 permissions.toTypedArray(),
-                CAMERA_REQUEST_ID
+                currentRequestCode
             )
-        } else {
-            // Permissions already exist. Call the callback with success.
-            callback(null, null)
         }
     }
 
-    private fun hasAllPermissions(activity: Activity, permissions: List<String>): Boolean {
-        return permissions.all { hasPermission(activity, it) }
+    fun requestPermission(
+        permission: String,
+        onGranted: () -> Unit,
+        onShowPermissionRationale: (() -> Unit) -> Unit,
+        onDenied: () -> Unit
+    ) {
+        activity?.let {
+            requestPermissions(it, listOf(permission), object : IListener {
+                override fun onAllGranted() {
+                    onGranted()
+                }
+
+                override fun onShowPermissionRationale(
+                    permissions: List<String>,
+                    onRequiredPermissionLastTime: () -> Unit
+                ) {
+                    onShowPermissionRationale(onRequiredPermissionLastTime)
+                }
+
+                override fun onAtLeastOnePermissionDenied() {
+                    onDenied()
+                }
+            })
+        } ?: throw IllegalStateException("Missing Activity")
     }
 
-    private fun hasPermission(activity: Activity, permission: String): Boolean {
-        return (ContextCompat.checkSelfPermission(activity, permission)
-                == PackageManager.PERMISSION_GRANTED)
-    }
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray
+    ): Boolean {
+        val listener = listeners[requestCode] ?: return false
+        listeners.remove(requestCode)
 
-    @VisibleForTesting
-    internal class CameraRequestPermissionsListener @VisibleForTesting constructor(val callback: ResultCallback) :
-        RequestPermissionsResultListener {
-        // There's no way to unregister permission listeners in the v1 embedding, so we'll be called
-        // duplicate times in cases where the user denies and then grants a permission. Keep track of if
-        // we've responded before and bail out of handling the callback manually if this is a repeat
-        // call.
-        var alreadyCalled = false
-        override fun onRequestPermissionsResult(
-            id: Int,
-            permissions: Array<String>,
-            grantResults: IntArray
-        ): Boolean {
-            if (alreadyCalled || id != CAMERA_REQUEST_ID) {
-                return false
-            }
-            alreadyCalled = true
-            val notGrantedPermission = mutableListOf<String>()
-            List(grantResults.filter { result ->
-                result != PackageManager.PERMISSION_GRANTED
-            }.size) { index ->
-                notGrantedPermission.add(permissions[index])
-            }
-            if (notGrantedPermission.isEmpty()) {
-                callback.onResult(null, null)
+        grantResults.forEach {
+            if (it == PackageManager.PERMISSION_GRANTED) {
+                listener.onGranted(permissions[grantResults.indexOf(it)])
             } else {
-                callback.onResult(
-                    "camera_permission",
-                    "The user did not grant the permission(s): $notGrantedPermission"
-                )
+                listener.onDenied(permissions[grantResults.indexOf(it)])
             }
-            return true
         }
+        if (grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
+            listener.onAllGranted()
+        } else {
+            listener.onAtLeastOnePermissionDenied()
+        }
+
+        return listeners.isEmpty()
     }
 
-    companion object {
-        private const val CAMERA_REQUEST_ID = 9799
-
-        fun hasCameraPermission(activity: Activity): Boolean {
-            return (ContextCompat.checkSelfPermission(activity, Manifest.permission.CAMERA)
-                    == PackageManager.PERMISSION_GRANTED)
+    interface IListener {
+        fun onAllGranted() {}
+        fun onGranted(permission: String) {}
+        fun onShowPermissionRationale(
+            permissions: List<String>,
+            onRequiredPermissionLastTime: () -> Unit
+        ) {
         }
 
-        fun hasMicrophonePermission(activity: Activity): Boolean {
-            return (ContextCompat.checkSelfPermission(activity, Manifest.permission.RECORD_AUDIO)
-                    == PackageManager.PERMISSION_GRANTED)
-        }
+        fun onDenied(permission: String) {}
+        fun onAtLeastOnePermissionDenied() {}
     }
 }

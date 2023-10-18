@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="permission_required">Permission required</string>
+    <string name="record_audio_permission_required_message">You have to grant the record audio permission to stream.</string>
+    <string name="camera_permission_required_message">You have to grant the camera permission to stream.</string>
+</resources>

@@ -43,6 +43,8 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
 
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+
     implementation "io.github.thibaultbee:streampack:$streamPackVersion"
     implementation "io.github.thibaultbee:streampack-extension-rtmp:$streamPackVersion"
 }

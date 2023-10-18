@@ -1,44 +1,62 @@
 package video.api.flutter.livestream
 
-import android.Manifest
-import android.app.Activity
+import android.content.Context
+import android.os.Handler
+import android.os.Looper
+import android.util.Size
 import io.flutter.plugin.common.BinaryMessenger
+import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
-import io.flutter.plugin.common.PluginRegistry
 import io.flutter.view.TextureRegistry
-import kotlin.reflect.KFunction1
 
 class MethodCallHandlerImpl(
-    private val activity: Activity,
-    private val messenger: BinaryMessenger,
-    private val permissionsRegistry: KFunction1<PluginRegistry.RequestPermissionsResultListener, Unit>,
+    private val context: Context,
+    messenger: BinaryMessenger,
+    private val permissionsManager: PermissionsManager,
     private val textureRegistry: TextureRegistry
 ) : MethodChannel.MethodCallHandler {
-    private val audioCameraPermissionsManager =
-        PermissionsManager(listOf(Manifest.permission.RECORD_AUDIO, Manifest.permission.CAMERA))
-    private val audioPermissionsManager =
-        PermissionsManager(listOf(Manifest.permission.RECORD_AUDIO))
-    private val cameraPermissionsManager = PermissionsManager(listOf(Manifest.permission.CAMERA))
+    private val methodChannel = MethodChannel(messenger, METHOD_CHANNEL_NAME)
+    private val eventChannel = EventChannel(messenger, EVENT_CHANNEL_NAME)
+    private var eventSink: EventChannel.EventSink? = null
 
-    private val methodChannel = MethodChannel(messenger, "video.api.livestream/controller")
     private var flutterView: FlutterLiveStreamView? = null
 
-    init {
+    fun startListening() {
         methodChannel.setMethodCallHandler(this)
+        eventChannel.setStreamHandler(object : EventChannel.StreamHandler {
+            override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
+                eventSink = events
+            }
+
+            override fun onCancel(arguments: Any?) {
+                eventSink?.endOfStream()
+                eventSink = null
+            }
+        })
+    }
+
+    fun stopListening() {
+        methodChannel.setMethodCallHandler(null)
+        eventChannel.setStreamHandler(null)
     }
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
         when (call.method) {
             "create" -> {
                 try {
-                    ensurePermissions(audioCameraPermissionsManager, result) {
-                        flutterView?.dispose()
-                        flutterView = FlutterLiveStreamView(
-                            activity.applicationContext, textureRegistry, messenger
-                        )
-                        result.success(mapOf("textureId" to flutterView!!.textureId))
-                    }
+                    flutterView?.dispose()
+                    flutterView = FlutterLiveStreamView(
+                        context,
+                        textureRegistry,
+                        permissionsManager,
+                        { sendConnected() },
+                        { sendDisconnected() },
+                        { sendConnectionFailed(it) },
+                        { sendError(it) },
+                        { sendVideoSizeChanged(it) }
+                    )
+                    result.success(mapOf("textureId" to flutterView!!.textureId))
                 } catch (e: Exception) {
                     result.error("failed_to_create_live_stream", e.message, null)
                 }
@@ -51,11 +69,9 @@ class MethodCallHandlerImpl(
 
             "setVideoConfig" -> {
                 try {
-                    ensurePermissions(cameraPermissionsManager, result) {
-                        val videoConfig = (call.arguments as Map<String, Any>).toVideoConfig()
-                        flutterView!!.videoConfig = videoConfig
-                        result.success(null)
-                    }
+                    val videoConfig = (call.arguments as Map<String, Any>).toVideoConfig()
+                    flutterView!!.videoConfig = videoConfig
+                    result.success(null)
                 } catch (e: Exception) {
                     result.error("failed_to_set_video_config", e.message, null)
                 }
@@ -63,11 +79,9 @@ class MethodCallHandlerImpl(
 
             "setAudioConfig" -> {
                 try {
-                    ensurePermissions(audioPermissionsManager, result) {
-                        val audioConfig = (call.arguments as Map<String, Any>).toAudioConfig()
-                        flutterView!!.audioConfig = audioConfig
-                        result.success(null)
-                    }
+                    val audioConfig = (call.arguments as Map<String, Any>).toAudioConfig()
+                    flutterView!!.audioConfig = audioConfig
+                    result.success(null)
                 } catch (e: Exception) {
                     result.error("failed_to_set_audio_config", e.message, null)
                 }
@@ -75,10 +89,8 @@ class MethodCallHandlerImpl(
 
             "startPreview" -> {
                 try {
-                    ensurePermissions(cameraPermissionsManager, result) {
-                        flutterView!!.startPreview()
-                        result.success(null)
-                    }
+                    flutterView!!.startPreview()
+                    result.success(null)
                 } catch (e: Exception) {
                     result.error("failed_to_start_preview", e.message, null)
                 }
@@ -109,14 +121,13 @@ class MethodCallHandlerImpl(
 
                     url.isEmpty() -> result.error("empty_rtmp_url", "RTMP URL is empty", null)
 
-                    else -> ensurePermissions(audioCameraPermissionsManager, result) {
+                    else ->
                         try {
                             flutterView!!.startStream(url.addTrailingSlashIfNeeded() + streamKey)
                             result.success(null)
                         } catch (e: Exception) {
                             result.error("failed_to_start_stream", e.message, null)
                         }
-                    }
                 }
             }
 
@@ -174,28 +185,46 @@ class MethodCallHandlerImpl(
         }
     }
 
-    private fun ensurePermissions(
-        permissionsManager: PermissionsManager,
-        result: MethodChannel.Result,
-        onPermissionGranted: () -> Unit
-    ) {
-        permissionsManager.requestPermissions(
-            activity,
-            permissionsRegistry,
-        ) { errCode, errDesc ->
-            if (errCode == null) {
-                onPermissionGranted()
-            } else {
-                result.error(errCode, errDesc, null)
-            }
+    private fun sendEvent(type: String) {
+        Handler(Looper.getMainLooper()).post {
+            eventSink?.success(mapOf("type" to type))
         }
     }
 
-    fun dispose() {
-        methodChannel.setMethodCallHandler(null)
+    private fun sendConnected() {
+        sendEvent("connected")
+    }
+
+    private fun sendDisconnected() {
+        sendEvent("disconnected")
+    }
+
+    private fun sendConnectionFailed(message: String) {
+        Handler(Looper.getMainLooper()).post {
+            eventSink?.success(mapOf("type" to "connectionFailed", "message" to message))
+        }
+    }
+
+    private fun sendError(error: Exception) {
+        Handler(Looper.getMainLooper()).post {
+            eventSink?.error(error::class.java.name, error.message, error)
+        }
+    }
+
+    private fun sendVideoSizeChanged(resolution: Size) {
+        Handler(Looper.getMainLooper()).post {
+            eventSink?.success(
+                mapOf(
+                    "type" to "videoSizeChanged",
+                    "width" to resolution.width.toDouble(),
+                    "height" to resolution.height.toDouble() // Dart size fields are in double
+                )
+            )
+        }
     }
 
     companion object {
-        private const val TAG = "MethodCallHandlerImpl"
+        private const val METHOD_CHANNEL_NAME = "video.api.livestream/controller"
+        private const val EVENT_CHANNEL_NAME = "video.api.livestream/events"
     }
 }
