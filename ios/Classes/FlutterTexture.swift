@@ -1,6 +1,6 @@
+import AVFoundation
 import Foundation
 import HaishinKit
-import AVFoundation
 
 class PreviewTexture: NSObject, FlutterTexture {
     var videoOrientation: AVCaptureVideoOrientation = .portrait
@@ -21,9 +21,10 @@ class PreviewTexture: NSObject, FlutterTexture {
 
     func copyPixelBuffer() -> Unmanaged<CVPixelBuffer>? {
         guard let currentSampleBuffer = currentSampleBuffer,
-              let imageBuffer = CMSampleBufferGetImageBuffer(currentSampleBuffer) else {
-                 return nil
-             }
+              let imageBuffer = CMSampleBufferGetImageBuffer(currentSampleBuffer)
+        else {
+            return nil
+        }
 
         var pixelBuffer: Unmanaged<CVPixelBuffer>?
         queue.sync {
@@ -31,7 +32,7 @@ class PreviewTexture: NSObject, FlutterTexture {
         }
         return pixelBuffer
     }
-    
+
     func dispose() {
         registry.unregisterTexture(textureId)
     }
@@ -39,9 +40,10 @@ class PreviewTexture: NSObject, FlutterTexture {
 
 extension PreviewTexture: NetStreamDrawable {
     // MARK: - NetStreamDrawable
+
     func attachStream(_ stream: NetStream?) {
         guard let stream = stream else {
-            self.currentStream = nil
+            currentStream = nil
             return
         }
         stream.lockQueue.async {
@@ -53,6 +55,6 @@ extension PreviewTexture: NetStreamDrawable {
 
     func enqueue(_ sampleBuffer: CMSampleBuffer?) {
         currentSampleBuffer = sampleBuffer
-        self.registry.textureFrameAvailable(textureId)
+        registry.textureFrameAvailable(textureId)
     }
 }

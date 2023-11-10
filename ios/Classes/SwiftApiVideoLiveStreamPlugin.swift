@@ -1,9 +1,9 @@
+import ApiVideoLiveStream
 import AVFoundation
 import Flutter
+import HaishinKit
 import Network
 import UIKit
-import HaishinKit
-import ApiVideoLiveStream
 
 enum ApiVideoLiveStreamError: Error {
     case invalidAVSession
@@ -21,11 +21,11 @@ public class SwiftApiVideoLiveStreamPlugin: NSObject, FlutterPlugin {
     }
 
     public init(registrar: FlutterPluginRegistrar) {
-        self.binaryMessenger = registrar.messenger()
-        self.channel = FlutterMethodChannel(name: "video.api.livestream/controller", binaryMessenger: binaryMessenger)
-        self.registry = registrar.textures()
+        binaryMessenger = registrar.messenger()
+        channel = FlutterMethodChannel(name: "video.api.livestream/controller", binaryMessenger: binaryMessenger)
+        registry = registrar.textures()
         super.init()
-        
+
         registrar.addMethodCallDelegate(self, channel: channel)
     }
 
@@ -127,7 +127,8 @@ public class SwiftApiVideoLiveStreamPlugin: NSObject, FlutterPlugin {
                 return
             }
             guard let args = call.arguments as? [String: Any],
-                 let cameraPosition = args["position"] as? String else {
+                  let cameraPosition = args["position"] as? String
+            else {
                 result(FlutterError(code: "invalid_parameter", message: "Invalid camera position", details: nil))
                 return
             }
@@ -145,12 +146,19 @@ public class SwiftApiVideoLiveStreamPlugin: NSObject, FlutterPlugin {
                 return
             }
             guard let args = call.arguments as? [String: Any],
-                 let isMuted = args["isMuted"] as? Bool else {
+                  let isMuted = args["isMuted"] as? Bool
+            else {
                 result(FlutterError(code: "invalid_parameter", message: "Invalid isMuted", details: nil))
                 return
             }
             flutterView.isMuted = isMuted
             result(nil)
+        case "getVideoSize":
+            guard let flutterView = flutterView else {
+                result(FlutterError(code: "missing_live_stream", message: "Live stream must exist at this point", details: nil))
+                return
+            }
+            result(["width": flutterView.videoConfig.resolution.size.width, "height": flutterView.videoConfig.resolution.size.height])
         default:
             result(FlutterMethodNotImplemented)
         }
