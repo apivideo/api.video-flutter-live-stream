@@ -193,4 +193,3 @@ use [issues](https://github.com/apivideo/api.video-flutter-live-stream/issues).
 [StreamPack]: <https://github.com/ThibaultBee/StreamPack>
 
 [HaishinKit]: <https://github.com/shogo4405/HaishinKit.swift>
-
