@@ -63,7 +63,7 @@ class MethodCallHandlerImpl(
             }
 
             "dispose" -> {
-                flutterView!!.dispose()
+                flutterView?.dispose()
                 flutterView = null
             }
 
@@ -97,7 +97,7 @@ class MethodCallHandlerImpl(
             }
 
             "stopPreview" -> {
-                flutterView!!.stopPreview()
+                flutterView?.stopPreview()
                 result.success(null)
             }
 
@@ -132,7 +132,7 @@ class MethodCallHandlerImpl(
             }
 
             "stopStreaming" -> {
-                flutterView!!.stopStream()
+                flutterView?.stopStream()
                 result.success(null)
             }
 
@@ -152,12 +152,20 @@ class MethodCallHandlerImpl(
                     result.error("invalid_parameter", "Invalid camera position", e)
                     return
                 }
-                flutterView!!.cameraPosition = cameraPosition
-                result.success(null)
+                try {
+                    flutterView!!.cameraPosition = cameraPosition
+                    result.success(null)
+                } catch (e: Exception) {
+                    result.error("failed_to_set_camera_position", e.message, null)
+                }
             }
 
             "getIsMuted" -> {
-                result.success(mapOf("isMuted" to flutterView!!.isMuted))
+                try {
+                    result.success(mapOf("isMuted" to flutterView!!.isMuted))
+                } catch (e: Exception) {
+                    result.error("failed_to_get_is_muted", e.message, null)
+                }
             }
 
             "setIsMuted" -> {
@@ -167,18 +175,26 @@ class MethodCallHandlerImpl(
                     result.error("invalid_parameter", "Invalid isMuted", e)
                     return
                 }
-                flutterView!!.isMuted = isMuted
-                result.success(null)
+                try {
+                    flutterView!!.isMuted = isMuted
+                    result.success(null)
+                } catch (e: Exception) {
+                    result.error("failed_to_set_is_muted", e.message, null)
+                }
             }
 
             "getVideoSize" -> {
-                val videoSize = flutterView!!.videoConfig.resolution
-                result.success(
-                    mapOf(
-                        "width" to videoSize.width.toDouble(),
-                        "height" to videoSize.height.toDouble()
+                try {
+                    val videoSize = flutterView!!.videoConfig.resolution
+                    result.success(
+                        mapOf(
+                            "width" to videoSize.width.toDouble(),
+                            "height" to videoSize.height.toDouble()
+                        )
                     )
-                )
+                } catch (e: Exception) {
+                    result.error("failed_to_get_video_size", e.message, null)
+                }
             }
 
             else -> result.notImplemented()
