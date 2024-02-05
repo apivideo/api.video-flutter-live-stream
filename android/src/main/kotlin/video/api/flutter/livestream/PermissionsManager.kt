@@ -128,6 +128,10 @@ class PermissionsManager(
         val listener = listeners[requestCode] ?: return false
         listeners.remove(requestCode)
 
+        if (grantResults.isEmpty()) {
+            return false
+        }
+
         grantResults.forEach {
             if (it == PackageManager.PERMISSION_GRANTED) {
                 listener.onGranted(permissions[grantResults.indexOf(it)])
@@ -135,6 +139,7 @@ class PermissionsManager(
                 listener.onDenied(permissions[grantResults.indexOf(it)])
             }
         }
+
         if (grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
             listener.onAllGranted()
         } else {

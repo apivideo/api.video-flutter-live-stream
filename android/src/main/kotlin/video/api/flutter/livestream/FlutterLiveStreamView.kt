@@ -45,51 +45,75 @@ class FlutterLiveStreamView(
     val isStreaming: Boolean
         get() = _isStreaming
 
-    var videoConfig = VideoConfig()
-        set(value) {
-            if (isStreaming) {
-                throw UnsupportedOperationException("You have to stop streaming first")
-            }
 
-            onVideoSizeChanged(value.resolution)
+    private var _videoConfig: VideoConfig? = null
+    val videoConfig: VideoConfig
+        get() = _videoConfig!!
 
-            val wasPreviewing = _isPreviewing
-            if (wasPreviewing) {
-                stopPreview()
-            }
-            streamer.configure(value)
-            field = value
-            if (wasPreviewing) {
-                startPreview()
-            }
+    fun setVideoConfig(
+        videoConfig: VideoConfig,
+        onSuccess: () -> Unit,
+        onError: (Exception) -> Unit
+    ) {
+        if (isStreaming) {
+            throw UnsupportedOperationException("You have to stop streaming first")
         }
 
-    var audioConfig = AudioConfig()
-        set(value) {
-            if (isStreaming) {
-                throw UnsupportedOperationException("You have to stop streaming first")
-            }
-            permissionsManager.requestPermission(
-                Manifest.permission.RECORD_AUDIO,
-                onGranted = {
-                    streamer.configure(value)
-                },
-                onShowPermissionRationale = { onRequiredPermissionLastTime ->
-                    /**
-                     * Require an AppCompat theme to use MaterialAlertDialogBuilder
-                     *
-                    context.showDialog(
-                        R.string.permission_required,
-                        R.string.record_audio_permission_required_message,
-                        android.R.string.ok,
-                        onPositiveButtonClick = { onRequiredPermissionLastTime() }
-                    ) */
-                    onGenericError(SecurityException("Missing permission Manifest.permission.RECORD_AUDIO"))
-                },
-                onDenied = {
-                    onGenericError(SecurityException("Missing permission Manifest.permission.RECORD_AUDIO"))
-                })
+        onVideoSizeChanged(videoConfig.resolution)
+
+        val wasPreviewing = _isPreviewing
+        if (wasPreviewing) {
+            stopPreview()
         }
+        streamer.configure(videoConfig)
+        _videoConfig = videoConfig
+        if (wasPreviewing) {
+            startPreview(onSuccess, onError)
+        } else {
+            onSuccess()
+        }
+    }
+
+    private var _audioConfig: AudioConfig? = null
+    val audioConfig: AudioConfig
+        get() = _audioConfig!!
+
+    fun setAudioConfig(
+        audioConfig: AudioConfig,
+        onSuccess: () -> Unit,
+        onError: (Exception) -> Unit
+    ) {
+        if (isStreaming) {
+            throw UnsupportedOperationException("You have to stop streaming first")
+        }
+
+        permissionsManager.requestPermission(
+            Manifest.permission.RECORD_AUDIO,
+            onGranted = {
+                try {
+                    streamer.configure(audioConfig)
+                    _audioConfig = audioConfig
+                    onSuccess()
+                } catch (e: Exception) {
+                    onError(e)
+                }
+            },
+            onShowPermissionRationale = { onRequiredPermissionLastTime ->
+                /**
+                 * Require an AppCompat theme to use MaterialAlertDialogBuilder
+                 *
+                context.showDialog(
+                R.string.permission_required,
+                R.string.record_audio_permission_required_message,
+                android.R.string.ok,
+                onPositiveButtonClick = { onRequiredPermissionLastTime() }
+                ) */
+                onError(SecurityException("Missing permission Manifest.permission.RECORD_AUDIO"))
+            },
+            onDenied = {
+                onError(SecurityException("Missing permission Manifest.permission.RECORD_AUDIO"))
+            })
+    }
 
     var isMuted: Boolean
         get() = streamer.settings.audio.isMuted
@@ -97,28 +121,54 @@ class FlutterLiveStreamView(
             streamer.settings.audio.isMuted = value
         }
 
-    var camera: String
+    val camera: String
         get() = streamer.camera
-        set(value) {
-            streamer.camera = value
-        }
 
-    var cameraPosition: String
+    fun setCamera(camera: String, onSuccess: () -> Unit, onError: (Exception) -> Unit) {
+        permissionsManager.requestPermission(
+            Manifest.permission.CAMERA,
+            onGranted = {
+                try {
+                    streamer.camera = camera
+                    onSuccess()
+                } catch (e: Exception) {
+                    onError(e)
+                }
+            },
+            onShowPermissionRationale = { onRequiredPermissionLastTime ->
+                /**
+                 * Require an AppCompat theme to use MaterialAlertDialogBuilder
+                 *
+                 * context.showDialog(
+                R.string.permission_required,
+                R.string.camera_permission_required_message,
+                android.R.string.ok,
+                onPositiveButtonClick = { onRequiredPermissionLastTime() }
+                )*/
+                onError(SecurityException("Missing permission Manifest.permission.CAMERA"))
+            },
+            onDenied = {
+                onError(SecurityException("Missing permission Manifest.permission.CAMERA"))
+            })
+    }
+
+    val cameraPosition: String
         get() = when {
             context.isFrontCamera(streamer.camera) -> "front"
             context.isBackCamera(streamer.camera) -> "back"
             context.isExternalCamera(streamer.camera) -> "other"
             else -> throw IllegalArgumentException("Invalid camera position for camera ${streamer.camera}")
         }
-        set(value) {
-            val cameraList = when (value) {
-                "front" -> context.getFrontCameraList()
-                "back" -> context.getBackCameraList()
-                "other" -> context.getExternalCameraList()
-                else -> throw IllegalArgumentException("Invalid camera position: $value")
-            }
-            streamer.camera = cameraList[0]
+
+    fun setCameraPosition(position: String, onSuccess: () -> Unit, onError: (Exception) -> Unit) {
+        val cameraList = when (position) {
+            "front" -> context.getFrontCameraList()
+            "back" -> context.getBackCameraList()
+            "other" -> context.getExternalCameraList()
+            else -> throw IllegalArgumentException("Invalid camera position: $position")
         }
+        setCamera(cameraList.first(), onSuccess, onError)
+    }
 
     fun dispose() {
         streamer.stopStream()
@@ -150,27 +200,36 @@ class FlutterLiveStreamView(
         _isStreaming = false
     }
 
-    fun startPreview() {
+    fun startPreview(onSuccess: () -> Unit, onError: (Exception) -> Unit) {
         permissionsManager.requestPermission(
             Manifest.permission.CAMERA,
             onGranted = {
-                streamer.startPreview(getSurface(videoConfig.resolution))
-                _isPreviewing = true
+                if (_videoConfig == null) {
+                    onError(IllegalStateException("Video has not been configured!"))
+                } else {
+                    try {
+                        streamer.startPreview(getSurface(videoConfig.resolution))
+                        _isPreviewing = true
+                        onSuccess()
+                    } catch (e: Exception) {
+                        onError(e)
+                    }
+                }
             },
             onShowPermissionRationale = { onRequiredPermissionLastTime ->
                 /**
                  * Require an AppCompat theme to use MaterialAlertDialogBuilder
                  *
                  * context.showDialog(
-                    R.string.permission_required,
-                    R.string.camera_permission_required_message,
-                    android.R.string.ok,
-                    onPositiveButtonClick = { onRequiredPermissionLastTime() }
+                R.string.permission_required,
+                R.string.camera_permission_required_message,
+                android.R.string.ok,
+                onPositiveButtonClick = { onRequiredPermissionLastTime() }
                 )*/
-                onGenericError(SecurityException("Missing permission Manifest.permission.CAMERA"))
+                onError(SecurityException("Missing permission Manifest.permission.CAMERA"))
             },
             onDenied = {
-                onGenericError(SecurityException("Missing permission Manifest.permission.CAMERA"))
+                onError(SecurityException("Missing permission Manifest.permission.CAMERA"))
             })
     }
 

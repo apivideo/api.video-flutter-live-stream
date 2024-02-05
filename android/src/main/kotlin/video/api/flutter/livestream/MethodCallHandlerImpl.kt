@@ -70,8 +70,16 @@ class MethodCallHandlerImpl(
             "setVideoConfig" -> {
                 try {
                     val videoConfig = (call.arguments as Map<String, Any>).toVideoConfig()
-                    flutterView!!.videoConfig = videoConfig
-                    result.success(null)
+                    flutterView!!.setVideoConfig(
+                        videoConfig,
+                        { result.success(null) },
+                        {
+                            result.error(
+                                "failed_to_set_video_config",
+                                it.message,
+                                null
+                            )
+                        })
                 } catch (e: Exception) {
                     result.error("failed_to_set_video_config", e.message, null)
                 }
@@ -80,8 +88,16 @@ class MethodCallHandlerImpl(
             "setAudioConfig" -> {
                 try {
                     val audioConfig = (call.arguments as Map<String, Any>).toAudioConfig()
-                    flutterView!!.audioConfig = audioConfig
-                    result.success(null)
+                    flutterView!!.setAudioConfig(
+                        audioConfig,
+                        { result.success(null) },
+                        {
+                            result.error(
+                                "failed_to_set_audio_config",
+                                it.message,
+                                null
+                            )
+                        })
                 } catch (e: Exception) {
                     result.error("failed_to_set_audio_config", e.message, null)
                 }
@@ -89,8 +105,15 @@ class MethodCallHandlerImpl(
 
             "startPreview" -> {
                 try {
-                    flutterView!!.startPreview()
-                    result.success(null)
+                    flutterView!!.startPreview(
+                        { result.success(null) },
+                        {
+                            result.error(
+                                "failed_to_start_preview",
+                                it.message,
+                                null
+                            )
+                        })
                 } catch (e: Exception) {
                     result.error("failed_to_start_preview", e.message, null)
                 }
@@ -153,8 +176,15 @@ class MethodCallHandlerImpl(
                     return
                 }
                 try {
-                    flutterView!!.cameraPosition = cameraPosition
-                    result.success(null)
+                    flutterView!!.setCameraPosition(cameraPosition,
+                        { result.success(null) },
+                        {
+                            result.error(
+                                "failed_to_set_camera_position",
+                                it.message,
+                                null
+                            )
+                        })
                 } catch (e: Exception) {
                     result.error("failed_to_set_camera_position", e.message, null)
                 }
