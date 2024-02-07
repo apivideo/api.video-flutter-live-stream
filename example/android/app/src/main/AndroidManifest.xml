@@ -1,5 +1,4 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="video.api.flutter.livestream.example">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <application
         android:icon="@drawable/ic_api_video"
