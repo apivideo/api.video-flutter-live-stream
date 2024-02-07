@@ -31,7 +31,7 @@ class FlutterLiveStreamView: NSObject {
             liveStream.videoConfig
         }
         set {
-            eventSink?(["type": "videoSizeChanged", "width": Double(newValue.resolution.size.width), "height": Double(newValue.resolution.size.height)])
+            sendEvent(["type": "videoSizeChanged", "width": Double(newValue.resolution.size.width), "height": Double(newValue.resolution.size.height)])
 
             liveStream.videoConfig = newValue
         }
@@ -110,24 +110,30 @@ extension FlutterLiveStreamView: FlutterStreamHandler {
         eventSink = nil
         return nil
     }
+    
+    private func sendEvent(_ event: [String: Any]) {
+        DispatchQueue.main.async {
+            self.eventSink?(event)
+        }
+    }
 }
 
 extension FlutterLiveStreamView: ApiVideoLiveStreamDelegate {
     /// Called when the connection to the rtmp server is successful
     func connectionSuccess() {
-        eventSink?(["type": "connected"])
+        sendEvent(["type": "connected"])
     }
 
     /// Called when the connection to the rtmp server failed
     func connectionFailed(_: String) {
         isStreaming = false
-        eventSink?(["type": "connectionFailed", "message": "Failed to connect"])
+        sendEvent(["type": "connectionFailed", "message": "Failed to connect"])
     }
 
     /// Called when the connection to the rtmp server is closed
     func disconnection() {
         isStreaming = false
-        eventSink?(["type": "disconnected"])
+        sendEvent(["type": "disconnected"])
     }
 
     /// Called if an error happened during the audio configuration
