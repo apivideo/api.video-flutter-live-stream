@@ -11,9 +11,9 @@ import io.github.thibaultbee.streampack.error.StreamPackError
 import io.github.thibaultbee.streampack.ext.rtmp.streamers.CameraRtmpLiveStreamer
 import io.github.thibaultbee.streampack.listeners.OnConnectionListener
 import io.github.thibaultbee.streampack.listeners.OnErrorListener
-import io.github.thibaultbee.streampack.utils.getBackCameraList
-import io.github.thibaultbee.streampack.utils.getExternalCameraList
-import io.github.thibaultbee.streampack.utils.getFrontCameraList
+import io.github.thibaultbee.streampack.utils.backCameraList
+import io.github.thibaultbee.streampack.utils.externalCameraList
+import io.github.thibaultbee.streampack.utils.frontCameraList
 import io.github.thibaultbee.streampack.utils.isBackCamera
 import io.github.thibaultbee.streampack.utils.isExternalCamera
 import io.github.thibaultbee.streampack.utils.isFrontCamera
@@ -162,16 +162,16 @@ class FlutterLiveStreamView(
 
     fun setCameraPosition(position: String, onSuccess: () -> Unit, onError: (Exception) -> Unit) {
         val cameraList = when (position) {
-            "front" -> context.getFrontCameraList()
-            "back" -> context.getBackCameraList()
-            "other" -> context.getExternalCameraList()
+            "front" -> context.frontCameraList
+            "back" -> context.backCameraList
+            "other" -> context.externalCameraList
             else -> throw IllegalArgumentException("Invalid camera position: $position")
         }
         setCamera(cameraList.first(), onSuccess, onError)
     }
 
     fun dispose() {
-        streamer.stopStream()
+        stopStream()
         streamer.stopPreview()
         flutterTexture.release()
     }
@@ -192,7 +192,9 @@ class FlutterLiveStreamView(
 
     fun stopStream() {
         val isConnected = streamer.isConnected
-        streamer.stopStream()
+        runBlocking {
+            streamer.stopStream()
+        }
         streamer.disconnect()
         if (isConnected) {
             onDisconnected()
