@@ -3,6 +3,7 @@ import 'package:apivideo_live_stream_example/settings_screen.dart';
 import 'package:apivideo_live_stream_example/types/params.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 import 'constants.dart';
 
@@ -74,32 +75,31 @@ class _LiveViewPageState extends State<LiveViewPage>
 
   ApiVideoLiveStreamController createLiveStreamController() {
     return ApiVideoLiveStreamController(
-      initialAudioConfig: config.audio,
-      initialVideoConfig: config.video,
-      onConnectionSuccess: () {
-        print('Connection succeeded');
-      },
-      onConnectionFailed: (error) {
-        print('Connection failed: $error');
-        _showDialog(context, 'Connection failed', '$error');
-        if (mounted) {
-          setIsStreaming(false);
-        }
-      },
-      onDisconnection: () {
-        showInSnackBar('Disconnected');
-        if (mounted) {
-          setIsStreaming(false);
-        }
-      },
-      onError: (error) {
-        // Get error such as missing permission,...
-        _showDialog(context, 'Error', '$error');
-        if (mounted) {
-          setIsStreaming(false);
-        }
-      }
-    );
+        initialAudioConfig: config.audio,
+        initialVideoConfig: config.video,
+        onConnectionSuccess: () {
+          print('Connection succeeded');
+        },
+        onConnectionFailed: (error) {
+          print('Connection failed: $error');
+          _showDialog(context, 'Connection failed', '$error');
+          if (mounted) {
+            setIsStreaming(false);
+          }
+        },
+        onDisconnection: () {
+          showInSnackBar('Disconnected');
+          if (mounted) {
+            setIsStreaming(false);
+          }
+        },
+        onError: (error) {
+          // Get error such as missing permission,...
+          _showDialog(context, 'Error', '$error');
+          if (mounted) {
+            setIsStreaming(false);
+          }
+        });
   }
 
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
@@ -309,6 +309,11 @@ class _LiveViewPageState extends State<LiveViewPage>
 
   void setIsStreaming(bool isStreaming) {
     setState(() {
+      if (isStreaming) {
+        WakelockPlus.enable();
+      } else {
+        WakelockPlus.disable();
+      }
       _isStreaming = isStreaming;
     });
   }
