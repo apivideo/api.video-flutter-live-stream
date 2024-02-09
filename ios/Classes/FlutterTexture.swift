@@ -4,13 +4,16 @@ import HaishinKit
 
 class PreviewTexture: NSObject, FlutterTexture {
     var videoOrientation: AVCaptureVideoOrientation = .portrait
-    var position: AVCaptureDevice.Position = .back
-    var videoFormatDescription: CMVideoFormatDescription?
+    var isCaptureVideoPreviewEnabled: Bool = false
+
+    private weak var currentStream: IOStream? {
+        didSet {
+            currentStream?.drawable = self
+        }
+    }
 
     private var currentSampleBuffer: CMSampleBuffer?
     private let registry: FlutterTextureRegistry
-    private let queue = DispatchQueue(label: "api.video.flutter.livestream.pixelBufferSynchronizationQueue")
-    private var currentStream: NetStream?
     private(set) var textureId: Int64 = 0
 
     public init(registry: FlutterTextureRegistry) {
@@ -26,11 +29,7 @@ class PreviewTexture: NSObject, FlutterTexture {
             return nil
         }
 
-        var pixelBuffer: Unmanaged<CVPixelBuffer>?
-        queue.sync {
-            pixelBuffer = Unmanaged<CVPixelBuffer>.passRetained(imageBuffer)
-        }
-        return pixelBuffer
+        return Unmanaged<CVPixelBuffer>.passRetained(imageBuffer)
     }
 
     func dispose() {
@@ -38,18 +37,15 @@ class PreviewTexture: NSObject, FlutterTexture {
     }
 }
 
-extension PreviewTexture: NetStreamDrawable {
-    // MARK: - NetStreamDrawable
-
-    func attachStream(_ stream: NetStream?) {
-        guard let stream = stream else {
-            currentStream = nil
-            return
-        }
-        stream.lockQueue.async {
-            stream.mixer.drawable = self
-            self.currentStream = stream
-            stream.mixer.startRunning()
+extension PreviewTexture: IOStreamDrawable {
+    // MARK: - IOStreamDrawable
+    func attachStream(_ stream: IOStream?) {
+        if Thread.isMainThread {
+            currentStream = stream
+        } else {
+            DispatchQueue.main.async {
+                self.currentStream = stream
+            }
         }
     }
 
