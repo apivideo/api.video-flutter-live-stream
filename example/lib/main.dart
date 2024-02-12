@@ -112,41 +112,42 @@ class _LiveViewPageState extends State<LiveViewPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      key: _scaffoldKey,
-      appBar: AppBar(
-        title: const Text('Live Stream Example'),
-        actions: <Widget>[
-          PopupMenuButton<String>(
-            onSelected: (choice) => _onMenuSelected(choice, context),
-            itemBuilder: (BuildContext context) {
-              return Constants.choices.map((String choice) {
-                return PopupMenuItem<String>(
-                  value: choice,
-                  child: Text(choice),
-                );
-              }).toList();
-            },
-          )
-        ],
-      ),
-      body: Center(
-        child: Column(
-          children: <Widget>[
-            Expanded(
-              child: Container(
-                child: Padding(
-                  padding: const EdgeInsets.all(1.0),
-                  child: Center(
-                    child: ApiVideoCameraPreview(controller: _controller),
-                  ),
-                ),
-              ),
-            ),
-            _controlRowWidget()
+        key: _scaffoldKey,
+        appBar: AppBar(
+          title: const Text('Live Stream Example'),
+          actions: <Widget>[
+            PopupMenuButton<String>(
+              onSelected: (choice) => _onMenuSelected(choice, context),
+              itemBuilder: (BuildContext context) {
+                return Constants.choices.map((String choice) {
+                  return PopupMenuItem<String>(
+                    value: choice,
+                    child: Text(choice),
+                  );
+                }).toList();
+              },
+            )
           ],
         ),
-      ),
-    );
+        body: SafeArea(
+          child: Center(
+            child: Column(
+              children: <Widget>[
+                Expanded(
+                  child: Container(
+                    child: Padding(
+                      padding: const EdgeInsets.all(1.0),
+                      child: Center(
+                        child: ApiVideoCameraPreview(controller: _controller),
+                      ),
+                    ),
+                  ),
+                ),
+                _controlRowWidget()
+              ],
+            ),
+          ),
+        ));
   }
 
   void _onMenuSelected(String choice, BuildContext context) {
