@@ -66,6 +66,11 @@ class _LiveViewPageState extends State<LiveViewPage>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    // App state changed before we got the chance to initialize.
+    if (!_controller.isInitialized) {
+      return;
+    }
+
     if (state == AppLifecycleState.inactive) {
       _controller.stop();
     } else if (state == AppLifecycleState.resumed) {
