@@ -13,19 +13,22 @@ class VideoConfig {
   /// The live streaming video resolution
   Resolution resolution;
 
-  /// The video framerate in fps
+  /// The video frame rate in fps
   int fps;
 
   /// Creates a [VideoConfig] instance
   VideoConfig(
       {required this.bitrate,
       this.resolution = Resolution.RESOLUTION_720,
-      this.fps = 30});
+      this.fps = 30})
+      : assert(bitrate > 0),
+        assert(fps > 0);
 
   /// Creates a [VideoConfig] instance where bitrate is set according to the given [resolution].
   VideoConfig.withDefaultBitrate(
       {this.resolution = Resolution.RESOLUTION_720, this.fps = 30})
-      : bitrate = _getDefaultBitrate(resolution);
+      : assert(fps > 0),
+        bitrate = _getDefaultBitrate(resolution);
 
   /// Creates a [VideoConfig] from a [json] map.
   factory VideoConfig.fromJson(Map<String, dynamic> json) =>

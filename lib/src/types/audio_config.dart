@@ -36,7 +36,8 @@ class AudioConfig {
       this.channel = Channel.stereo,
       this.sampleRate = SampleRate.kHz_44_1,
       this.enableEchoCanceler = true,
-      this.enableNoiseSuppressor = true});
+      this.enableNoiseSuppressor = true})
+      : assert(bitrate > 0);
 
   /// Creates a [AudioConfig] from a [json] map.
   factory AudioConfig.fromJson(Map<String, dynamic> json) =>

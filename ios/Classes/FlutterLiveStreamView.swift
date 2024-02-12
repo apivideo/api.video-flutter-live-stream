@@ -31,7 +31,7 @@ class FlutterLiveStreamView: NSObject {
             liveStream.videoConfig
         }
         set {
-            sendEvent(["type": "videoSizeChanged", "width": Double(newValue.resolution.size.width), "height": Double(newValue.resolution.size.height)])
+            sendEvent(["type": "videoSizeChanged", "width": Double(newValue.resolution.width), "height": Double(newValue.resolution.height)])
 
             liveStream.videoConfig = newValue
         }

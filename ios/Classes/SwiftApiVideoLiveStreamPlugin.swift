@@ -54,8 +54,7 @@ public class SwiftApiVideoLiveStreamPlugin: NSObject, FlutterPlugin {
                 result(FlutterError(code: "invalid_parameter", message: "Invalid video config", details: nil))
                 return
             }
-            flutterView.videoConfig = videoParameters.toVideoConfig()
-            result(nil)
+            applyVideoConfig(config: videoParameters, flutterView: flutterView, result: result)
         case "setAudioConfig":
             guard let flutterView = flutterView else {
                 result(FlutterError(code: "missing_live_stream", message: "Live stream must exist at this point", details: nil))
@@ -65,8 +64,7 @@ public class SwiftApiVideoLiveStreamPlugin: NSObject, FlutterPlugin {
                 result(FlutterError(code: "invalid_parameter", message: "Invalid audio config", details: nil))
                 return
             }
-            flutterView.audioConfig = audioParameters.toAudioConfig()
-            result(nil)
+            applyAudioConfig(config: audioParameters, flutterView: flutterView, result: result)
         case "startPreview":
             guard let flutterView = flutterView else {
                 result(FlutterError(code: "missing_live_stream", message: "Live stream must exist at this point", details: nil))
@@ -158,40 +156,50 @@ public class SwiftApiVideoLiveStreamPlugin: NSObject, FlutterPlugin {
                 result(FlutterError(code: "missing_live_stream", message: "Live stream must exist at this point", details: nil))
                 return
             }
-            result(["width": flutterView.videoConfig.resolution.size.width, "height": flutterView.videoConfig.resolution.size.height])
+            result(["width": flutterView.videoConfig.resolution.width, "height": flutterView.videoConfig.resolution.height])
         default:
             result(FlutterMethodNotImplemented)
         }
     }
+    
+    private func applyVideoConfig(config: Dictionary<String, Any>, flutterView: FlutterLiveStreamView, result: @escaping FlutterResult) {
+        let resolutionString = config["resolution"] as! String?
+        guard let resolutionString else {
+            result(FlutterError(code: "missing_parameter", message: "Resolution is missing", details: nil))
+            return
+        }
+        let resolution = resolutionString.toResolution()
+        guard let resolution else {
+            result(FlutterError(code: "invalid_parameter", message: "Invalid resolution \(resolutionString)", details: nil))
+            return
+        }
+        flutterView.videoConfig = VideoConfig(bitrate: config["bitrate"] as! Int,
+                           resolution: resolution.rawValue,
+                           fps: config["fps"] as! Float64)
+        result(nil)
+    }
+    
+    private func applyAudioConfig(config: Dictionary<String, Any>, flutterView: FlutterLiveStreamView, result: @escaping FlutterResult) {
+        flutterView.audioConfig = AudioConfig(bitrate: config["bitrate"] as! Int)
+        result(nil)
+    }
 }
 
 extension String {
-    func toResolution() -> Resolution {
+    func toResolution() -> Resolution? {
         switch self {
         case "240p":
-            return Resolution.RESOLUTION_240
+            return Resolution.RESOLUTION_16_9_240P
         case "360p":
-            return Resolution.RESOLUTION_360
+            return Resolution.RESOLUTION_16_9_360P
         case "480p":
-            return Resolution.RESOLUTION_480
+            return Resolution.RESOLUTION_16_9_480P
         case "720p":
-            return Resolution.RESOLUTION_720
+            return Resolution.RESOLUTION_16_9_720P
         case "1080p":
-            return Resolution.RESOLUTION_1080
+            return Resolution.RESOLUTION_16_9_1080P
         default:
-            return Resolution.RESOLUTION_720
+            return nil
         }
-    }
-}
-
-extension Dictionary where Key == String {
-    func toAudioConfig() -> AudioConfig {
-        return AudioConfig(bitrate: self["bitrate"] as! Int)
-    }
-
-    func toVideoConfig() -> VideoConfig {
-        return VideoConfig(bitrate: self["bitrate"] as! Int,
-                           resolution: (self["resolution"] as! String).toResolution(),
-                           fps: self["fps"] as! Float64)
     }
 }

@@ -31,12 +31,11 @@ fun Map<String, Any>.toAudioConfig(): AudioConfig {
 
 fun String.toResolution(): Size {
     return when (this) {
-        "240p" -> Size(352, 240)
+        "240p" -> Size(426, 240)
         "360p" -> Size(640, 360)
-        "480p" -> Size(858, 480)
+        "480p" -> Size(854, 480)
         "720p" -> Size(1280, 720)
         "1080p" -> Size(1920, 1080)
-        "2160p" -> Size(4096, 2160)
         else -> throw IllegalArgumentException("Unknown resolution: $this")
     }
 }

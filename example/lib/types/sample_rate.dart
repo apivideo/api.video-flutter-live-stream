@@ -10,18 +10,6 @@ Map<SampleRate, String> getSampleRatesMap() {
 
 extension SampleRateExtension on SampleRate {
   String toPrettyString() {
-    var result = "";
-    switch (this) {
-      case SampleRate.kHz_11:
-        result = "11 kHz";
-        break;
-      case SampleRate.kHz_22:
-        result = "22 kHz";
-        break;
-      case SampleRate.kHz_44_1:
-        result = "44.1 kHz";
-        break;
-    }
-    return result;
+    return "${this.value / 1000} KHz";
   }
 }
