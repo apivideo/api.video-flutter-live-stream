@@ -98,7 +98,7 @@ class FlutterLiveStreamView(
                     onError(e)
                 }
             },
-            onShowPermissionRationale = { onRequiredPermissionLastTime ->
+            onShowPermissionRationale = { _ ->
                 /**
                  * Require an AppCompat theme to use MaterialAlertDialogBuilder
                  *
@@ -135,7 +135,7 @@ class FlutterLiveStreamView(
                     onError(e)
                 }
             },
-            onShowPermissionRationale = { onRequiredPermissionLastTime ->
+            onShowPermissionRationale = { _ ->
                 /**
                  * Require an AppCompat theme to use MaterialAlertDialogBuilder
                  *
@@ -194,12 +194,12 @@ class FlutterLiveStreamView(
         val isConnected = streamer.isConnected
         runBlocking {
             streamer.stopStream()
+            streamer.disconnect()
+            if (isConnected) {
+                onDisconnected()
+            }
+            _isStreaming = false
         }
-        streamer.disconnect()
-        if (isConnected) {
-            onDisconnected()
-        }
-        _isStreaming = false
     }
 
     fun startPreview(onSuccess: () -> Unit, onError: (Exception) -> Unit) {
@@ -218,7 +218,7 @@ class FlutterLiveStreamView(
                     }
                 }
             },
-            onShowPermissionRationale = { onRequiredPermissionLastTime ->
+            onShowPermissionRationale = { _ ->
                 /**
                  * Require an AppCompat theme to use MaterialAlertDialogBuilder
                  *

@@ -9,6 +9,9 @@ import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.view.TextureRegistry
+import video.api.flutter.livestream.utils.addTrailingSlashIfNeeded
+import video.api.flutter.livestream.utils.toAudioConfig
+import video.api.flutter.livestream.utils.toVideoConfig
 
 class MethodCallHandlerImpl(
     private val context: Context,
@@ -69,6 +72,7 @@ class MethodCallHandlerImpl(
 
             "setVideoConfig" -> {
                 try {
+                    @Suppress("UNCHECKED_CAST")
                     val videoConfig = (call.arguments as Map<String, Any>).toVideoConfig()
                     flutterView!!.setVideoConfig(
                         videoConfig,
@@ -87,6 +91,7 @@ class MethodCallHandlerImpl(
 
             "setAudioConfig" -> {
                 try {
+                    @Suppress("UNCHECKED_CAST")
                     val audioConfig = (call.arguments as Map<String, Any>).toAudioConfig()
                     flutterView!!.setAudioConfig(
                         audioConfig,

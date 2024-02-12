@@ -1,4 +1,4 @@
-package video.api.flutter.livestream
+package video.api.flutter.livestream.utils
 
 import android.util.Size
 import io.github.thibaultbee.streampack.data.AudioConfig
