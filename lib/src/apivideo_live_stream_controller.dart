@@ -142,9 +142,9 @@ class ApiVideoLiveStreamController {
   }
 
   /// Same as [stopStreaming] and [stopPreview]
-  void stop() {
-    stopStreaming();
-    stopPreview();
+  Future<void> stop() async {
+    await stopStreaming();
+    await stopPreview();
   }
 
   /// Gets if live stream is streaming or not.
