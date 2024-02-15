@@ -53,7 +53,7 @@ This module is made for broadcasting RTMP live stream from smartphone camera.
 
 ### Installation
 
-Run the following command at the root of your project.
+Run the following command at the root of your project:
 
 ```shell
 flutter pub add apivideo_live_stream

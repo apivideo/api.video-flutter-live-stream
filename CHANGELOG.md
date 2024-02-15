@@ -2,6 +2,19 @@
 
 All changes to this project will be documented in this file.
 
+## [1.2.0] - 2024-02-12
+
+- Add a `fit` parameter to `ApiVideoCameraPreview` to control the fit of the preview inside its
+  parent widget
+- Improve and fix few video resolution issues
+- Android: The package automatically requests the camera and microphone permissions
+- Android: upgrade gradle, kotlin, AGP and other dependencies
+- iOS: add missing `getVideoSize` method
+- iOS: send events from the main thread
+- Example: lower default bitrate to run the example effortlessly
+- Example: enable wake lock to keep the device awake during the live stream
+- Example: put the application in the safe area
+
 ## [1.1.3] - 2023-10-16
 
 - Android: call `disconnect` event when `stopStream` is explicitly called
