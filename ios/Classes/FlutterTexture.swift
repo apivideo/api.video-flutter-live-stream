@@ -8,7 +8,7 @@ class PreviewTexture: NSObject, FlutterTexture {
 
     private weak var currentStream: IOStream? {
         didSet {
-            currentStream?.drawable = self
+            currentStream?.view = self
         }
     }
 
@@ -37,7 +37,7 @@ class PreviewTexture: NSObject, FlutterTexture {
     }
 }
 
-extension PreviewTexture: IOStreamDrawable {
+extension PreviewTexture: IOStreamView {
     // MARK: - IOStreamDrawable
     func attachStream(_ stream: IOStream?) {
         if Thread.isMainThread {
