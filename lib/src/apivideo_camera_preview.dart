@@ -97,10 +97,12 @@ class _ApiVideoCameraPreviewState extends State<ApiVideoCameraPreview> {
   Widget _buildFittedPreview(
       BoxConstraints constraints, NativeDeviceOrientation orientation) {
     final orientedSize = _size.orientate(orientation);
+    final fittedSize =
+        applyBoxFit(widget.fit, orientedSize, constraints.biggest);
     // See https://github.com/flutter/flutter/issues/17287
-    return SizedBox(
-        width: constraints.maxWidth,
-        height: constraints.maxHeight,
+    return Container(
+        width: fittedSize.destination.width,
+        height: fittedSize.destination.height,
         child: FittedBox(
             fit: widget.fit,
             clipBehavior: Clip.hardEdge,
