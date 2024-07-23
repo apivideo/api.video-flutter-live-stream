@@ -65,6 +65,13 @@ class _LiveViewPageState extends State<LiveViewPage>
   }
 
   @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     // App state changed before we got the chance to initialize.
     if (!_controller.isInitialized) {
