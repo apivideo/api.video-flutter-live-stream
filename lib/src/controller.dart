@@ -5,8 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:meta/meta.dart';
 
-import 'apivideo_live_stream_platform_interface.dart';
-import 'types.dart';
+import 'platform/platform_interface.dart';
+import 'types/types.dart';
 
 ApiVideoLiveStreamPlatform get _platform {
   return ApiVideoLiveStreamPlatform.instance;

@@ -1,4 +1,4 @@
-import 'package:apivideo_live_stream/apivideo_live_stream.dart';
+import 'package:apivideo_live_stream/src/platform/mobile_platform.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -15,7 +15,8 @@ void main() {
   test('startStreaming', () async {
     final url = "rtmp://test";
     final streamKey = "abcde";
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(channel, (MethodCall methodCall) async {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (MethodCall methodCall) async {
       expect(methodCall.method, "startStreaming");
       expect(methodCall.arguments["url"], url);
       expect(methodCall.arguments["streamKey"], streamKey);
@@ -25,7 +26,8 @@ void main() {
   });
 
   test('startStreaming with exception', () async {
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(channel, (MethodCall methodCall) async {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (MethodCall methodCall) async {
       throw Exception();
     });
 

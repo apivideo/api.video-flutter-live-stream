@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:native_device_orientation/native_device_orientation.dart';
 
-import 'apivideo_live_stream_controller.dart';
+import 'controller.dart';
 
 /// Widget that displays the camera preview of [controller].
 ///

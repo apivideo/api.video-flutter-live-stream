@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:apivideo_live_stream/apivideo_live_stream.dart';
-import 'package:apivideo_live_stream/src/apivideo_live_stream_platform_interface.dart';
+import 'package:apivideo_live_stream/src/platform/platform_interface.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

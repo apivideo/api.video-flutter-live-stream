@@ -1,8 +1,8 @@
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
-import 'apivideo_live_stream_platform_interface.dart';
-import 'types.dart';
+import '../types/types.dart';
+import 'platform_interface.dart';
 
 /// Controller of the live streaming
 class ApiVideoMobileLiveStreamPlatform extends ApiVideoLiveStreamPlatform {
