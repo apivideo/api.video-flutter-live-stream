@@ -3,6 +3,7 @@ import 'package:flutter/widgets.dart';
 import 'package:native_device_orientation/native_device_orientation.dart';
 
 import 'controller.dart';
+import 'listeners.dart';
 
 /// Widget that displays the camera preview of [controller].
 ///

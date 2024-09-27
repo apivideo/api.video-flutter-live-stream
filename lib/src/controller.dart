@@ -2,11 +2,10 @@ import 'dart:async';
 
 import 'package:apivideo_live_stream/apivideo_live_stream.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:meta/meta.dart';
 
+import 'listeners.dart';
 import 'platform/platform_interface.dart';
-import 'types/types.dart';
 
 ApiVideoLiveStreamPlatform get _platform {
   return ApiVideoLiveStreamPlatform.instance;
@@ -30,50 +29,50 @@ class ApiVideoLiveStreamController {
   /// Gets the current state of the video player.
   bool get isInitialized => _isInitialized;
 
-  /// Events
-  StreamSubscription<dynamic>? _eventSubscription;
+  /// Events listeners
   List<ApiVideoLiveStreamEventsListener> _eventsListeners = [];
   List<ApiVideoLiveStreamWidgetListener> _widgetListeners = [];
+
+  late ApiVideoLiveStreamEventsListener _platformListener =
+      ApiVideoLiveStreamEventsListener(onConnectionSuccess: () {
+    _eventsListeners.forEach((listener) {
+      if (listener.onConnectionSuccess != null) {
+        listener.onConnectionSuccess!();
+      }
+    });
+  }, onConnectionFailed: (error) {
+    _eventsListeners.forEach((listener) {
+      if (listener.onConnectionFailed != null) {
+        listener.onConnectionFailed!(error);
+      }
+    });
+  }, onDisconnection: () {
+    _eventsListeners.forEach((listener) {
+      if (listener.onDisconnection != null) {
+        listener.onDisconnection!();
+      }
+    });
+  }, onError: (error) {
+    _eventsListeners.forEach((listener) {
+      if (listener.onError != null) {
+        listener.onError!(error);
+      }
+    });
+  });
 
   /// Creates a new [ApiVideoLiveStreamController] instance.
   ApiVideoLiveStreamController(
       {required AudioConfig initialAudioConfig,
       required VideoConfig initialVideoConfig,
-      CameraPosition initialCameraPosition = CameraPosition.back,
-      VoidCallback? onConnectionSuccess,
-      Function(String)? onConnectionFailed,
-      VoidCallback? onDisconnection,
-      Function(Exception)? onError})
+      CameraPosition initialCameraPosition = CameraPosition.back})
       : _initialVideoConfig = initialVideoConfig,
         _initialAudioConfig = initialAudioConfig,
-        _initialCameraPosition = initialCameraPosition {
-    _eventsListeners.add(ApiVideoLiveStreamEventsListener(
-        onConnectionSuccess: onConnectionSuccess,
-        onConnectionFailed: onConnectionFailed,
-        onDisconnection: onDisconnection,
-        onError: onError));
-  }
-
-  ApiVideoLiveStreamController.fromListener(
-      {required AudioConfig initialAudioConfig,
-      required VideoConfig initialVideoConfig,
-      CameraPosition initialCameraPosition = CameraPosition.back,
-      ApiVideoLiveStreamEventsListener? listener})
-      : _initialVideoConfig = initialVideoConfig,
-        _initialAudioConfig = initialAudioConfig,
-        _initialCameraPosition = initialCameraPosition {
-    if (listener != null) {
-      _eventsListeners.add(listener);
-    }
-  }
+        _initialCameraPosition = initialCameraPosition {}
 
   /// Creates a new live stream instance with initial audio and video configurations.
   Future<void> initialize() async {
+    _platform.setListener(_platformListener);
     _textureId = await _platform.initialize() ?? kUninitializedTextureId;
-
-    _eventSubscription = _platform
-        .liveStreamingEventsFor(_textureId)
-        .listen(_eventListener, onError: _errorListener);
 
     for (var listener in [..._widgetListeners]) {
       if (listener.onTextureReady != null) {
@@ -92,7 +91,7 @@ class ApiVideoLiveStreamController {
 
   /// Disposes the live stream instance.
   Future<void> dispose() async {
-    await _eventSubscription?.cancel();
+    _platform.setListener(null);
     _eventsListeners.clear();
     _widgetListeners.clear();
     await _platform.dispose();
@@ -198,10 +197,28 @@ class ApiVideoLiveStreamController {
     return Texture(textureId: textureId);
   }
 
+  /// Adds a new events listener from the direct callbacks.
+  /// Returns the listener instance. You can remove it later with [removeEventsListener].
+  ApiVideoLiveStreamEventsListener addCallbacksListener(
+      {VoidCallback? onConnectionSuccess,
+      Function(String)? onConnectionFailed,
+      VoidCallback? onDisconnection,
+      Function(Exception)? onError}) {
+    final listener = ApiVideoLiveStreamEventsListener(
+        onConnectionSuccess: onConnectionSuccess,
+        onConnectionFailed: onConnectionFailed,
+        onDisconnection: onDisconnection,
+        onError: onError);
+    _eventsListeners.add(listener);
+    return listener;
+  }
+
+  /// Adds a new widget listener from the events listener.
   void addEventsListener(ApiVideoLiveStreamEventsListener listener) {
     _eventsListeners.add(listener);
   }
 
+  /// Removes an events listener.
   void removeEventsListener(ApiVideoLiveStreamEventsListener listener) {
     _eventsListeners.remove(listener);
   }
@@ -217,79 +234,4 @@ class ApiVideoLiveStreamController {
   void removeWidgetListener(ApiVideoLiveStreamWidgetListener listener) {
     _widgetListeners.remove(listener);
   }
-
-  void _errorListener(Object obj) {
-    final PlatformException e = obj as PlatformException;
-    for (var listener in [..._eventsListeners]) {
-      if (listener.onError != null) {
-        listener.onError!(e);
-      }
-    }
-  }
-
-  void _eventListener(LiveStreamingEvent event) {
-    switch (event.type) {
-      case LiveStreamingEventType.connected:
-        for (var listener in [..._eventsListeners]) {
-          if (listener.onConnectionSuccess != null) {
-            listener.onConnectionSuccess!();
-          }
-        }
-        break;
-      case LiveStreamingEventType.disconnected:
-        for (var listener in [..._eventsListeners]) {
-          if (listener.onDisconnection != null) {
-            listener.onDisconnection!();
-          }
-        }
-        break;
-      case LiveStreamingEventType.connectionFailed:
-        for (var listener in [..._eventsListeners]) {
-          if (listener.onConnectionFailed != null) {
-            listener.onConnectionFailed!(event.data as String);
-          }
-        }
-        break;
-      case LiveStreamingEventType.videoSizeChanged:
-        for (var listener in [..._eventsListeners]) {
-          if (listener.onVideoSizeChanged != null) {
-            listener.onVideoSizeChanged!(event.data as Size);
-          }
-        }
-        break;
-      case LiveStreamingEventType.unknown:
-        // Nothing to do
-        break;
-    }
-  }
-}
-
-class ApiVideoLiveStreamEventsListener {
-  /// Gets notified when the connection is successful
-  final VoidCallback? onConnectionSuccess;
-
-  /// Gets notified when the connection failed
-  final Function(String)? onConnectionFailed;
-
-  /// Gets notified when the device has been disconnected
-  final VoidCallback? onDisconnection;
-
-  /// Gets notified when the video size has changed. Mostly designed to update Widget aspect ratio.
-  final Function(Size)? onVideoSizeChanged;
-
-  /// Gets notified when an error occurs
-  final Function(Exception)? onError;
-
-  ApiVideoLiveStreamEventsListener(
-      {this.onConnectionSuccess,
-      this.onConnectionFailed,
-      this.onDisconnection,
-      this.onVideoSizeChanged,
-      this.onError});
-}
-
-class ApiVideoLiveStreamWidgetListener {
-  final VoidCallback? onTextureReady;
-
-  ApiVideoLiveStreamWidgetListener({this.onTextureReady});
 }

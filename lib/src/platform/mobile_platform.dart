@@ -1,13 +1,22 @@
+import 'package:apivideo_live_stream/src/extensions/size_extensions.dart';
+import 'package:apivideo_live_stream/src/listeners.dart';
+import 'package:apivideo_live_stream/src/types/types.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
-import '../types/types.dart';
+import 'generated/live_stream_api.g.dart';
 import 'platform_interface.dart';
 
 /// Controller of the live streaming
-class ApiVideoMobileLiveStreamPlatform extends ApiVideoLiveStreamPlatform {
-  final MethodChannel _channel =
-      const MethodChannel('video.api.livestream/controller');
+class ApiVideoMobileLiveStreamPlatform extends ApiVideoLiveStreamPlatform
+    implements LiveStreamFlutterApi {
+  final LiveStreamHostApi messenger = LiveStreamHostApi();
+  late ApiVideoLiveStreamEventsListener? _eventsListener;
+
+  ApiVideoMobileLiveStreamPlatform() {
+    LiveStreamFlutterApi.setUp(this,
+        binaryMessenger: messenger.pigeonVar_binaryMessenger);
+  }
 
   /// Registers this class as the default instance of [PathProviderPlatform].
   static void registerWith() {
@@ -16,89 +25,75 @@ class ApiVideoMobileLiveStreamPlatform extends ApiVideoLiveStreamPlatform {
 
   @override
   Future<int?> initialize() async {
-    final Map<String, dynamic>? reply =
-        await _channel.invokeMapMethod<String, dynamic>('create');
-    return reply!['textureId']! as int;
+    return messenger.create();
   }
 
   @override
   Future<void> dispose() {
-    return _channel.invokeMapMethod<String, dynamic>('dispose');
+    return messenger.dispose();
   }
 
   @override
   Future<void> setVideoConfig(VideoConfig videoConfig) {
-    return _channel.invokeMethod('setVideoConfig', videoConfig.toJson());
+    return messenger.setVideoConfig(videoConfig.toNative());
   }
 
   @override
   Future<void> setAudioConfig(AudioConfig audioConfig) {
-    return _channel.invokeMethod('setAudioConfig', audioConfig.toJson());
+    return messenger.setAudioConfig(audioConfig.toNative());
   }
 
   @override
   Future<void> startStreaming(
       {required String streamKey, required String url}) {
-    return _channel.invokeMethod('startStreaming', <String, dynamic>{
-      'streamKey': streamKey,
-      'url': url,
-    });
+    return messenger.startStreaming(streamKey: streamKey, url: url);
   }
 
   @override
   Future<void> stopStreaming() {
-    return _channel.invokeMethod('stopStreaming');
+    return messenger.stopStreaming();
   }
 
   @override
   Future<void> startPreview() {
-    return _channel.invokeMethod('startPreview');
+    return messenger.startPreview();
   }
 
   @override
   Future<void> stopPreview() {
-    return _channel.invokeMethod('stopPreview');
+    return messenger.stopPreview();
   }
 
   @override
   Future<bool> getIsStreaming() async {
-    final Map<dynamic, dynamic> reply =
-        await _channel.invokeMethod('getIsStreaming') as Map;
-    return reply['isStreaming'] as bool;
+    return messenger.getIsStreaming();
   }
 
   @override
   Future<void> setCameraPosition(CameraPosition cameraPosition) {
-    return _channel.invokeMethod('setCameraPosition',
-        <String, dynamic>{'position': cameraPosition.toJson()});
+    return messenger.setCameraPosition(cameraPosition);
   }
 
   @override
   Future<CameraPosition> getCameraPosition() async {
-    final Map<dynamic, dynamic> reply =
-        await _channel.invokeMethod('getCameraPosition') as Map;
-    return CameraPosition.fromJson(reply['position'] as String);
+    return messenger.getCameraPosition();
   }
 
   @override
   Future<void> setIsMuted(bool isMuted) {
-    return _channel
-        .invokeMethod('setIsMuted', <String, dynamic>{'isMuted': isMuted});
+    return messenger.setIsMuted(isMuted);
   }
 
   @override
   Future<bool> getIsMuted() async {
-    final Map<dynamic, dynamic> reply =
-        await _channel.invokeMethod('getIsMuted') as Map;
-    return reply['isMuted'] as bool;
+    return messenger.getIsMuted();
   }
 
   @override
   Future<Size?> getVideoSize() async {
-    final Map<dynamic, dynamic> reply =
-        await _channel.invokeMethod('getVideoSize') as Map;
-    if (reply.containsKey("width") && reply.containsKey("height")) {
-      return Size(reply["width"] as double, reply["height"] as double);
+    final resolution = await messenger.getVideoResolution();
+    if (resolution != null) {
+      return resolution.toSize();
     } else {
       return null;
     }
@@ -111,27 +106,32 @@ class ApiVideoMobileLiveStreamPlatform extends ApiVideoLiveStreamPlatform {
   }
 
   @override
-  Stream<LiveStreamingEvent> liveStreamingEventsFor(int textureId) {
-    return EventChannel('video.api.livestream/events')
-        .receiveBroadcastStream()
-        .map((dynamic map) {
-      final Map<dynamic, dynamic> event = map as Map<dynamic, dynamic>;
-      switch (event['type']) {
-        case 'connected':
-          return LiveStreamingEvent(type: LiveStreamingEventType.connected);
-        case 'disconnected':
-          return LiveStreamingEvent(type: LiveStreamingEventType.disconnected);
-        case 'connectionFailed':
-          return LiveStreamingEvent(
-              type: LiveStreamingEventType.connectionFailed,
-              data: event['message']);
-        case 'videoSizeChanged':
-          return LiveStreamingEvent(
-              type: LiveStreamingEventType.videoSizeChanged,
-              data: Size(event['width'] as double, event['height'] as double));
-        default:
-          return LiveStreamingEvent(type: LiveStreamingEventType.unknown);
-      }
-    });
+  void setListener(ApiVideoLiveStreamEventsListener? listener) {
+    _eventsListener = listener;
+  }
+
+  @override
+  void onConnectionFailed(String message) {
+    _eventsListener?.onConnectionFailed?.call(message);
+  }
+
+  @override
+  void onIsConnectedChanged(bool isConnected) {
+    if (isConnected) {
+      _eventsListener?.onConnectionSuccess?.call();
+    } else {
+      _eventsListener?.onDisconnection?.call();
+    }
+  }
+
+  @override
+  void onVideoSizeChanged(NativeResolution resolution) {
+    _eventsListener?.onVideoSizeChanged?.call(resolution.toSize());
+  }
+
+  @override
+  void onError(String code, String message) {
+    _eventsListener?.onError
+        ?.call(PlatformException(code: code, message: message));
   }
 }

@@ -48,7 +48,7 @@ class _LiveViewPageState extends State<LiveViewPage>
     with WidgetsBindingObserver {
   final ButtonStyle buttonStyle =
       ElevatedButton.styleFrom(textStyle: const TextStyle(fontSize: 20));
-  Params config = Params();
+  Params params = Params();
   late final ApiVideoLiveStreamController _controller;
   bool _isStreaming = false;
 
@@ -86,32 +86,36 @@ class _LiveViewPageState extends State<LiveViewPage>
   }
 
   ApiVideoLiveStreamController createLiveStreamController() {
-    return ApiVideoLiveStreamController(
-        initialAudioConfig: config.audio,
-        initialVideoConfig: config.video,
-        onConnectionSuccess: () {
-          print('Connection succeeded');
-        },
-        onConnectionFailed: (error) {
-          print('Connection failed: $error');
-          _showDialog(context, 'Connection failed', '$error');
-          if (mounted) {
-            setIsStreaming(false);
-          }
-        },
-        onDisconnection: () {
-          showInSnackBar('Disconnected');
-          if (mounted) {
-            setIsStreaming(false);
-          }
-        },
-        onError: (error) {
-          // Get error such as missing permission,...
-          _showDialog(context, 'Error', '$error');
-          if (mounted) {
-            setIsStreaming(false);
-          }
-        });
+    final controller = ApiVideoLiveStreamController(
+        initialAudioConfig: params.audioConfig,
+        initialVideoConfig: params.videoConfig);
+
+    controller.addCallbacksListener(onConnectionSuccess: () {
+      print('Connection succeeded');
+    }, onConnectionFailed: (error) {
+      print('Connection failed: $error');
+      _showDialog(context, 'Connection failed', '$error');
+      if (mounted) {
+        setIsStreaming(false);
+      }
+    }, onDisconnection: () {
+      showInSnackBar('Disconnected');
+      if (mounted) {
+        setIsStreaming(false);
+      }
+    }, onError: (error) {
+      // Get error such as missing permission,...
+      if (error is PlatformException) {
+        _showDialog(
+            context, "Error", error.message ?? "An unknown error occurred");
+      } else {
+        _showDialog(context, "Error", "$error");
+      }
+      if (mounted) {
+        setIsStreaming(false);
+      }
+    });
+    return controller;
   }
 
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
@@ -167,9 +171,9 @@ class _LiveViewPageState extends State<LiveViewPage>
     await Navigator.push(
         context,
         MaterialPageRoute(
-            builder: (context) => SettingsScreen(params: config)));
-    _controller.setVideoConfig(config.video);
-    _controller.setAudioConfig(config.audio);
+            builder: (context) => SettingsScreen(params: params)));
+    _controller.setVideoConfig(params.videoConfig);
+    _controller.setAudioConfig(params.audioConfig);
   }
 
   /// Display the control bar with buttons to take pictures and record videos.
@@ -246,7 +250,7 @@ class _LiveViewPageState extends State<LiveViewPage>
     }
 
     return await controller.startStreaming(
-        streamKey: config.streamKey, url: config.rtmpUrl);
+        streamKey: params.streamKey, url: params.rtmpUrl);
   }
 
   Future<void> stopStreaming() async {
@@ -310,14 +314,7 @@ class _LiveViewPageState extends State<LiveViewPage>
       if (mounted) {
         setIsStreaming(false);
       }
-    }).catchError((error) {
-      if (error is PlatformException) {
-        _showDialog(
-            context, "Error", "Failed to stop stream: ${error.message}");
-      } else {
-        _showDialog(context, "Error", "Failed to stop stream: $error");
-      }
-    });
+    }).catchError((error) {});
   }
 
   void setIsStreaming(bool isStreaming) {

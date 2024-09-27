@@ -1,54 +1,90 @@
 package video.api.flutter.livestream
 
+import android.app.Activity
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.FlutterPlugin.FlutterPluginBinding
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
+import io.flutter.plugin.common.BinaryMessenger
+import io.flutter.view.TextureRegistry
+import video.api.flutter.livestream.generated.LiveStreamHostApi
+
 
 /** ApiVideoLiveStreamPlugin */
 class ApiVideoLiveStreamPlugin : FlutterPlugin, ActivityAware {
-    private var permissionsManager: PermissionsManager? = null
-    private var methodCallHandlerImpl: MethodCallHandlerImpl? = null
+    private var pluginBinding: FlutterPluginBinding? = null
+    private var activityBinding: ActivityPluginBinding? = null
 
-    override fun onAttachedToEngine(binding: FlutterPluginBinding) {
-        permissionsManager = PermissionsManager(binding.applicationContext).apply {
-            methodCallHandlerImpl = MethodCallHandlerImpl(
-                binding.applicationContext,
-                binding.binaryMessenger,
-                this,
-                binding.textureRegistry
-            ).apply {
-                startListening()
-            }
+    private var permissionsManager: PermissionsManager? = null
+    private var liveStreamHostApiImpl: LiveStreamHostApiImpl? = null
+
+    private fun setUp(
+        permissionsManager: PermissionsManager,
+        binaryMessenger: BinaryMessenger,
+        activity: Activity,
+        textureRegistry: TextureRegistry
+    ) {
+        LiveStreamHostApiImpl(
+            activity,
+            permissionsManager,
+            textureRegistry,
+            binaryMessenger
+        ).apply {
+            LiveStreamHostApi.setUp(binaryMessenger, this)
+            liveStreamHostApiImpl = this
         }
     }
 
+    override fun onAttachedToEngine(binding: FlutterPluginBinding) {
+        pluginBinding = binding
+        permissionsManager = PermissionsManager(binding.applicationContext)
+    }
+
     override fun onDetachedFromEngine(binding: FlutterPluginBinding) {
-        methodCallHandlerImpl?.stopListening()
-        methodCallHandlerImpl = null
+        pluginBinding = null
         permissionsManager = null
     }
 
     override fun onAttachedToActivity(binding: ActivityPluginBinding) {
+        activityBinding = binding
+
         val activity = binding.activity
-        permissionsManager?.let {
-            it.activity = activity
-            binding.addRequestPermissionsResultListener(it)
-        }
+
+        val pluginBinding = requireNotNull(pluginBinding)
+
+        val permissionsManager = requireNotNull(permissionsManager)
+        permissionsManager.activity = activity
+        binding.addRequestPermissionsResultListener(permissionsManager)
+
+        setUp(
+            permissionsManager,
+            pluginBinding.binaryMessenger,
+            activity,
+            pluginBinding.textureRegistry
+        )
     }
 
     override fun onDetachedFromActivityForConfigChanges() {
-        permissionsManager?.activity = null
-    }
-
-    override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
         permissionsManager?.let {
             it.activity = null
-            binding.addRequestPermissionsResultListener(it)
+            activityBinding?.removeRequestPermissionsResultListener(it)
         }
     }
 
+    override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
+        activityBinding = binding
+
+        val permissionsManager = requireNotNull(permissionsManager)
+        permissionsManager.activity = binding.activity
+        binding.addRequestPermissionsResultListener(permissionsManager)
+    }
+
     override fun onDetachedFromActivity() {
-        permissionsManager?.activity = null
+        permissionsManager?.let {
+            it.activity = null
+            activityBinding?.removeRequestPermissionsResultListener(it)
+        }
+
+        activityBinding = null
     }
 }
