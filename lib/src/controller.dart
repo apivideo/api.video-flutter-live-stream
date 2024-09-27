@@ -152,7 +152,7 @@ class ApiVideoLiveStreamController {
   }
 
   /// Changes current back/front camera to front/back camera
-  Future<void> switchCamera() async {
+  Future<void> toggleCamera() async {
     final cameraPosition = await this.cameraPosition;
     if (cameraPosition == CameraPosition.back) {
       return setCameraPosition(CameraPosition.front);

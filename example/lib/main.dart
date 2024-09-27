@@ -227,7 +227,7 @@ class _LiveViewPageState extends State<LiveViewPage>
       return;
     }
 
-    return await liveStreamController.switchCamera();
+    return await liveStreamController.toggleCamera();
   }
 
   Future<void> toggleMicrophone() async {
