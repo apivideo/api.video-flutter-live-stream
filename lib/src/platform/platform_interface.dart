@@ -1,7 +1,7 @@
+import 'package:apivideo_live_stream/apivideo_live_stream.dart';
+import 'package:apivideo_live_stream/src/listeners.dart';
 import 'package:flutter/widgets.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
-
-import 'types.dart';
 
 abstract class ApiVideoLiveStreamPlatform extends PlatformInterface {
   /// Constructs a ApiVideoPlayerPlatform.
@@ -9,7 +9,11 @@ abstract class ApiVideoLiveStreamPlatform extends PlatformInterface {
 
   static final Object _token = Object();
 
-  static ApiVideoLiveStreamPlatform _instance = _PlatformImplementation();
+  static ApiVideoLiveStreamPlatform _instance = _getDefaultPlatform();
+
+  static ApiVideoLiveStreamPlatform _getDefaultPlatform() {
+    return ApiVideoMobileLiveStreamPlatform();
+  }
 
   /// The default instance of [ApiVideoLiveStreamPlatform] to use.
   ///
@@ -84,41 +88,11 @@ abstract class ApiVideoLiveStreamPlatform extends PlatformInterface {
   }
 
   /// Returns a Stream of [LiveStreamingEvent]s.
-  Stream<LiveStreamingEvent> liveStreamingEventsFor(int textureId) {
-    throw UnimplementedError(
-        'liveStreamingEventsFor() has not been implemented.');
+  void setListener(ApiVideoLiveStreamEventsListener? listener) {
+    throw UnimplementedError('setListener() has not been implemented.');
   }
 
   Widget buildPreview(int textureId) {
     throw UnimplementedError('buildPreview() has not been implemented.');
   }
-}
-
-class _PlatformImplementation extends ApiVideoLiveStreamPlatform {}
-
-class LiveStreamingEvent {
-  /// Adds optional parameters here if needed
-  final Object? data;
-
-  /// The [LiveStreamingEventType]
-  final LiveStreamingEventType type;
-
-  LiveStreamingEvent({required this.type, this.data});
-}
-
-enum LiveStreamingEventType {
-  /// The live streaming is connected.
-  connected,
-
-  /// The live streaming has just been disconnected.
-  disconnected,
-
-  /// The connection to the server failed.
-  connectionFailed,
-
-  /// The video size has changed.
-  videoSizeChanged,
-
-  /// Unknown event
-  unknown
 }

@@ -1,52 +1,58 @@
 import 'dart:core';
+import 'dart:ui';
 
 import 'package:apivideo_live_stream/apivideo_live_stream.dart';
-import 'package:apivideo_live_stream_example/types/sample_rate.dart';
-
-import 'channel.dart';
-import 'resolution.dart';
-
-List<int> fpsList = [24, 25, 30];
-List<int> audioBitrateList = [32000, 64000, 128000, 192000];
-
-String defaultValueTransformation(int e) {
-  return "$e";
-}
-
-extension ListExtension on List<int> {
-  Map<int, String> toMap(
-      {Function(int e) valueTransformation = defaultValueTransformation}) {
-    var map = Map<int, String>.fromIterable(this,
-        key: (e) => e, value: (e) => valueTransformation(e));
-    return map;
-  }
-}
-
-String bitrateToPrettyString(int bitrate) {
-  return "${bitrate / 1000} Kbps";
-}
 
 class Params {
-  final VideoConfig video =
-      VideoConfig.withDefaultBitrate(resolution: Resolution.RESOLUTION_360);
-  final AudioConfig audio = AudioConfig();
+  /// The video configuration
 
-  String rtmpUrl = "rtmp://broadcast.api.video/s/";
-  String streamKey = "";
+  /// The video bitrate in bps
+  int videoBitrate = 1000000;
 
-  String getResolutionToString() {
-    return video.resolution.toPrettyString();
-  }
+  /// The live streaming video resolution
+  Size videoResolution = PredefinedResolution.RESOLUTION_360.resolution;
 
-  String getChannelToString() {
-    return audio.channel.toPrettyString();
-  }
+  /// The video frame rate in fps
+  int videoFps = 30;
 
-  String getBitrateToString() {
-    return bitrateToPrettyString(audio.bitrate);
-  }
+  /// The video configuration
+  VideoConfig get videoConfig => VideoConfig.withBitrate(
+        bitrate: videoBitrate,
+        resolution: videoResolution,
+        fps: videoFps,
+      );
 
-  String getSampleRateToString() {
-    return audio.sampleRate.toPrettyString();
-  }
+  /// The audio configuration
+
+  /// The audio bitrate in bps
+  int audioBitrate = 128000;
+
+  /// The number of audio channels
+  Channel audioChannel = Channel.stereo;
+
+  /// The sample rate of the audio capture
+  int audioSampleRate = 44100;
+
+  /// Enable the echo cancellation
+  bool audioEnableEchoCanceler = true;
+
+  /// Enable the noise suppressor
+  bool audioEnableNoiseSuppressor = true;
+
+  /// The audio configuration
+  AudioConfig get audioConfig => AudioConfig(
+        bitrate: audioBitrate,
+        channel: audioChannel,
+        sampleRate: audioSampleRate,
+        enableEchoCanceler: audioEnableEchoCanceler,
+        enableNoiseSuppressor: audioEnableNoiseSuppressor,
+      );
+
+  /// The network configuration
+
+  /// The server URL
+  String rtmpUrl = "rtmp://192.168.1.12/s/";
+
+  /// The stream key
+  String streamKey = "abcde";
 }

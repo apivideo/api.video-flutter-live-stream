@@ -1,48 +1,61 @@
-import 'package:json_annotation/json_annotation.dart';
-
-import 'channel.dart';
-import 'sample_rate.dart';
-
-part 'audio_config.g.dart';
+import 'package:apivideo_live_stream/src/platform/generated/live_stream_api.g.dart';
+import 'package:meta/meta.dart';
 
 /// Live streaming audio configuration.
-@JsonSerializable()
 class AudioConfig {
   /// The video bitrate in bps
-  int bitrate;
+  final int bitrate;
 
   /// The number of audio channels
   /// Only available on Android
-  Channel channel;
+  final Channel channel;
 
   /// The sample rate of the audio capture
   /// Only available on Android
-  SampleRate sampleRate;
+  /// Example: 44100, 48000, 96000
+  /// For RTMP sample rate, only 11025, 22050, 44100 are supported
+  final int sampleRate;
 
   /// Enable the echo cancellation
   /// Only available on Android
-  bool enableEchoCanceler;
+  final bool enableEchoCanceler;
 
   /// Enable the noise suppressor
   /// Only available on Android
-  bool enableNoiseSuppressor;
+  final bool enableNoiseSuppressor;
 
   /// Creates a new [AudioConfig] instance.
   ///
   /// [sampleRate] is only supported on Android.
   /// [channel] is only supported on Android.
-  AudioConfig(
+  const AudioConfig(
       {this.bitrate = 128000,
       this.channel = Channel.stereo,
-      this.sampleRate = SampleRate.kHz_44_1,
+      this.sampleRate = 44100,
       this.enableEchoCanceler = true,
       this.enableNoiseSuppressor = true})
       : assert(bitrate > 0);
 
-  /// Creates a [AudioConfig] from a [json] map.
-  factory AudioConfig.fromJson(Map<String, dynamic> json) =>
-      _$AudioConfigFromJson(json);
+  /// Returns a [NativeAudioConfig] instance.
+  @internal
+  NativeAudioConfig toNative() {
+    return NativeAudioConfig(
+        bitrate: bitrate,
+        channel: channel,
+        sampleRate: sampleRate,
+        enableEchoCanceler: enableEchoCanceler,
+        enableNoiseSuppressor: enableNoiseSuppressor);
+  }
 
-  /// Creates a json map from a [AudioConfig].
-  Map<String, dynamic> toJson() => _$AudioConfigToJson(this);
+  /// Returns a [AudioConfig] instance from a [NativeAudioConfig] instance.
+  @internal
+  static AudioConfig fromNative(NativeAudioConfig nativeAudioConfig) {
+    return AudioConfig(
+      bitrate: nativeAudioConfig.bitrate,
+      channel: nativeAudioConfig.channel,
+      sampleRate: nativeAudioConfig.sampleRate,
+      enableEchoCanceler: nativeAudioConfig.enableEchoCanceler,
+      enableNoiseSuppressor: nativeAudioConfig.enableNoiseSuppressor,
+    );
+  }
 }

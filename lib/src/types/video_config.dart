@@ -1,55 +1,65 @@
-import 'package:json_annotation/json_annotation.dart';
+import 'dart:ui';
 
-import 'resolution.dart';
-
-part 'video_config.g.dart';
+import 'package:apivideo_live_stream/src/extensions/size_extensions.dart';
+import 'package:apivideo_live_stream/src/platform/generated/live_stream_api.g.dart';
+import 'package:meta/meta.dart';
 
 /// Live streaming video configuration.
-@JsonSerializable()
 class VideoConfig {
   /// The video bitrate in bps
-  int bitrate;
+  final int bitrate;
 
   /// The live streaming video resolution
-  Resolution resolution;
+  final Size resolution;
 
   /// The video frame rate in fps
-  int fps;
+  final int fps;
 
   /// Creates a [VideoConfig] instance
-  VideoConfig(
+  const VideoConfig.withBitrate(
       {required this.bitrate,
-      this.resolution = Resolution.RESOLUTION_720,
+      this.resolution = defaultResolution,
       this.fps = 30})
       : assert(bitrate > 0),
         assert(fps > 0);
 
   /// Creates a [VideoConfig] instance where bitrate is set according to the given [resolution].
-  VideoConfig.withDefaultBitrate(
-      {this.resolution = Resolution.RESOLUTION_720, this.fps = 30})
+  VideoConfig({this.resolution = defaultResolution, this.fps = 30})
       : assert(fps > 0),
         bitrate = _getDefaultBitrate(resolution);
 
-  /// Creates a [VideoConfig] from a [json] map.
-  factory VideoConfig.fromJson(Map<String, dynamic> json) =>
-      _$VideoConfigFromJson(json);
-
-  /// Creates a json map from a [VideoConfig].
-  Map<String, dynamic> toJson() => _$VideoConfigToJson(this);
+  /// Returns a [NativeVideoConfig] instance.
+  @internal
+  NativeVideoConfig toNative() {
+    return NativeVideoConfig(
+        bitrate: bitrate, resolution: resolution.toNative(), fps: fps);
+  }
 
   /// Returns the default bitrate for the given [resolution].
-  static int _getDefaultBitrate(Resolution resolution) {
-    switch (resolution) {
-      case Resolution.RESOLUTION_240:
-        return 800000;
-      case Resolution.RESOLUTION_360:
-        return 1000000;
-      case Resolution.RESOLUTION_480:
-        return 1300000;
-      case Resolution.RESOLUTION_720:
-        return 2000000;
-      case Resolution.RESOLUTION_1080:
-        return 3500000;
+  static int _getDefaultBitrate(Size size) {
+    final pixelCount = size.width * size.height;
+
+    if (pixelCount <= 102240) {
+      return 800000; // for 4/3 and 16/9 240p
+    } else if (pixelCount <= 230400) {
+      return 1000000; // for 16/9 360p
+    } else if (pixelCount <= 409920) {
+      return 1300000; // for 4/3 and 16/9 480p
+    } else if (pixelCount <= 921600) {
+      return 2000000; // for 4/3 600p, 4/3 768p and 16/9 720p
+    } else {
+      return 3000000; // for 16/9 1080p
     }
   }
+
+  @internal
+  static VideoConfig fromNative(NativeVideoConfig nativeVideoConfig) {
+    return VideoConfig.withBitrate(
+      bitrate: nativeVideoConfig.bitrate,
+      resolution: nativeVideoConfig.resolution.toSize(),
+      fps: nativeVideoConfig.fps,
+    );
+  }
+
+  static const Size defaultResolution = const Size(1280, 720);
 }

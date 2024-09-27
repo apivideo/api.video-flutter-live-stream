@@ -2,22 +2,27 @@ import ApiVideoLiveStream
 import AVFoundation
 import Foundation
 
+protocol FlutterLiveStreamViewDelegate {
+    func connectionSuccess()
+    func connectionFailed(_: String)
+    func disconnection()
+    func error(_: Error)
+    func videoSizeChanged(_: CGSize)
+}
+
 class FlutterLiveStreamView: NSObject {
     private let previewTexture: PreviewTexture
     private let liveStream: ApiVideoLiveStream
 
-    private let eventChannel: FlutterEventChannel
-    private var eventSink: FlutterEventSink?
+    var delegate: FlutterLiveStreamViewDelegate?
 
-    init(binaryMessenger: FlutterBinaryMessenger, textureRegistry: FlutterTextureRegistry) throws {
+    init(textureRegistry: FlutterTextureRegistry) throws {
         previewTexture = PreviewTexture(registry: textureRegistry)
         liveStream = try ApiVideoLiveStream(preview: previewTexture, initialAudioConfig: nil, initialVideoConfig: nil, initialCamera: nil)
-        eventChannel = FlutterEventChannel(name: "video.api.livestream/events", binaryMessenger: binaryMessenger)
 
         super.init()
 
         liveStream.delegate = self
-        eventChannel.setStreamHandler(self)
     }
 
     var textureId: Int64 {
@@ -31,8 +36,7 @@ class FlutterLiveStreamView: NSObject {
             liveStream.videoConfig
         }
         set {
-            sendEvent(["type": "videoSizeChanged", "width": Double(newValue.resolution.width), "height": Double(newValue.resolution.height)])
-
+            delegate?.videoSizeChanged(newValue.resolution)
             liveStream.videoConfig = newValue
         }
     }
@@ -55,22 +59,12 @@ class FlutterLiveStreamView: NSObject {
         }
     }
 
-    var cameraPosition: String {
+    var cameraPosition: AVCaptureDevice.Position {
         get {
-            if liveStream.cameraPosition == AVCaptureDevice.Position.back {
-                return "back"
-            } else if liveStream.cameraPosition == AVCaptureDevice.Position.front {
-                return "front"
-            } else {
-                return "other"
-            }
+            liveStream.cameraPosition
         }
         set {
-            if newValue == "back" {
-                liveStream.cameraPosition = AVCaptureDevice.Position.back
-            } else if newValue == "front" {
-                liveStream.cameraPosition = AVCaptureDevice.Position.front
-            }
+            liveStream.cameraPosition = newValue
         }
     }
 
@@ -100,49 +94,31 @@ class FlutterLiveStreamView: NSObject {
     }
 }
 
-extension FlutterLiveStreamView: FlutterStreamHandler {
-    func onListen(withArguments _: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {
-        eventSink = events
-        return nil
-    }
-
-    func onCancel(withArguments _: Any?) -> FlutterError? {
-        eventSink = nil
-        return nil
-    }
-    
-    private func sendEvent(_ event: [String: Any]) {
-        DispatchQueue.main.async {
-            self.eventSink?(event)
-        }
-    }
-}
-
 extension FlutterLiveStreamView: ApiVideoLiveStreamDelegate {
     /// Called when the connection to the rtmp server is successful
     func connectionSuccess() {
-        sendEvent(["type": "connected"])
+        delegate?.connectionSuccess()
     }
 
     /// Called when the connection to the rtmp server failed
-    func connectionFailed(_: String) {
+    func connectionFailed(_ message: String) {
         isStreaming = false
-        sendEvent(["type": "connectionFailed", "message": "Failed to connect"])
+        delegate?.connectionFailed(message)
     }
 
     /// Called when the connection to the rtmp server is closed
     func disconnection() {
         isStreaming = false
-        sendEvent(["type": "disconnected"])
+        delegate?.disconnection()
     }
 
     /// Called if an error happened during the audio configuration
     func audioError(_ error: Error) {
-        print("audio error: \(error)")
+        delegate?.error(error)
     }
 
     /// Called if an error happened during the video configuration
     func videoError(_ error: Error) {
-        print("video error: \(error)")
+        delegate?.error(error)
     }
 }

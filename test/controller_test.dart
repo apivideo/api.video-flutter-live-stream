@@ -1,7 +1,8 @@
 import 'dart:async';
 
 import 'package:apivideo_live_stream/apivideo_live_stream.dart';
-import 'package:apivideo_live_stream/src/apivideo_live_stream_platform_interface.dart';
+import 'package:apivideo_live_stream/src/listeners.dart';
+import 'package:apivideo_live_stream/src/platform/platform_interface.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -13,13 +14,13 @@ void main() {
 
   /// The controller to test
   final _controller = ApiVideoLiveStreamController(
-      initialVideoConfig: VideoConfig.withDefaultBitrate(),
-      initialAudioConfig: AudioConfig());
+      initialVideoConfig: VideoConfig(), initialAudioConfig: AudioConfig());
 
   test('initialized', () async {
     await _controller.initialize();
-    expect(_mockedPlatform.calls.length, 5);
-    expect(_mockedPlatform.calls.first, 'initialize');
+    expect(_mockedPlatform.calls.length, 6);
+    expect(_mockedPlatform.calls.first, 'setListener');
+    expect(_mockedPlatform.calls[1], 'initialize');
   });
 }
 
@@ -59,7 +60,7 @@ class MockedApiVideoLiveStreamPlatform extends ApiVideoLiveStreamPlatform {
   }
 
   @override
-  Stream<LiveStreamingEvent> liveStreamingEventsFor(int textureId) {
-    return StreamController<LiveStreamingEvent>().stream;
+  void setListener(ApiVideoLiveStreamEventsListener? listener) {
+    calls.add('setListener');
   }
 }

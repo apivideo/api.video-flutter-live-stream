@@ -39,6 +39,7 @@ class PreviewTexture: NSObject, FlutterTexture {
 
 extension PreviewTexture: IOStreamView {
     // MARK: - IOStreamDrawable
+
     func attachStream(_ stream: IOStream?) {
         if Thread.isMainThread {
             currentStream = stream

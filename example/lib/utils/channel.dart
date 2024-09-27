@@ -1,14 +1,13 @@
 import 'package:apivideo_live_stream/apivideo_live_stream.dart';
+import 'package:apivideo_live_stream_example/utils/set.dart';
 
-Map<Channel, String> getChannelsMap() {
-  Map<Channel, String> map = {};
-  for (final res in Channel.values) {
-    map[res] = res.toPrettyString();
-  }
-  return map;
+Map<Channel, String> inflateChannelsMap() {
+  return Channel.values
+      .toSet()
+      .toDisplayMap(valueTransformation: (e) => e.toPrettyString());
 }
 
-extension ChannelExtension on Channel {
+extension ChannelPrettifier on Channel {
   String toPrettyString() {
     var result = "";
     switch (this) {

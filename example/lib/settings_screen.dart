@@ -1,10 +1,12 @@
-import 'package:apivideo_live_stream_example/types/channel.dart';
+import 'package:apivideo_live_stream_example/utils/audio_bitrate.dart';
+import 'package:apivideo_live_stream_example/utils/channel.dart';
+import 'package:apivideo_live_stream_example/utils/fps.dart';
 import 'package:flutter/material.dart';
 import 'package:settings_ui/settings_ui.dart';
 
 import 'types/params.dart';
-import 'types/resolution.dart';
-import 'types/sample_rate.dart';
+import 'utils/resolution.dart';
+import 'utils/sample_rate.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({Key? key, required this.params}) : super(key: key);
@@ -43,19 +45,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 tiles: [
                   SettingsTile(
                     title: Text('Resolution'),
-                    value: Text(widget.params.getResolutionToString()),
+                    value: Text(widget.params.videoResolution.toPrettyString()),
                     onPressed: (BuildContext context) {
                       showDialog(
                           context: context,
                           builder: (context) {
                             return PickerScreen(
                                 title: "Pick a resolution",
-                                initialValue: widget.params.video.resolution,
-                                values: getResolutionsMap());
+                                initialValue: widget.params.videoResolution,
+                                values: inflateResolutionsMap());
                           }).then((value) {
                         if (value != null) {
                           setState(() {
-                            widget.params.video.resolution = value;
+                            widget.params.videoResolution = value;
                           });
                         }
                       });
@@ -63,20 +65,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   SettingsTile(
                     title: Text('Framerate'),
-                    value: Text(widget.params.video.fps.toString()),
+                    value: Text(widget.params.videoFps.toString()),
                     onPressed: (BuildContext context) {
                       showDialog(
                           context: context,
                           builder: (context) {
                             return PickerScreen(
                                 title: "Pick a frame rate",
-                                initialValue:
-                                    widget.params.video.fps.toString(),
-                                values: fpsList.toMap());
+                                initialValue: widget.params.videoFps.toString(),
+                                values: inflateFpsMap());
                           }).then((value) {
                         if (value != null) {
                           setState(() {
-                            widget.params.video.fps = value;
+                            widget.params.videoFps = value;
                           });
                         }
                       });
@@ -92,11 +93,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           Row(
                             children: [
                               Slider(
-                                value: (widget.params.video.bitrate / 1024)
+                                value: (widget.params.videoBitrate / 1024)
                                     .toDouble(),
                                 onChanged: (newValue) {
                                   setState(() {
-                                    widget.params.video.bitrate =
+                                    widget.params.videoBitrate =
                                         (newValue.roundToDouble() * 1024)
                                             .toInt();
                                   });
@@ -104,7 +105,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 min: 500,
                                 max: 10000,
                               ),
-                              Text('${widget.params.video.bitrate}')
+                              Text('${widget.params.videoBitrate}')
                             ],
                           )
                         ],
@@ -118,7 +119,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 tiles: [
                   SettingsTile(
                     title: Text("Number of channels"),
-                    value: Text(widget.params.getChannelToString()),
+                    value: Text(widget.params.audioChannel.toPrettyString()),
                     onPressed: (BuildContext context) {
                       showDialog(
                           context: context,
@@ -126,12 +127,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             return PickerScreen(
                                 title: "Pick the number of channels",
                                 initialValue:
-                                    widget.params.getChannelToString(),
-                                values: getChannelsMap());
+                                    widget.params.audioChannel.toPrettyString(),
+                                values: inflateChannelsMap());
                           }).then((value) {
                         if (value != null) {
                           setState(() {
-                            widget.params.audio.channel = value;
+                            widget.params.audioChannel = value;
                           });
                         }
                       });
@@ -139,22 +140,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   SettingsTile(
                     title: Text('Bitrate'),
-                    value: Text(widget.params.getBitrateToString()),
+                    value:
+                        Text(bitrateToPrettyString(widget.params.audioBitrate)),
                     onPressed: (BuildContext context) {
                       showDialog(
                           context: context,
                           builder: (context) {
                             return PickerScreen(
                                 title: "Pick a bitrate",
-                                initialValue:
-                                    widget.params.getChannelToString(),
-                                values: audioBitrateList.toMap(
-                                    valueTransformation: (int e) =>
-                                        bitrateToPrettyString(e)));
+                                initialValue: bitrateToPrettyString(
+                                    widget.params.audioBitrate),
+                                values: inflateAudioBitrateMap());
                           }).then((value) {
                         if (value != null) {
                           setState(() {
-                            widget.params.audio.bitrate = value;
+                            widget.params.audioBitrate = value;
                           });
                         }
                       });
@@ -162,20 +162,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   SettingsTile(
                     title: Text('Sample rate'),
-                    value: Text(widget.params.getSampleRateToString()),
+                    value: Text(sampleRateToPrettyString(
+                        widget.params.audioSampleRate)),
                     onPressed: (BuildContext context) {
                       showDialog(
                           context: context,
                           builder: (context) {
                             return PickerScreen(
                                 title: "Pick a sample rate",
-                                initialValue:
-                                    widget.params.getSampleRateToString(),
-                                values: getSampleRatesMap());
+                                initialValue: sampleRateToPrettyString(
+                                    widget.params.audioSampleRate),
+                                values: inflateSampleRatesMap());
                           }).then((value) {
                         if (value != null) {
                           setState(() {
-                            widget.params.audio.sampleRate = value;
+                            widget.params.audioSampleRate = value;
                           });
                         }
                       });
@@ -183,19 +184,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   SettingsTile.switchTile(
                     title: Text('Enable echo canceler'),
-                    initialValue: widget.params.audio.enableEchoCanceler,
+                    initialValue: widget.params.audioEnableEchoCanceler,
                     onToggle: (bool value) {
                       setState(() {
-                        widget.params.audio.enableEchoCanceler = value;
+                        widget.params.audioEnableEchoCanceler = value;
                       });
                     },
                   ),
                   SettingsTile.switchTile(
                     title: Text('Enable noise suppressor'),
-                    initialValue: widget.params.audio.enableNoiseSuppressor,
+                    initialValue: widget.params.audioEnableNoiseSuppressor,
                     onToggle: (bool value) {
                       setState(() {
-                        widget.params.audio.enableNoiseSuppressor = value;
+                        widget.params.audioEnableNoiseSuppressor = value;
                       });
                     },
                   ),

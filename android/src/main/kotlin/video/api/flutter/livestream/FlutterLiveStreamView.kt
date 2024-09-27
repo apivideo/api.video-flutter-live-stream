@@ -152,24 +152,6 @@ class FlutterLiveStreamView(
             })
     }
 
-    val cameraPosition: String
-        get() = when {
-            context.isFrontCamera(streamer.camera) -> "front"
-            context.isBackCamera(streamer.camera) -> "back"
-            context.isExternalCamera(streamer.camera) -> "other"
-            else -> throw IllegalArgumentException("Invalid camera position for camera ${streamer.camera}")
-        }
-
-    fun setCameraPosition(position: String, onSuccess: () -> Unit, onError: (Exception) -> Unit) {
-        val cameraList = when (position) {
-            "front" -> context.frontCameraList
-            "back" -> context.backCameraList
-            "other" -> context.externalCameraList
-            else -> throw IllegalArgumentException("Invalid camera position: $position")
-        }
-        setCamera(cameraList.first(), onSuccess, onError)
-    }
-
     fun dispose() {
         stopStream()
         streamer.stopPreview()
