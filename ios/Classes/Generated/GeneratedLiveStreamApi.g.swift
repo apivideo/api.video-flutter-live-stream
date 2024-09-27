@@ -171,6 +171,8 @@ struct NativeVideoConfig {
   var resolution: NativeResolution
   /// The video frame rate in fps
   var fps: Int64
+  /// GOP (Group of Pictures) duration in seconds
+  var gopDurationInS: Double
 
 
 
@@ -179,11 +181,13 @@ struct NativeVideoConfig {
     let bitrate = pigeonVar_list[0] as! Int64
     let resolution = pigeonVar_list[1] as! NativeResolution
     let fps = pigeonVar_list[2] as! Int64
+    let gopDurationInS = pigeonVar_list[3] as! Double
 
     return NativeVideoConfig(
       bitrate: bitrate,
       resolution: resolution,
-      fps: fps
+      fps: fps,
+      gopDurationInS: gopDurationInS
     )
   }
   func toList() -> [Any?] {
@@ -191,6 +195,7 @@ struct NativeVideoConfig {
       bitrate,
       resolution,
       fps,
+      gopDurationInS,
     ]
   }
 }

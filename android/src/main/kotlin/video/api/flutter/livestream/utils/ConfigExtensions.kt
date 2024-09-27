@@ -16,7 +16,8 @@ fun Size.toNativeResolution() = NativeResolution(width.toLong(), height.toLong()
 fun NativeVideoConfig.toVideoConfig() = VideoConfig(
     startBitrate = bitrate.toInt(),
     resolution = resolution.toSize(),
-    fps = fps.toInt()
+    fps = fps.toInt(),
+    gopDuration = gopDurationInS.toFloat()
 )
 
 fun Channel.toChannelConfig() = when (this) {

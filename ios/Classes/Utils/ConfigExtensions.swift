@@ -14,7 +14,7 @@ extension CGSize {
 
 extension NativeVideoConfig {
     func toVideoConfig() -> VideoConfig {
-        return VideoConfig(bitrate: Int(bitrate), resolution: resolution.toCGSize(), fps: Float64(fps))
+        return VideoConfig(bitrate: Int(bitrate), resolution: resolution.toCGSize(), fps: Float64(fps), gopDuration: gopDurationInS)
     }
 }
 

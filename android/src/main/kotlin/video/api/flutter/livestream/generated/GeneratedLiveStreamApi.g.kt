@@ -162,7 +162,9 @@ data class NativeVideoConfig (
   /** The live streaming video resolution */
   val resolution: NativeResolution,
   /** The video frame rate in fps */
-  val fps: Long
+  val fps: Long,
+  /** GOP (Group of Pictures) duration in seconds */
+  val gopDurationInS: Double
 )
  {
   companion object {
@@ -170,7 +172,8 @@ data class NativeVideoConfig (
       val bitrate = pigeonVar_list[0] as Long
       val resolution = pigeonVar_list[1] as NativeResolution
       val fps = pigeonVar_list[2] as Long
-      return NativeVideoConfig(bitrate, resolution, fps)
+      val gopDurationInS = pigeonVar_list[3] as Double
+      return NativeVideoConfig(bitrate, resolution, fps, gopDurationInS)
     }
   }
   fun toList(): List<Any?> {
@@ -178,6 +181,7 @@ data class NativeVideoConfig (
       bitrate,
       resolution,
       fps,
+      gopDurationInS,
     )
   }
 }

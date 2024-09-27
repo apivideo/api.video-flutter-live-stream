@@ -82,8 +82,12 @@ class NativeVideoConfig {
   /// The video frame rate in fps
   final int fps;
 
+  /// GOP (Group of Pictures) duration in seconds
+  final double gopDurationInS;
+
   /// Creates a [VideoConfig] instance
-  const NativeVideoConfig(this.bitrate, this.resolution, this.fps);
+  const NativeVideoConfig(
+      this.bitrate, this.resolution, this.fps, this.gopDurationInS);
 }
 
 // From Flutter to native

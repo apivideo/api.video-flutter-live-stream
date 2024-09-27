@@ -15,16 +15,23 @@ class VideoConfig {
   /// The video frame rate in fps
   final int fps;
 
+  /// The GOP (Group of Pictures) duration
+  final Duration gopDuration;
+
   /// Creates a [VideoConfig] instance
   const VideoConfig.withBitrate(
       {required this.bitrate,
       this.resolution = defaultResolution,
-      this.fps = 30})
+      this.fps = 30,
+      this.gopDuration = defaultGopDuration})
       : assert(bitrate > 0),
         assert(fps > 0);
 
   /// Creates a [VideoConfig] instance where bitrate is set according to the given [resolution].
-  VideoConfig({this.resolution = defaultResolution, this.fps = 30})
+  VideoConfig(
+      {this.resolution = defaultResolution,
+      this.fps = 30,
+      this.gopDuration = defaultGopDuration})
       : assert(fps > 0),
         bitrate = _getDefaultBitrate(resolution);
 
@@ -32,7 +39,10 @@ class VideoConfig {
   @internal
   NativeVideoConfig toNative() {
     return NativeVideoConfig(
-        bitrate: bitrate, resolution: resolution.toNative(), fps: fps);
+        bitrate: bitrate,
+        resolution: resolution.toNative(),
+        fps: fps,
+        gopDurationInS: gopDuration.inSeconds.toDouble());
   }
 
   /// Returns the default bitrate for the given [resolution].
@@ -61,5 +71,6 @@ class VideoConfig {
     );
   }
 
+  static const Duration defaultGopDuration = const Duration(seconds: 2);
   static const Size defaultResolution = const Size(1280, 720);
 }

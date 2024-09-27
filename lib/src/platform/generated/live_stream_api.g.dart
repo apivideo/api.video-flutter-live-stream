@@ -132,6 +132,7 @@ class NativeVideoConfig {
     required this.bitrate,
     required this.resolution,
     required this.fps,
+    required this.gopDurationInS,
   });
 
   /// The video bitrate in bps
@@ -143,11 +144,15 @@ class NativeVideoConfig {
   /// The video frame rate in fps
   int fps;
 
+  /// GOP (Group of Pictures) duration in seconds
+  double gopDurationInS;
+
   Object encode() {
     return <Object?>[
       bitrate,
       resolution,
       fps,
+      gopDurationInS,
     ];
   }
 
@@ -157,6 +162,7 @@ class NativeVideoConfig {
       bitrate: result[0]! as int,
       resolution: result[1]! as NativeResolution,
       fps: result[2]! as int,
+      gopDurationInS: result[3]! as double,
     );
   }
 }
