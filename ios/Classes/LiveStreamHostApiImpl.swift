@@ -87,6 +87,18 @@ class LiveStreamHostApiImpl: LiveStreamHostApi {
     func getVideoResolution() throws -> NativeResolution? {
         flutterView?.videoConfig.resolution.toNativeResolution()
     }
+    
+    func setZoomRatio(zoomRatio: Double) throws {
+        flutterView!.zoomRatio = zoomRatio
+    }
+    
+    func getZoomRatio() throws -> Double {
+        flutterView?.zoomRatio ?? 1.0
+    }
+    
+    func getMaxZoomRatio() throws -> Double {
+        flutterView?.maxZoomRatio ?? 1.0
+    }
 }
 
 extension LiveStreamHostApiImpl: FlutterLiveStreamViewDelegate {

@@ -87,6 +87,18 @@ abstract class ApiVideoLiveStreamPlatform extends PlatformInterface {
     throw UnimplementedError('getVideoSize() has not been implemented.');
   }
 
+  Future<void> setZoomRatio(double zoomRatio) {
+    throw UnimplementedError('setZoomRatio() has not been implemented.');
+  }
+
+  Future<double> getZoomRatio() {
+    throw UnimplementedError('getZoomRatio() has not been implemented.');
+  }
+
+  Future<double> getMaxZoomRatio() {
+    throw UnimplementedError('getMaxZoomRatio() has not been implemented.');
+  }
+
   /// Returns a Stream of [LiveStreamingEvent]s.
   void setListener(ApiVideoLiveStreamEventsListener? listener) {
     throw UnimplementedError('setListener() has not been implemented.');

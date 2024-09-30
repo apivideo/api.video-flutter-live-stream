@@ -281,6 +281,9 @@ protocol LiveStreamHostApi {
   func getIsMuted() throws -> Bool
   func setIsMuted(isMuted: Bool) throws
   func getVideoResolution() throws -> NativeResolution?
+  func setZoomRatio(zoomRatio: Double) throws
+  func getZoomRatio() throws -> Double
+  func getMaxZoomRatio() throws -> Double
 }
 
 /// Generated setup class from Pigeon to handle messages through the `binaryMessenger`.
@@ -489,6 +492,47 @@ class LiveStreamHostApiSetup {
       }
     } else {
       getVideoResolutionChannel.setMessageHandler(nil)
+    }
+    let setZoomRatioChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.apivideo_live_stream.LiveStreamHostApi.setZoomRatio\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    if let api = api {
+      setZoomRatioChannel.setMessageHandler { message, reply in
+        let args = message as! [Any?]
+        let zoomRatioArg = args[0] as! Double
+        do {
+          try api.setZoomRatio(zoomRatio: zoomRatioArg)
+          reply(wrapResult(nil))
+        } catch {
+          reply(wrapError(error))
+        }
+      }
+    } else {
+      setZoomRatioChannel.setMessageHandler(nil)
+    }
+    let getZoomRatioChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.apivideo_live_stream.LiveStreamHostApi.getZoomRatio\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    if let api = api {
+      getZoomRatioChannel.setMessageHandler { _, reply in
+        do {
+          let result = try api.getZoomRatio()
+          reply(wrapResult(result))
+        } catch {
+          reply(wrapError(error))
+        }
+      }
+    } else {
+      getZoomRatioChannel.setMessageHandler(nil)
+    }
+    let getMaxZoomRatioChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.apivideo_live_stream.LiveStreamHostApi.getMaxZoomRatio\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    if let api = api {
+      getMaxZoomRatioChannel.setMessageHandler { _, reply in
+        do {
+          let result = try api.getMaxZoomRatio()
+          reply(wrapResult(result))
+        } catch {
+          reply(wrapError(error))
+        }
+      }
+    } else {
+      getMaxZoomRatioChannel.setMessageHandler(nil)
     }
   }
 }

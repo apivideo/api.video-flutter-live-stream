@@ -11,16 +11,10 @@ import io.github.thibaultbee.streampack.error.StreamPackError
 import io.github.thibaultbee.streampack.ext.rtmp.streamers.CameraRtmpLiveStreamer
 import io.github.thibaultbee.streampack.listeners.OnConnectionListener
 import io.github.thibaultbee.streampack.listeners.OnErrorListener
-import io.github.thibaultbee.streampack.utils.backCameraList
-import io.github.thibaultbee.streampack.utils.externalCameraList
-import io.github.thibaultbee.streampack.utils.frontCameraList
-import io.github.thibaultbee.streampack.utils.isBackCamera
-import io.github.thibaultbee.streampack.utils.isExternalCamera
-import io.github.thibaultbee.streampack.utils.isFrontCamera
 import kotlinx.coroutines.runBlocking
 
 class FlutterLiveStreamView(
-    private val context: Context,
+    context: Context,
     textureRegistry: TextureRegistry,
     private val permissionsManager: PermissionsManager,
     private val onConnectionSucceeded: () -> Unit,
@@ -151,6 +145,15 @@ class FlutterLiveStreamView(
                 onError(SecurityException("Missing permission Manifest.permission.CAMERA"))
             })
     }
+
+    var zoomRatio: Float
+        get() = streamer.settings.camera.zoom.zoomRatio
+        set(value) {
+            streamer.settings.camera.zoom.zoomRatio = value
+        }
+
+    val maxZoomRatio: Float
+        get() = streamer.settings.camera.zoom.availableRatioRange.upper
 
     fun dispose() {
         stopStream()
