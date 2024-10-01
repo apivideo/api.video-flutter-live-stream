@@ -76,29 +76,29 @@ unlinked_spec.ds
 **/ios/**/*.moved-aside
 **/ios/**/*.pbxuser
 **/ios/**/*.perspectivev3
-**/ios/**/*sync/
-**/ios/**/.sconsign.dblite
-**/ios/**/.tags*
-**/ios/**/.vagrant/
-**/ios/**/DerivedData/
-**/ios/**/Icon?
-**/ios/**/Pods/
-**/ios/**/.symlinks/
-**/ios/**/profile
-**/ios/**/xcuserdata
-**/ios/.generated/
-**/ios/Flutter/.last_build_id
-**/ios/Flutter/App.framework
-**/ios/Flutter/Flutter.framework
-**/ios/Flutter/Flutter.podspec
-**/ios/Flutter/Generated.xcconfig
-**/ios/Flutter/ephemeral
-**/ios/Flutter/app.flx
-**/ios/Flutter/app.zip
-**/ios/Flutter/flutter_assets/
-**/ios/Flutter/flutter_export_environment.sh
-**/ios/ServiceDefinitions.json
-**/ios/Runner/GeneratedPluginRegistrant.*
+packages/live_stream_apple/apple/**/*sync/
+packages/live_stream_apple/apple/**/.sconsign.dblite
+packages/live_stream_apple/apple/**/.tags*
+packages/live_stream_apple/apple/**/.vagrant/
+packages/live_stream_apple/apple/**/DerivedData/
+packages/live_stream_apple/apple/**/Icon?
+packages/live_stream_apple/apple/**/Pods/
+packages/live_stream_apple/apple/**/.symlinks/
+packages/live_stream_apple/apple/**/profile
+packages/live_stream_apple/apple/**/xcuserdata
+packages/live_stream_apple/apple/.generated/
+packages/live_stream_apple/apple/Flutter/.last_build_id
+packages/live_stream_apple/apple/Flutter/App.framework
+packages/live_stream_apple/apple/Flutter/Flutter.framework
+packages/live_stream_apple/apple/Flutter/Flutter.podspec
+packages/live_stream_apple/apple/Flutter/Generated.xcconfig
+packages/live_stream_apple/apple/Flutter/ephemeral
+packages/live_stream_apple/apple/Flutter/app.flx
+packages/live_stream_apple/apple/Flutter/app.zip
+packages/live_stream_apple/apple/Flutter/flutter_assets/
+packages/live_stream_apple/apple/Flutter/flutter_export_environment.sh
+packages/live_stream_apple/apple/ServiceDefinitions.json
+packages/live_stream_apple/apple/Runner/GeneratedPluginRegistrant.*
 
 # macOS
 **/macos/Flutter/GeneratedPluginRegistrant.swift
@@ -110,9 +110,9 @@ coverage/
 app.*.symbols
 
 # Exceptions to above rules.
-!**/ios/**/default.mode1v3
-!**/ios/**/default.mode2v3
-!**/ios/**/default.pbxuser
-!**/ios/**/default.perspectivev3
+!packages/live_stream_apple/apple/**/default.mode1v3
+!packages/live_stream_apple/apple/**/default.mode2v3
+!packages/live_stream_apple/apple/**/default.pbxuser
+!packages/live_stream_apple/apple/**/default.perspectivev3
 !/packages/flutter_tools/test/data/dart_dependencies_test/**/.packages
 !/dev/ci/**/Gemfile.lock

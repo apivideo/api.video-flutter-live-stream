@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:apivideo_live_stream/apivideo_live_stream.dart';
+import 'package:apivideo_live_stream/apivideo_live_stream_android.dart';
 import 'package:flutter/material.dart';
 import 'package:meta/meta.dart';
 
@@ -12,7 +12,7 @@ ApiVideoLiveStreamPlatform get _platform {
 }
 
 /// Controller of the live streaming
-class ApiVideoLiveStreamController {
+class ApiVideoLiveStreamAndroidController extends  {
   final VideoConfig _initialVideoConfig;
   final AudioConfig _initialAudioConfig;
   final CameraPosition _initialCameraPosition;

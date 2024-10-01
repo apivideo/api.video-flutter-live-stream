@@ -62,7 +62,7 @@ flutter pub add apivideo_live_stream
 In your dart file, import the package:
 
 ```dart 
-import 'package:apivideo_live_stream/apivideo_live_stream.dart';
+import 'package:apivideo_live_stream/apivideo_live_stream_android.dart';
 ```
 
 ### Permissions
