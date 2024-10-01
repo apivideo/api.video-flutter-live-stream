@@ -47,7 +47,7 @@ class LiveViewPage extends StatefulWidget {
 class _LiveViewPageState extends State<LiveViewPage>
     with WidgetsBindingObserver {
   final ButtonStyle buttonStyle =
-      ElevatedButton.styleFrom(textStyle: const TextStyle(fontSize: 20));
+  ElevatedButton.styleFrom(textStyle: const TextStyle(fontSize: 20));
   Params params = Params();
   late final ApiVideoLiveStreamController _controller;
   bool _isStreaming = false;
@@ -149,7 +149,8 @@ class _LiveViewPageState extends State<LiveViewPage>
                     child: Padding(
                       padding: const EdgeInsets.all(1.0),
                       child: Center(
-                        child: ApiVideoCameraPreview(controller: _controller),
+                        child: ApiVideoCameraPreview(
+                            controller: _controller, enableZoomOnPinch: true),
                       ),
                     ),
                   ),
@@ -188,7 +189,7 @@ class _LiveViewPageState extends State<LiveViewPage>
           icon: const Icon(Icons.cameraswitch),
           color: apiVideoOrange,
           onPressed:
-              liveStreamController != null ? onSwitchCameraButtonPressed : null,
+          liveStreamController != null ? onSwitchCameraButtonPressed : null,
         ),
         IconButton(
           icon: const Icon(Icons.mic_off),
@@ -329,8 +330,8 @@ class _LiveViewPageState extends State<LiveViewPage>
   }
 }
 
-Future<void> _showDialog(
-    BuildContext context, String title, String description) async {
+Future<void> _showDialog(BuildContext context, String title,
+    String description) async {
   return showDialog<void>(
     context: context,
     barrierDismissible: false, // user must tap button!
