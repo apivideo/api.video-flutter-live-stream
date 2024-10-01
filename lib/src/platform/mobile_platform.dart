@@ -112,26 +112,25 @@ class ApiVideoMobileLiveStreamPlatform extends ApiVideoLiveStreamPlatform
 
   @override
   void onConnectionFailed(String message) {
-    _eventsListener?.onConnectionFailed?.call(message);
+    _eventsListener?.onConnectionFailed(message);
   }
 
   @override
   void onIsConnectedChanged(bool isConnected) {
     if (isConnected) {
-      _eventsListener?.onConnectionSuccess?.call();
+      _eventsListener?.onConnectionSuccess();
     } else {
-      _eventsListener?.onDisconnection?.call();
+      _eventsListener?.onDisconnection();
     }
   }
 
   @override
   void onVideoSizeChanged(NativeResolution resolution) {
-    _eventsListener?.onVideoSizeChanged?.call(resolution.toSize());
+    _eventsListener?.onVideoSizeChanged(resolution.toSize());
   }
 
   @override
   void onError(String code, String message) {
-    _eventsListener?.onError
-        ?.call(PlatformException(code: code, message: message));
+    _eventsListener?.onError(PlatformException(code: code, message: message));
   }
 }

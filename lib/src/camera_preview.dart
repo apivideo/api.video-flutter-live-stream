@@ -28,25 +28,8 @@ class ApiVideoCameraPreview extends StatefulWidget {
   State<ApiVideoCameraPreview> createState() => _ApiVideoCameraPreviewState();
 }
 
-class _ApiVideoCameraPreviewState extends State<ApiVideoCameraPreview> {
-  _ApiVideoCameraPreviewState() {
-    _widgetListener = ApiVideoLiveStreamWidgetListener(onTextureReady: () {
-      final int newTextureId = widget.controller.textureId;
-      if (newTextureId != _textureId) {
-        setState(() {
-          _textureId = newTextureId;
-        });
-      }
-    });
-
-    _eventsListener =
-        ApiVideoLiveStreamEventsListener(onVideoSizeChanged: (size) {
-      _updateAspectRatio(size);
-    });
-  }
-
-  late ApiVideoLiveStreamWidgetListener _widgetListener;
-  late ApiVideoLiveStreamEventsListener _eventsListener;
+class _ApiVideoCameraPreviewState extends State<ApiVideoCameraPreview>
+    with ApiVideoLiveStreamEventsListener, ApiVideoLiveStreamWidgetListener {
   late int _textureId;
 
   double _aspectRatio = 1.77;
@@ -56,8 +39,8 @@ class _ApiVideoCameraPreviewState extends State<ApiVideoCameraPreview> {
   void initState() {
     super.initState();
     _textureId = widget.controller.textureId;
-    widget.controller.addWidgetListener(_widgetListener);
-    widget.controller.addEventsListener(_eventsListener);
+    widget.controller.addWidgetListener(this);
+    widget.controller.addEventsListener(this);
     if (widget.controller.isInitialized) {
       widget.controller.videoSize.then((size) {
         if (size != null) {
@@ -70,9 +53,22 @@ class _ApiVideoCameraPreviewState extends State<ApiVideoCameraPreview> {
   @override
   void dispose() {
     widget.controller.stopPreview();
-    widget.controller.removeWidgetListener(_widgetListener);
-    widget.controller.removeEventsListener(_eventsListener);
+    widget.controller.removeWidgetListener(this);
+    widget.controller.removeEventsListener(this);
     super.dispose();
+  }
+
+  void onTextureReady() {
+    final int newTextureId = widget.controller.textureId;
+    if (newTextureId != _textureId) {
+      setState(() {
+        _textureId = newTextureId;
+      });
+    }
+  }
+
+  void onVideoSizeChanged(Size size) {
+    _updateAspectRatio(size);
   }
 
   @override

@@ -1,31 +1,22 @@
 import 'dart:ui';
 
-class ApiVideoLiveStreamEventsListener {
+mixin ApiVideoLiveStreamEventsListener {
   /// Gets notified when the connection is successful
-  final VoidCallback? onConnectionSuccess;
+  void onConnectionSuccess() {}
 
   /// Gets notified when the connection failed
-  final Function(String)? onConnectionFailed;
+  void onConnectionFailed(String reason) {}
 
   /// Gets notified when the device has been disconnected
-  final VoidCallback? onDisconnection;
+  void onDisconnection() {}
 
   /// Gets notified when the video size has changed. Mostly designed to update Widget aspect ratio.
-  final Function(Size)? onVideoSizeChanged;
+  void onVideoSizeChanged(Size size) {}
 
   /// Gets notified when an error occurs
-  final Function(Exception)? onError;
-
-  ApiVideoLiveStreamEventsListener(
-      {this.onConnectionSuccess,
-      this.onConnectionFailed,
-      this.onDisconnection,
-      this.onVideoSizeChanged,
-      this.onError});
+  void onError(Exception error) {}
 }
 
-class ApiVideoLiveStreamWidgetListener {
-  final VoidCallback? onTextureReady;
-
-  ApiVideoLiveStreamWidgetListener({this.onTextureReady});
+mixin ApiVideoLiveStreamWidgetListener {
+  void onTextureReady() {}
 }

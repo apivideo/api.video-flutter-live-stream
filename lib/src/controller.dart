@@ -30,35 +30,8 @@ class ApiVideoLiveStreamController {
   bool get isInitialized => _isInitialized;
 
   /// Events listeners
-  List<ApiVideoLiveStreamEventsListener> _eventsListeners = [];
+  _EventListenersManager _eventsListenersManager = _EventListenersManager();
   List<ApiVideoLiveStreamWidgetListener> _widgetListeners = [];
-
-  late ApiVideoLiveStreamEventsListener _platformListener =
-      ApiVideoLiveStreamEventsListener(onConnectionSuccess: () {
-    _eventsListeners.forEach((listener) {
-      if (listener.onConnectionSuccess != null) {
-        listener.onConnectionSuccess!();
-      }
-    });
-  }, onConnectionFailed: (error) {
-    _eventsListeners.forEach((listener) {
-      if (listener.onConnectionFailed != null) {
-        listener.onConnectionFailed!(error);
-      }
-    });
-  }, onDisconnection: () {
-    _eventsListeners.forEach((listener) {
-      if (listener.onDisconnection != null) {
-        listener.onDisconnection!();
-      }
-    });
-  }, onError: (error) {
-    _eventsListeners.forEach((listener) {
-      if (listener.onError != null) {
-        listener.onError!(error);
-      }
-    });
-  });
 
   /// Creates a new [ApiVideoLiveStreamController] instance.
   ApiVideoLiveStreamController(
@@ -71,13 +44,11 @@ class ApiVideoLiveStreamController {
 
   /// Creates a new live stream instance with initial audio and video configurations.
   Future<void> initialize() async {
-    _platform.setListener(_platformListener);
+    _platform.setListener(_eventsListenersManager);
     _textureId = await _platform.initialize() ?? kUninitializedTextureId;
 
     for (var listener in [..._widgetListeners]) {
-      if (listener.onTextureReady != null) {
-        listener.onTextureReady!();
-      }
+      listener.onTextureReady();
     }
 
     await setCameraPosition(_initialCameraPosition);
@@ -92,7 +63,7 @@ class ApiVideoLiveStreamController {
   /// Disposes the live stream instance.
   Future<void> dispose() async {
     _platform.setListener(null);
-    _eventsListeners.clear();
+    _eventsListenersManager.dispose();
     _widgetListeners.clear();
     await _platform.dispose();
     return;
@@ -197,30 +168,14 @@ class ApiVideoLiveStreamController {
     return Texture(textureId: textureId);
   }
 
-  /// Adds a new events listener from the direct callbacks.
-  /// Returns the listener instance. You can remove it later with [removeEventsListener].
-  ApiVideoLiveStreamEventsListener addCallbacksListener(
-      {VoidCallback? onConnectionSuccess,
-      Function(String)? onConnectionFailed,
-      VoidCallback? onDisconnection,
-      Function(Exception)? onError}) {
-    final listener = ApiVideoLiveStreamEventsListener(
-        onConnectionSuccess: onConnectionSuccess,
-        onConnectionFailed: onConnectionFailed,
-        onDisconnection: onDisconnection,
-        onError: onError);
-    _eventsListeners.add(listener);
-    return listener;
-  }
-
   /// Adds a new widget listener from the events listener.
   void addEventsListener(ApiVideoLiveStreamEventsListener listener) {
-    _eventsListeners.add(listener);
+    _eventsListenersManager.add(listener);
   }
 
   /// Removes an events listener.
   void removeEventsListener(ApiVideoLiveStreamEventsListener listener) {
-    _eventsListeners.remove(listener);
+    _eventsListenersManager.remove(listener);
   }
 
   /// This is exposed for internal use only. Do not use it.
@@ -233,5 +188,51 @@ class ApiVideoLiveStreamController {
   @internal
   void removeWidgetListener(ApiVideoLiveStreamWidgetListener listener) {
     _widgetListeners.remove(listener);
+  }
+}
+
+class _EventListenersManager with ApiVideoLiveStreamEventsListener {
+  final List<ApiVideoLiveStreamEventsListener> listeners = [];
+
+  void onConnectionSuccess() {
+    for (var listener in listeners) {
+      listener.onConnectionSuccess();
+    }
+  }
+
+  void onConnectionFailed(String reason) {
+    for (var listener in listeners) {
+      listener.onConnectionFailed(reason);
+    }
+  }
+
+  void onDisconnection() {
+    for (var listener in listeners) {
+      listener.onDisconnection();
+    }
+  }
+
+  void onError(Exception error) {
+    for (var listener in listeners) {
+      listener.onError(error);
+    }
+  }
+
+  void onVideoSizeChanged(Size size) {
+    for (var listener in listeners) {
+      listener.onVideoSizeChanged(size);
+    }
+  }
+
+  void add(ApiVideoLiveStreamEventsListener listener) {
+    listeners.add(listener);
+  }
+
+  void remove(ApiVideoLiveStreamEventsListener listener) {
+    listeners.remove(listener);
+  }
+
+  void dispose() {
+    listeners.clear();
   }
 }

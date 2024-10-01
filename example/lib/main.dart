@@ -45,7 +45,7 @@ class LiveViewPage extends StatefulWidget {
 }
 
 class _LiveViewPageState extends State<LiveViewPage>
-    with WidgetsBindingObserver {
+    with WidgetsBindingObserver, ApiVideoLiveStreamEventsListener {
   final ButtonStyle buttonStyle =
       ElevatedButton.styleFrom(textStyle: const TextStyle(fontSize: 20));
   Params params = Params();
@@ -67,6 +67,7 @@ class _LiveViewPageState extends State<LiveViewPage>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _controller.removeEventsListener(this);
     _controller.dispose();
     super.dispose();
   }
@@ -85,36 +86,43 @@ class _LiveViewPageState extends State<LiveViewPage>
     }
   }
 
+  void onConnectionSuccess() {
+    print('Connection succeeded');
+  }
+
+  void onConnectionFailed(String reason) {
+    print('Connection failed: $reason');
+    _showDialog(context, 'Connection failed', '$reason');
+    if (mounted) {
+      setIsStreaming(false);
+    }
+  }
+
+  void onDisconnection() {
+    showInSnackBar('Disconnected');
+    if (mounted) {
+      setIsStreaming(false);
+    }
+  }
+
+  void onError(Exception error) {
+    // Get error such as missing permission,...
+    if (error is PlatformException) {
+      _showDialog(
+          context, "Error", error.message ?? "An unknown error occurred");
+    } else {
+      _showDialog(context, "Error", "$error");
+    }
+    if (mounted) {
+      setIsStreaming(false);
+    }
+  }
+
   ApiVideoLiveStreamController createLiveStreamController() {
     final controller = ApiVideoLiveStreamController(
         initialAudioConfig: params.audioConfig,
         initialVideoConfig: params.videoConfig);
-
-    controller.addCallbacksListener(onConnectionSuccess: () {
-      print('Connection succeeded');
-    }, onConnectionFailed: (error) {
-      print('Connection failed: $error');
-      _showDialog(context, 'Connection failed', '$error');
-      if (mounted) {
-        setIsStreaming(false);
-      }
-    }, onDisconnection: () {
-      showInSnackBar('Disconnected');
-      if (mounted) {
-        setIsStreaming(false);
-      }
-    }, onError: (error) {
-      // Get error such as missing permission,...
-      if (error is PlatformException) {
-        _showDialog(
-            context, "Error", error.message ?? "An unknown error occurred");
-      } else {
-        _showDialog(context, "Error", "$error");
-      }
-      if (mounted) {
-        setIsStreaming(false);
-      }
-    });
+    controller.addEventsListener(this);
     return controller;
   }
 
