@@ -99,6 +99,21 @@ class ApiVideoMobileLiveStreamPlatform extends ApiVideoLiveStreamPlatform
     }
   }
 
+  @override
+  Future<void> setZoomRatio(double zoomRatio) {
+    return messenger.setZoomRatio(zoomRatio);
+  }
+
+  @override
+  Future<double> getZoomRatio() async {
+    return messenger.getZoomRatio();
+  }
+
+  @override
+  Future<double> getMaxZoomRatio() async {
+    return messenger.getMaxZoomRatio();
+  }
+
   /// Builds the preview widget.
   @override
   Widget buildPreview(int textureId) {

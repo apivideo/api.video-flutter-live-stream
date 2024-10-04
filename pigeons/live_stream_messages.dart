@@ -124,6 +124,12 @@ abstract class LiveStreamHostApi {
   void setIsMuted(bool isMuted);
 
   NativeResolution? getVideoResolution();
+
+  void setZoomRatio(double zoomRatio);
+
+  double getZoomRatio();
+
+  double getMaxZoomRatio();
 }
 
 // From native to Flutter

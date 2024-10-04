@@ -260,6 +260,9 @@ interface LiveStreamHostApi {
   fun getIsMuted(): Boolean
   fun setIsMuted(isMuted: Boolean)
   fun getVideoResolution(): NativeResolution?
+  fun setZoomRatio(zoomRatio: Double)
+  fun getZoomRatio(): Double
+  fun getMaxZoomRatio(): Double
 
   companion object {
     /** The codec used by LiveStreamHostApi. */
@@ -495,6 +498,54 @@ interface LiveStreamHostApi {
           channel.setMessageHandler { _, reply ->
             val wrapped: List<Any?> = try {
               listOf(api.getVideoResolution())
+            } catch (exception: Throwable) {
+              wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.apivideo_live_stream.LiveStreamHostApi.setZoomRatio$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val zoomRatioArg = args[0] as Double
+            val wrapped: List<Any?> = try {
+              api.setZoomRatio(zoomRatioArg)
+              listOf(null)
+            } catch (exception: Throwable) {
+              wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.apivideo_live_stream.LiveStreamHostApi.getZoomRatio$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { _, reply ->
+            val wrapped: List<Any?> = try {
+              listOf(api.getZoomRatio())
+            } catch (exception: Throwable) {
+              wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.apivideo_live_stream.LiveStreamHostApi.getMaxZoomRatio$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { _, reply ->
+            val wrapped: List<Any?> = try {
+              listOf(api.getMaxZoomRatio())
             } catch (exception: Throwable) {
               wrapError(exception)
             }

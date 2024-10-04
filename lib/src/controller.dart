@@ -158,8 +158,29 @@ class ApiVideoLiveStreamController {
     return _platform.setIsMuted(isMuted);
   }
 
+  /// Gets the current video [Size].
   Future<Size?> get videoSize {
     return _platform.getVideoSize();
+  }
+
+  /// Sets the zoom ratio.
+  /// The value must be between [zoomRatioRange].
+  /// 1.0 means no zoom.
+  Future<void> setZoomRatio(double zoomRatio) {
+    return _platform.setZoomRatio(zoomRatio);
+  }
+
+  /// Gets the current zoom ratio.
+  Future<double> get zoomRatio {
+    return _platform.getZoomRatio();
+  }
+
+  /// Gets the maximum zoom ratio range.
+  /// If the device does not support zoom, it will return a range from 1.0 to 1.0.
+  /// When switching to another camera, you should call this method again.
+  Future<Range<double>> get zoomRatioRange async {
+    final max = await _platform.getMaxZoomRatio();
+    return Range(min: 1.0, max: max);
   }
 
   /// Builds the preview widget.

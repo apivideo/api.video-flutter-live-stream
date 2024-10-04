@@ -67,6 +67,21 @@ class FlutterLiveStreamView: NSObject {
             liveStream.cameraPosition = newValue
         }
     }
+    
+    var zoomRatio: Double {
+        get {
+            Double(liveStream.zoomRatio)
+        }
+        set {
+            liveStream.zoomRatio = newValue
+        }
+    }
+    
+    var maxZoomRatio: Double {
+        get {
+            Double(liveStream.zoomRatioRange.upperBound)
+        }
+    }
 
     func dispose() {
         liveStream.stopStreaming()

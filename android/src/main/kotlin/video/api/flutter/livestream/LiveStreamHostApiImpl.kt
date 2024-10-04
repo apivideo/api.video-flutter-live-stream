@@ -139,6 +139,18 @@ class LiveStreamHostApiImpl(
         return flutterView!!.videoConfig.resolution.toNativeResolution()
     }
 
+    override fun setZoomRatio(zoomRatio: Double) {
+        flutterView!!.zoomRatio = zoomRatio.toFloat()
+    }
+
+    override fun getZoomRatio(): Double {
+        return flutterView!!.zoomRatio.toDouble()
+    }
+
+    override fun getMaxZoomRatio(): Double {
+        return flutterView!!.maxZoomRatio.toDouble()
+    }
+
     private fun executeOnMain(block: () -> Unit) {
         mainHandler.post {
             block()

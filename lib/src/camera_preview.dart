@@ -12,11 +12,15 @@ class ApiVideoCameraPreview extends StatefulWidget {
   const ApiVideoCameraPreview(
       {super.key,
       required this.controller,
+      this.enableZoomOnPinch = false,
       this.fit = BoxFit.contain,
       this.child});
 
   /// The controller for the camera to display the preview for.
   final ApiVideoLiveStreamController controller;
+
+  /// Enables zooming on pinch.
+  final bool enableZoomOnPinch;
 
   /// The [BoxFit] for the video. The [child] is scale to the preview box.
   final BoxFit fit;
@@ -95,19 +99,23 @@ class _ApiVideoCameraPreviewState extends State<ApiVideoCameraPreview>
       BoxConstraints constraints, NativeDeviceOrientation orientation) {
     final orientedSize = _size.orientate(orientation);
     // See https://github.com/flutter/flutter/issues/17287
-    return SizedBox(
-        width: constraints.maxWidth,
-        height: constraints.maxHeight,
-        child: FittedBox(
-            fit: widget.fit,
-            clipBehavior: Clip.hardEdge,
-            child: Center(
-                child: SizedBox(
-                    width: orientedSize.width,
-                    height: orientedSize.height,
-                    child: _wrapInRotatedBox(
-                        orientation: orientation,
-                        child: widget.controller.buildPreview())))));
+    return GestureDetector(
+        onScaleUpdate: (details) {
+          if (widget.enableZoomOnPinch) _onScaleUpdate(details);
+        },
+        child: SizedBox(
+            width: constraints.maxWidth,
+            height: constraints.maxHeight,
+            child: FittedBox(
+                fit: widget.fit,
+                clipBehavior: Clip.hardEdge,
+                child: Center(
+                    child: SizedBox(
+                        width: orientedSize.width,
+                        height: orientedSize.height,
+                        child: _wrapInRotatedBox(
+                            orientation: orientation,
+                            child: widget.controller.buildPreview()))))));
   }
 
   Widget _buildFittedOverlay(
@@ -119,6 +127,16 @@ class _ApiVideoCameraPreviewState extends State<ApiVideoCameraPreview>
         width: fittedSize.destination.width,
         height: fittedSize.destination.height,
         child: widget.child ?? Container());
+  }
+
+  void _onScaleUpdate(ScaleUpdateDetails details) async {
+    //print('ScaleUpdateDetails: ${details.scale}');
+
+    final zoomRatio = await widget.controller.zoomRatio;
+    //print('zoomRatio: $zoomRatio');
+    final double newZoomRatio = zoomRatio + (details.scale - 1) * 0.5;
+    //print('newZoomRatio: $zoomRatio');
+    widget.controller.setZoomRatio(newZoomRatio);
   }
 
   Widget _wrapInRotatedBox(
