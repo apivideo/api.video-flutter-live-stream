@@ -1,6 +1,8 @@
 package video.api.flutter.livestream
 
 import android.content.Context
+import android.hardware.camera2.CameraCharacteristics
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import io.flutter.plugin.common.BinaryMessenger
@@ -8,6 +10,7 @@ import io.flutter.view.TextureRegistry
 import io.github.thibaultbee.streampack.utils.backCameraList
 import io.github.thibaultbee.streampack.utils.externalCameraList
 import io.github.thibaultbee.streampack.utils.frontCameraList
+import io.github.thibaultbee.streampack.utils.getCameraCharacteristics
 import io.github.thibaultbee.streampack.utils.isBackCamera
 import io.github.thibaultbee.streampack.utils.isExternalCamera
 import io.github.thibaultbee.streampack.utils.isFrontCamera
@@ -17,22 +20,12 @@ import video.api.flutter.livestream.generated.LiveStreamHostApi
 import video.api.flutter.livestream.generated.NativeAudioConfig
 import video.api.flutter.livestream.generated.NativeResolution
 import video.api.flutter.livestream.generated.NativeVideoConfig
+import video.api.flutter.livestream.manager.FlutterLiveStreamViewManager
+import video.api.flutter.livestream.manager.PermissionsManager
 import video.api.flutter.livestream.utils.addTrailingSlashIfNeeded
 import video.api.flutter.livestream.utils.toAudioConfig
 import video.api.flutter.livestream.utils.toNativeResolution
 import video.api.flutter.livestream.utils.toVideoConfig
-
-fun LiveStreamHostApiImpl(
-    context: Context,
-    permissionsManager: PermissionsManager,
-    textureRegistry: TextureRegistry,
-    binaryMessenger: BinaryMessenger,
-) = LiveStreamHostApiImpl(
-    context,
-    permissionsManager,
-    textureRegistry,
-    LiveStreamFlutterApi(binaryMessenger)
-)
 
 class LiveStreamHostApiImpl(
     private val context: Context,
@@ -40,12 +33,12 @@ class LiveStreamHostApiImpl(
     private val textureRegistry: TextureRegistry,
     private val liveStreamFlutterApi: LiveStreamFlutterApi,
 ) : LiveStreamHostApi {
-    private var flutterView: FlutterLiveStreamView? = null
+    private var flutterView: FlutterLiveStreamViewManager? = null
     private val mainHandler = Handler(Looper.getMainLooper())
 
     override fun create(): Long {
         flutterView?.dispose()
-        flutterView = FlutterLiveStreamView(
+        flutterView = FlutterLiveStreamViewManager(
             context,
             textureRegistry,
             permissionsManager,
@@ -127,6 +120,10 @@ class LiveStreamHostApiImpl(
             { callback(Result.failure(it)) })
     }
 
+    override fun getCameraId(): String {
+        return flutterView!!.camera
+    }
+
     override fun getIsMuted(): Boolean {
         return flutterView!!.isMuted
     }
@@ -149,6 +146,18 @@ class LiveStreamHostApiImpl(
 
     override fun getMaxZoomRatio(): Double {
         return flutterView!!.maxZoomRatio.toDouble()
+    }
+
+    override fun getSensorOrientation(cameraId: String): Long {
+        val characteristics = context.getCameraCharacteristics(cameraId)
+        return (characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION) ?: 0).toLong()
+    }
+
+    /**
+     * Whether the preview is backed by [SurfaceTexture].
+     */
+    override fun isPreviewPreTransformed(): Boolean {
+        return Build.VERSION.SDK_INT <= 29
     }
 
     private fun executeOnMain(block: () -> Unit) {

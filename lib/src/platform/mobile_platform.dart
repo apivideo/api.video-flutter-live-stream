@@ -75,6 +75,11 @@ class ApiVideoMobileLiveStreamPlatform extends ApiVideoLiveStreamPlatform
   }
 
   @override
+  Future<String> getCameraId() {
+    return messenger.getCameraId();
+  }
+
+  @override
   Future<CameraPosition> getCameraPosition() async {
     return messenger.getCameraPosition();
   }
@@ -112,6 +117,16 @@ class ApiVideoMobileLiveStreamPlatform extends ApiVideoLiveStreamPlatform
   @override
   Future<double> getMaxZoomRatio() async {
     return messenger.getMaxZoomRatio();
+  }
+
+  @override
+  Future<bool> isPreviewPreTransformed() {
+    return messenger.isPreviewPreTransformed();
+  }
+
+  @override
+  Future<int> getSensorOrientation(String cameraId) {
+    return messenger.getSensorOrientation(cameraId);
   }
 
   /// Builds the preview widget.

@@ -1,9 +1,14 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:apivideo_live_stream/apivideo_live_stream.dart';
+import 'package:apivideo_live_stream/src/extensions/device_orientation_extensions.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:meta/meta.dart';
+import 'package:native_device_orientation/native_device_orientation.dart';
 
+import 'device_orientation_manager.dart';
 import 'listeners.dart';
 import 'platform/platform_interface.dart';
 
@@ -28,6 +33,21 @@ class ApiVideoLiveStreamController {
 
   /// Gets the current state of the video player.
   bool get isInitialized => _isInitialized;
+
+  // Properties for the camera preview orientation
+  @visibleForTesting
+  late bool cameraIsFrontFacing;
+  @visibleForTesting
+  late bool isPreviewPreTransformed = false;
+  @visibleForTesting
+  late int sensorOrientation = 0;
+  @visibleForTesting
+  DeviceOrientation? naturalOrientation;
+  @visibleForTesting
+  DeviceOrientation? currentDeviceOrientation;
+
+  NativeDeviceOrientationCommunicator _deviceOrientationCommunicator =
+      NativeDeviceOrientationCommunicator();
 
   /// Events listeners
   _EventListenersManager _eventsListenersManager = _EventListenersManager();
@@ -56,6 +76,35 @@ class ApiVideoLiveStreamController {
     await setAudioConfig(_initialAudioConfig);
 
     await startPreview();
+
+    // Retrieve info required for correcting the rotation of the camera preview
+    // if necessary.
+    if (Platform.isAndroid) {
+      //_deviceOrientationCommunicator = NativeDeviceOrientationCommunicator();
+
+      final cameraId = await _platform.getCameraId();
+      await Future.wait(<Future<Object>>[
+        _platform
+            .isPreviewPreTransformed()
+            .then((bool value) => isPreviewPreTransformed = value),
+        _platform
+            .getSensorOrientation(cameraId)
+            .then((int value) => sensorOrientation = value),
+        DeviceOrientationManager.getUiOrientation().then(
+            (DeviceOrientation orientation) =>
+                naturalOrientation ??= orientation),
+        cameraPosition.then((CameraPosition position) =>
+            cameraIsFrontFacing = position == CameraPosition.front)
+      ]);
+
+      _deviceOrientationCommunicator
+          .onOrientationChanged(useSensor: true)
+          .listen((NativeDeviceOrientation orientation) async {
+        currentDeviceOrientation =
+            await DeviceOrientationManager.getUiOrientation();
+      });
+    }
+
     _isInitialized = true;
     return;
   }
@@ -186,7 +235,66 @@ class ApiVideoLiveStreamController {
   /// Builds the preview widget.
   @internal
   Widget buildPreview() {
-    return Texture(textureId: textureId);
+    if (_textureId == kUninitializedTextureId) {
+      throw Exception("Controller is not initialized");
+    }
+
+    final Widget cameraPreview = Texture(textureId: textureId);
+    if (Platform.isAndroid) {
+      int naturalDeviceOrientationDegrees = naturalOrientation!.toDegress();
+      if (isPreviewPreTransformed) {
+        // If the camera preview is backed by a SurfaceTexture, the transformation
+        // needed to correctly rotate the preview has already been applied.
+        // However, we may need to correct the camera preview rotation if the
+        // device is naturally landscape-oriented.
+        if (naturalOrientation == NativeDeviceOrientation.landscapeLeft ||
+            naturalOrientation == NativeDeviceOrientation.landscapeRight) {
+          final int quarterTurnsToCorrectForLandscape =
+              (-naturalDeviceOrientationDegrees + 360) ~/ 4;
+          return RotatedBox(
+              quarterTurns: quarterTurnsToCorrectForLandscape,
+              child: cameraPreview);
+        }
+        return cameraPreview;
+      } else {
+        final int signForCameraDirection = cameraIsFrontFacing ? 1 : -1;
+
+        if (signForCameraDirection == 1 &&
+            (currentDeviceOrientation ==
+                    NativeDeviceOrientation.landscapeLeft ||
+                currentDeviceOrientation ==
+                    NativeDeviceOrientation.landscapeRight)) {
+          // For front-facing cameras, the image buffer is rotated counterclockwise,
+          // so we determine the rotation needed to correct the camera preview with
+          // respect to the naturalOrientation of the device based on the inverse of
+          // naturalOrientation.
+          naturalDeviceOrientationDegrees += 180;
+        }
+
+        // See https://developer.android.com/media/camera/camera2/camera-preview#orientation_calculation
+        // for more context on this formula.
+        final double rotation = (sensorOrientation +
+                naturalDeviceOrientationDegrees * signForCameraDirection +
+                360) %
+            360;
+        int quarterTurnsToCorrectPreview = rotation ~/ 90;
+
+        if (naturalOrientation == NativeDeviceOrientation.landscapeLeft ||
+            naturalOrientation == NativeDeviceOrientation.landscapeRight) {
+          // We may need to correct the camera preview rotation if the device is
+          // naturally landscape-oriented.
+          quarterTurnsToCorrectPreview +=
+              (-naturalDeviceOrientationDegrees + 360) ~/ 4;
+          return RotatedBox(
+              quarterTurns: quarterTurnsToCorrectPreview, child: cameraPreview);
+        }
+
+        return RotatedBox(
+            quarterTurns: quarterTurnsToCorrectPreview, child: cameraPreview);
+      }
+    } else {
+      return cameraPreview;
+    }
   }
 
   /// Adds a new widget listener from the events listener.

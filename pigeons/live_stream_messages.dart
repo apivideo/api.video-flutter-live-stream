@@ -119,6 +119,8 @@ abstract class LiveStreamHostApi {
   @async
   void setCameraPosition(CameraPosition position);
 
+  String getCameraId();
+
   bool getIsMuted();
 
   void setIsMuted(bool isMuted);
@@ -130,6 +132,10 @@ abstract class LiveStreamHostApi {
   double getZoomRatio();
 
   double getMaxZoomRatio();
+
+  int getSensorOrientation(String cameraId);
+
+  bool isPreviewPreTransformed();
 }
 
 // From native to Flutter
@@ -142,4 +148,9 @@ abstract class LiveStreamFlutterApi {
   void onVideoSizeChanged(NativeResolution resolution);
 
   void onError(String code, String message);
+}
+
+@HostApi()
+abstract class DeviceOrientationManagerHostApi {
+  String getUiOrientation();
 }

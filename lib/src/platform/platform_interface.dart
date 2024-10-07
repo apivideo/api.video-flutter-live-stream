@@ -77,6 +77,10 @@ abstract class ApiVideoLiveStreamPlatform extends PlatformInterface {
     throw UnimplementedError('setCameraPosition() has not been implemented.');
   }
 
+  Future<String> getCameraId() {
+    throw UnimplementedError('getCameraId() has not been implemented.');
+  }
+
   Future<bool> getIsMuted() {
     throw UnimplementedError('getIsMuted() has not been implemented.');
   }
@@ -99,6 +103,16 @@ abstract class ApiVideoLiveStreamPlatform extends PlatformInterface {
 
   Future<double> getMaxZoomRatio() {
     throw UnimplementedError('getMaxZoomRatio() has not been implemented.');
+  }
+
+  Future<bool> isPreviewPreTransformed() {
+    throw UnimplementedError(
+        'isPreviewPreTransformed() has not been implemented.');
+  }
+
+  Future<int> getSensorOrientation(String cameraId) {
+    throw UnimplementedError(
+        'getSensorOrientation() has not been implemented.');
   }
 
   /// Returns a Stream of [LiveStreamingEvent]s.

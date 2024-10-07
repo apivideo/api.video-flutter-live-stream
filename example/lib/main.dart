@@ -47,20 +47,15 @@ class LiveViewPage extends StatefulWidget {
 class _LiveViewPageState extends State<LiveViewPage>
     with WidgetsBindingObserver, ApiVideoLiveStreamEventsListener {
   final ButtonStyle buttonStyle =
-  ElevatedButton.styleFrom(textStyle: const TextStyle(fontSize: 20));
+      ElevatedButton.styleFrom(textStyle: const TextStyle(fontSize: 20));
   Params params = Params();
-  late final ApiVideoLiveStreamController _controller;
+  late final ApiVideoLiveStreamController _controller =
+      createLiveStreamController();
   bool _isStreaming = false;
 
   @override
   void initState() {
     WidgetsBinding.instance.addObserver(this);
-
-    _controller = createLiveStreamController();
-
-    _controller.initialize().catchError((e) {
-      showInSnackBar(e.toString());
-    });
     super.initState();
   }
 
@@ -118,14 +113,6 @@ class _LiveViewPageState extends State<LiveViewPage>
     }
   }
 
-  ApiVideoLiveStreamController createLiveStreamController() {
-    final controller = ApiVideoLiveStreamController(
-        initialAudioConfig: params.audioConfig,
-        initialVideoConfig: params.videoConfig);
-    controller.addEventsListener(this);
-    return controller;
-  }
-
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
@@ -156,10 +143,22 @@ class _LiveViewPageState extends State<LiveViewPage>
                   child: Container(
                     child: Padding(
                       padding: const EdgeInsets.all(1.0),
-                      child: Center(
-                        child: ApiVideoCameraPreview(
-                            controller: _controller, enableZoomOnPinch: true),
-                      ),
+                      child: FutureBuilder<void>(
+                          future: _controller.initialize(),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.done) {
+                              return Center(
+                                child: ApiVideoCameraPreview(
+                                    controller: _controller,
+                                    enableZoomOnPinch: true),
+                              );
+                            } else {
+                              return Center(
+                                child: CircularProgressIndicator(),
+                              );
+                            }
+                          }),
                     ),
                   ),
                 ),
@@ -197,7 +196,7 @@ class _LiveViewPageState extends State<LiveViewPage>
           icon: const Icon(Icons.cameraswitch),
           color: apiVideoOrange,
           onPressed:
-          liveStreamController != null ? onSwitchCameraButtonPressed : null,
+              liveStreamController != null ? onSwitchCameraButtonPressed : null,
         ),
         IconButton(
           icon: const Icon(Icons.mic_off),
@@ -226,6 +225,14 @@ class _LiveViewPageState extends State<LiveViewPage>
   void showInSnackBar(String message) {
     ScaffoldMessenger.of(context)
         .showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  ApiVideoLiveStreamController createLiveStreamController() {
+    final controller = ApiVideoLiveStreamController(
+        initialAudioConfig: params.audioConfig,
+        initialVideoConfig: params.videoConfig);
+    controller.addEventsListener(this);
+    return controller;
   }
 
   Future<void> switchCamera() async {
@@ -338,8 +345,8 @@ class _LiveViewPageState extends State<LiveViewPage>
   }
 }
 
-Future<void> _showDialog(BuildContext context, String title,
-    String description) async {
+Future<void> _showDialog(
+    BuildContext context, String title, String description) async {
   return showDialog<void>(
     context: context,
     barrierDismissible: false, // user must tap button!

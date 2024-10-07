@@ -1,10 +1,12 @@
-package video.api.flutter.livestream
+package video.api.flutter.livestream.manager
 
 import android.Manifest
 import android.content.Context
+import android.util.Log
 import android.util.Size
 import android.view.Surface
 import io.flutter.view.TextureRegistry
+import io.flutter.view.TextureRegistry.SurfaceProducer
 import io.github.thibaultbee.streampack.data.AudioConfig
 import io.github.thibaultbee.streampack.data.VideoConfig
 import io.github.thibaultbee.streampack.error.StreamPackError
@@ -13,9 +15,29 @@ import io.github.thibaultbee.streampack.listeners.OnConnectionListener
 import io.github.thibaultbee.streampack.listeners.OnErrorListener
 import kotlinx.coroutines.runBlocking
 
-class FlutterLiveStreamView(
+fun FlutterLiveStreamViewManager(
     context: Context,
     textureRegistry: TextureRegistry,
+    permissionsManager: PermissionsManager,
+    onConnectionSucceeded: () -> Unit,
+    onDisconnected: () -> Unit,
+    onConnectionFailed: (String) -> Unit,
+    onGenericError: (Exception) -> Unit,
+    onVideoSizeChanged: (Size) -> Unit,
+) = FlutterLiveStreamViewManager(
+    context,
+    textureRegistry.createSurfaceProducer(),
+    permissionsManager,
+    onConnectionSucceeded,
+    onDisconnected,
+    onConnectionFailed,
+    onGenericError,
+    onVideoSizeChanged
+)
+
+class FlutterLiveStreamViewManager(
+    context: Context,
+    private val surfaceProducer: SurfaceProducer,
     private val permissionsManager: PermissionsManager,
     private val onConnectionSucceeded: () -> Unit,
     private val onDisconnected: () -> Unit,
@@ -24,9 +46,7 @@ class FlutterLiveStreamView(
     private val onVideoSizeChanged: (Size) -> Unit,
 ) :
     OnConnectionListener, OnErrorListener {
-    private val flutterTexture = textureRegistry.createSurfaceTexture()
-    val textureId: Long
-        get() = flutterTexture.id()
+    val textureId = surfaceProducer.id()
 
     private val streamer = CameraRtmpLiveStreamer(
         context = context,
@@ -39,10 +59,23 @@ class FlutterLiveStreamView(
     val isStreaming: Boolean
         get() = _isStreaming
 
-
     private var _videoConfig: VideoConfig? = null
     val videoConfig: VideoConfig
         get() = _videoConfig!!
+
+    init {
+        surfaceProducer.setCallback(object : SurfaceProducer.Callback {
+            override fun onSurfaceCreated() {
+                Log.i(TAG, "Surface created")
+            }
+
+            override fun onSurfaceDestroyed() {
+                Log.i(TAG, "Surface destroyed")
+                streamer.stopPreview()
+            }
+        })
+    }
+
 
     fun setVideoConfig(
         videoConfig: VideoConfig,
@@ -158,7 +191,7 @@ class FlutterLiveStreamView(
     fun dispose() {
         stopStream()
         streamer.stopPreview()
-        flutterTexture.release()
+        surfaceProducer.release()
     }
 
     fun startStream(url: String) {
@@ -226,13 +259,8 @@ class FlutterLiveStreamView(
     }
 
     private fun getSurface(resolution: Size): Surface {
-        val surfaceTexture = flutterTexture.surfaceTexture().apply {
-            setDefaultBufferSize(
-                resolution.width,
-                resolution.height
-            )
-        }
-        return Surface(surfaceTexture)
+        surfaceProducer.setSize(resolution.width, resolution.height)
+        return surfaceProducer.surface
     }
 
 
@@ -251,5 +279,9 @@ class FlutterLiveStreamView(
     override fun onError(error: StreamPackError) {
         _isStreaming = false
         onGenericError(error)
+    }
+
+    companion object {
+        private const val TAG = "FltLiveStreamView"
     }
 }

@@ -7,7 +7,10 @@ import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.view.TextureRegistry
+import video.api.flutter.livestream.generated.DeviceOrientationManagerHostApi
+import video.api.flutter.livestream.generated.LiveStreamFlutterApi
 import video.api.flutter.livestream.generated.LiveStreamHostApi
+import video.api.flutter.livestream.manager.PermissionsManager
 
 
 /** ApiVideoLiveStreamPlugin */
@@ -17,6 +20,7 @@ class ApiVideoLiveStreamPlugin : FlutterPlugin, ActivityAware {
 
     private var permissionsManager: PermissionsManager? = null
     private var liveStreamHostApiImpl: LiveStreamHostApiImpl? = null
+    private var deviceOrientationManagerHostApiImpl: DeviceOrientationManagerHostApiImpl? = null
 
     private fun setUp(
         permissionsManager: PermissionsManager,
@@ -24,14 +28,16 @@ class ApiVideoLiveStreamPlugin : FlutterPlugin, ActivityAware {
         activity: Activity,
         textureRegistry: TextureRegistry
     ) {
-        LiveStreamHostApiImpl(
+        liveStreamHostApiImpl = LiveStreamHostApiImpl(
             activity,
             permissionsManager,
             textureRegistry,
-            binaryMessenger
+            LiveStreamFlutterApi(binaryMessenger)
         ).apply {
             LiveStreamHostApi.setUp(binaryMessenger, this)
-            liveStreamHostApiImpl = this
+        }
+        deviceOrientationManagerHostApiImpl = DeviceOrientationManagerHostApiImpl().apply {
+            DeviceOrientationManagerHostApi.setUp(binaryMessenger, this)
         }
     }
 
@@ -62,6 +68,8 @@ class ApiVideoLiveStreamPlugin : FlutterPlugin, ActivityAware {
             activity,
             pluginBinding.textureRegistry
         )
+
+        updateActivity(activity)
     }
 
     override fun onDetachedFromActivityForConfigChanges() {
@@ -69,6 +77,8 @@ class ApiVideoLiveStreamPlugin : FlutterPlugin, ActivityAware {
             it.activity = null
             activityBinding?.removeRequestPermissionsResultListener(it)
         }
+
+        updateActivity(null)
     }
 
     override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
@@ -77,6 +87,8 @@ class ApiVideoLiveStreamPlugin : FlutterPlugin, ActivityAware {
         val permissionsManager = requireNotNull(permissionsManager)
         permissionsManager.activity = binding.activity
         binding.addRequestPermissionsResultListener(permissionsManager)
+
+        updateActivity(binding.activity)
     }
 
     override fun onDetachedFromActivity() {
@@ -85,6 +97,11 @@ class ApiVideoLiveStreamPlugin : FlutterPlugin, ActivityAware {
             activityBinding?.removeRequestPermissionsResultListener(it)
         }
 
+        updateActivity(null)
         activityBinding = null
+    }
+
+    fun updateActivity(activity: Activity?) {
+        deviceOrientationManagerHostApiImpl?.setActivity(activity)
     }
 }
