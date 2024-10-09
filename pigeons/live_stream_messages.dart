@@ -19,20 +19,8 @@ class NativeResolution {
   final int height;
 }
 
-/// Camera facing direction
-enum CameraPosition {
-  /// Front camera
-  front,
-
-  /// Back camera
-  back,
-
-  /// Other camera (external for example)
-  other;
-}
-
 /// Audio channel
-enum Channel {
+enum NativeChannel {
   /// Stereo (2 channels)
   stereo,
 
@@ -42,12 +30,19 @@ enum Channel {
 
 /// Live streaming audio configuration.
 class NativeAudioConfig {
+  /// Creates a new [AudioConfig] instance.
+  ///
+  /// [sampleRate] is only supported on Android.
+  /// [channel] is only supported on Android.
+  const NativeAudioConfig(this.bitrate, this.channel, this.sampleRate,
+      this.enableEchoCanceler, this.enableNoiseSuppressor);
+
   /// The video bitrate in bps
   final int bitrate;
 
   /// The number of audio channels
   /// Only available on Android
-  final Channel channel;
+  final NativeChannel channel;
 
   /// The sample rate of the audio capture
   /// Only available on Android
@@ -62,17 +57,14 @@ class NativeAudioConfig {
   /// Enable the noise suppressor
   /// Only available on Android
   final bool enableNoiseSuppressor;
-
-  /// Creates a new [AudioConfig] instance.
-  ///
-  /// [sampleRate] is only supported on Android.
-  /// [channel] is only supported on Android.
-  const NativeAudioConfig(this.bitrate, this.channel, this.sampleRate,
-      this.enableEchoCanceler, this.enableNoiseSuppressor);
 }
 
 /// Live streaming video configuration.
 class NativeVideoConfig {
+  /// Creates a [VideoConfig] instance
+  const NativeVideoConfig(
+      this.bitrate, this.resolution, this.fps, this.gopDurationInS);
+
   /// The video bitrate in bps
   final int bitrate;
 
@@ -84,10 +76,18 @@ class NativeVideoConfig {
 
   /// GOP (Group of Pictures) duration in seconds
   final double gopDurationInS;
+}
 
-  /// Creates a [VideoConfig] instance
-  const NativeVideoConfig(
-      this.bitrate, this.resolution, this.fps, this.gopDurationInS);
+/// Camera facing direction
+enum NativeCameraLensDirection {
+  /// Front camera
+  front,
+
+  /// Back camera
+  back,
+
+  /// Other camera (external for example)
+  other;
 }
 
 // From Flutter to native
@@ -114,22 +114,16 @@ abstract class LiveStreamHostApi {
 
   bool getIsStreaming();
 
-  CameraPosition getCameraPosition();
+  String getCameraId();
 
   @async
-  void setCameraPosition(CameraPosition position);
+  void setCameraId(String cameraId);
 
   bool getIsMuted();
 
   void setIsMuted(bool isMuted);
 
   NativeResolution? getVideoResolution();
-
-  void setZoomRatio(double zoomRatio);
-
-  double getZoomRatio();
-
-  double getMaxZoomRatio();
 }
 
 // From native to Flutter
@@ -142,4 +136,27 @@ abstract class LiveStreamFlutterApi {
   void onVideoSizeChanged(NativeResolution resolution);
 
   void onError(String code, String message);
+}
+
+@HostApi()
+abstract class CameraInfoHostApi {
+  int getSensorRotationDegrees(String cameraId);
+
+  NativeCameraLensDirection getLensDirection(String cameraId);
+
+  double getMinZoomRatio(String cameraId);
+
+  double getMaxZoomRatio(String cameraId);
+}
+
+@HostApi()
+abstract class CameraSettingsHostApi {
+  void setZoomRatio(double zoomRatio);
+
+  double getZoomRatio();
+}
+
+@HostApi()
+abstract class CameraProviderHostApi {
+  List<String> getAvailableCameraIds();
 }

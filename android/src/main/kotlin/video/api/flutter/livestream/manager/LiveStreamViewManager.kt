@@ -1,20 +1,19 @@
-package video.api.flutter.livestream
+package video.api.flutter.livestream.manager
 
 import android.Manifest
-import android.content.Context
 import android.util.Size
 import android.view.Surface
 import io.flutter.view.TextureRegistry
 import io.github.thibaultbee.streampack.data.AudioConfig
 import io.github.thibaultbee.streampack.data.VideoConfig
 import io.github.thibaultbee.streampack.error.StreamPackError
-import io.github.thibaultbee.streampack.ext.rtmp.streamers.CameraRtmpLiveStreamer
 import io.github.thibaultbee.streampack.listeners.OnConnectionListener
 import io.github.thibaultbee.streampack.listeners.OnErrorListener
+import io.github.thibaultbee.streampack.streamers.live.BaseCameraLiveStreamer
 import kotlinx.coroutines.runBlocking
 
-class FlutterLiveStreamView(
-    context: Context,
+class LiveStreamViewManager(
+    private val streamer: BaseCameraLiveStreamer,
     textureRegistry: TextureRegistry,
     private val permissionsManager: PermissionsManager,
     private val onConnectionSucceeded: () -> Unit,
@@ -28,17 +27,10 @@ class FlutterLiveStreamView(
     val textureId: Long
         get() = flutterTexture.id()
 
-    private val streamer = CameraRtmpLiveStreamer(
-        context = context,
-        initialOnConnectionListener = this,
-        initialOnErrorListener = this
-    )
-
     private var _isPreviewing = false
     private var _isStreaming = false
     val isStreaming: Boolean
         get() = _isStreaming
-
 
     private var _videoConfig: VideoConfig? = null
     val videoConfig: VideoConfig
@@ -146,14 +138,10 @@ class FlutterLiveStreamView(
             })
     }
 
-    var zoomRatio: Float
-        get() = streamer.settings.camera.zoom.zoomRatio
-        set(value) {
-            streamer.settings.camera.zoom.zoomRatio = value
-        }
-
-    val maxZoomRatio: Float
-        get() = streamer.settings.camera.zoom.availableRatioRange.upper
+    init {
+        streamer.onConnectionListener = this
+        streamer.onErrorListener = this
+    }
 
     fun dispose() {
         stopStream()

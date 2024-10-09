@@ -4,7 +4,7 @@ import android.media.AudioFormat
 import android.util.Size
 import io.github.thibaultbee.streampack.data.AudioConfig
 import io.github.thibaultbee.streampack.data.VideoConfig
-import video.api.flutter.livestream.generated.Channel
+import video.api.flutter.livestream.generated.NativeChannel
 import video.api.flutter.livestream.generated.NativeAudioConfig
 import video.api.flutter.livestream.generated.NativeResolution
 import video.api.flutter.livestream.generated.NativeVideoConfig
@@ -20,9 +20,9 @@ fun NativeVideoConfig.toVideoConfig() = VideoConfig(
     gopDuration = gopDurationInS.toFloat()
 )
 
-fun Channel.toChannelConfig() = when (this) {
-    Channel.MONO -> AudioFormat.CHANNEL_IN_MONO
-    Channel.STEREO -> AudioFormat.CHANNEL_IN_STEREO
+fun NativeChannel.toChannelConfig() = when (this) {
+    NativeChannel.MONO -> AudioFormat.CHANNEL_IN_MONO
+    NativeChannel.STEREO -> AudioFormat.CHANNEL_IN_STEREO
 }
 
 fun NativeAudioConfig.toAudioConfig() = AudioConfig(

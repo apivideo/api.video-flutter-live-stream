@@ -130,13 +130,11 @@ class _ApiVideoCameraPreviewState extends State<ApiVideoCameraPreview>
   }
 
   void _onScaleUpdate(ScaleUpdateDetails details) async {
-    //print('ScaleUpdateDetails: ${details.scale}');
+    final cameraSettings = await widget.controller.cameraSettings;
 
-    final zoomRatio = await widget.controller.zoomRatio;
-    //print('zoomRatio: $zoomRatio');
+    final zoomRatio = await cameraSettings.zoom.zoomRatio;
     final double newZoomRatio = zoomRatio + (details.scale - 1) * 0.5;
-    //print('newZoomRatio: $zoomRatio');
-    widget.controller.setZoomRatio(newZoomRatio);
+    cameraSettings.zoom.setZoomRatio(newZoomRatio);
   }
 
   Widget _wrapInRotatedBox(

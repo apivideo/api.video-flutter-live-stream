@@ -1,6 +1,6 @@
 import 'dart:ui';
 
-import 'package:apivideo_live_stream/src/extensions/size_extensions.dart';
+import 'package:apivideo_live_stream/src/platform/extensions/size_extensions.dart';
 import 'package:apivideo_live_stream/src/platform/generated/live_stream_api.g.dart';
 import 'package:meta/meta.dart';
 

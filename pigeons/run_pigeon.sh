@@ -1,1 +1,1 @@
-flutter pub run pigeon --input pigeons/live_stream_messages.dart
+dart run pigeon --input pigeons/live_stream_messages.dart
