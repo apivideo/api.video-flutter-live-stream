@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:apivideo_live_stream/apivideo_live_stream.dart';
-import 'package:apivideo_live_stream/src/platform/platform_interface.dart';
+import 'package:apivideo_live_stream/src/platform_interface/platform_interface.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -13,7 +13,7 @@ void main() {
 
   /// The controller to test
   final _controller = ApiVideoLiveStreamController(
-      initialVideoConfig: VideoConfig(), initialAudioConfig: AudioConfig());
+      initialVideoConfig: VideoConfig(), initialAudioConfig: AudioConfig(), initialCameraId: "test");
 
   test('initialized', () async {
     await _controller.initialize();
@@ -53,8 +53,8 @@ class MockedApiVideoLiveStreamPlatform extends ApiVideoLiveStreamPlatform {
   }
 
   @override
-  Future<void> setCameraPosition(CameraPosition position) {
-    calls.add('setCameraPosition');
+  Future<void> setCameraId(String cameraId) {
+    calls.add('setCameraId');
     return Future.value();
   }
 

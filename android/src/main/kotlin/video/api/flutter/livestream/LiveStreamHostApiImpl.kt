@@ -1,52 +1,48 @@
 package video.api.flutter.livestream
 
-import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.view.TextureRegistry
-import io.github.thibaultbee.streampack.utils.backCameraList
-import io.github.thibaultbee.streampack.utils.externalCameraList
-import io.github.thibaultbee.streampack.utils.frontCameraList
-import io.github.thibaultbee.streampack.utils.isBackCamera
-import io.github.thibaultbee.streampack.utils.isExternalCamera
-import io.github.thibaultbee.streampack.utils.isFrontCamera
-import video.api.flutter.livestream.generated.CameraPosition
 import video.api.flutter.livestream.generated.LiveStreamFlutterApi
 import video.api.flutter.livestream.generated.LiveStreamHostApi
 import video.api.flutter.livestream.generated.NativeAudioConfig
 import video.api.flutter.livestream.generated.NativeResolution
 import video.api.flutter.livestream.generated.NativeVideoConfig
+import video.api.flutter.livestream.manager.InstanceManager
+import video.api.flutter.livestream.manager.LiveStreamViewManager
+import video.api.flutter.livestream.manager.PermissionsManager
 import video.api.flutter.livestream.utils.addTrailingSlashIfNeeded
 import video.api.flutter.livestream.utils.toAudioConfig
 import video.api.flutter.livestream.utils.toNativeResolution
 import video.api.flutter.livestream.utils.toVideoConfig
 
 fun LiveStreamHostApiImpl(
-    context: Context,
+    instanceManager: InstanceManager,
     permissionsManager: PermissionsManager,
     textureRegistry: TextureRegistry,
     binaryMessenger: BinaryMessenger,
 ) = LiveStreamHostApiImpl(
-    context,
+    instanceManager,
     permissionsManager,
     textureRegistry,
     LiveStreamFlutterApi(binaryMessenger)
 )
 
 class LiveStreamHostApiImpl(
-    private val context: Context,
+    private val instanceManager: InstanceManager,
     private val permissionsManager: PermissionsManager,
     private val textureRegistry: TextureRegistry,
     private val liveStreamFlutterApi: LiveStreamFlutterApi,
 ) : LiveStreamHostApi {
-    private var flutterView: FlutterLiveStreamView? = null
+    private var flutterView: LiveStreamViewManager? = null
     private val mainHandler = Handler(Looper.getMainLooper())
 
     override fun create(): Long {
         flutterView?.dispose()
-        flutterView = FlutterLiveStreamView(
-            context,
+        instanceManager.dispose()
+        flutterView = LiveStreamViewManager(
+            instanceManager.getInstance(),
             textureRegistry,
             permissionsManager,
             { executeOnMain { liveStreamFlutterApi.onIsConnectedChanged(true) {} } },
@@ -106,23 +102,12 @@ class LiveStreamHostApiImpl(
         return flutterView!!.isStreaming
     }
 
-    override fun getCameraPosition(): CameraPosition {
-        val camera = flutterView!!.camera
-        return when {
-            context.isFrontCamera(camera) -> CameraPosition.FRONT
-            context.isBackCamera(camera) -> CameraPosition.BACK
-            context.isExternalCamera(camera) -> CameraPosition.OTHER
-            else -> throw IllegalArgumentException("Invalid camera position for camera $camera")
-        }
+    override fun getCameraId(): String {
+        return flutterView!!.camera
     }
 
-    override fun setCameraPosition(position: CameraPosition, callback: (Result<Unit>) -> Unit) {
-        val cameraList = when (position) {
-            CameraPosition.FRONT -> context.frontCameraList
-            CameraPosition.BACK -> context.backCameraList
-            CameraPosition.OTHER -> context.externalCameraList
-        }
-        flutterView!!.setCamera(cameraList.first(),
+    override fun setCameraId(cameraId: String, callback: (Result<Unit>) -> Unit) {
+        flutterView!!.setCamera(cameraId,
             { callback(Result.success(Unit)) },
             { callback(Result.failure(it)) })
     }
@@ -137,18 +122,6 @@ class LiveStreamHostApiImpl(
 
     override fun getVideoResolution(): NativeResolution {
         return flutterView!!.videoConfig.resolution.toNativeResolution()
-    }
-
-    override fun setZoomRatio(zoomRatio: Double) {
-        flutterView!!.zoomRatio = zoomRatio.toFloat()
-    }
-
-    override fun getZoomRatio(): Double {
-        return flutterView!!.zoomRatio.toDouble()
-    }
-
-    override fun getMaxZoomRatio(): Double {
-        return flutterView!!.maxZoomRatio.toDouble()
     }
 
     private fun executeOnMain(block: () -> Unit) {

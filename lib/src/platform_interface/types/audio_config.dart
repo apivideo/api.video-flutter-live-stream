@@ -1,6 +1,37 @@
 import 'package:apivideo_live_stream/src/platform/generated/live_stream_api.g.dart';
 import 'package:meta/meta.dart';
 
+/// Audio channel
+enum Channel {
+  /// Stereo (2 channels)
+  stereo,
+
+  /// Mono (1 channel)
+  mono;
+
+  /// Returns a [NativeAudioConfig] instance.
+  @internal
+  NativeChannel toNative() {
+    switch (this) {
+      case Channel.stereo:
+        return NativeChannel.stereo;
+      case Channel.mono:
+        return NativeChannel.mono;
+    }
+  }
+
+  /// Returns a [Channel] instance from a [NativeChannel] instance.
+  @internal
+  static Channel fromNative(NativeChannel nativeChannel) {
+    switch (nativeChannel) {
+      case NativeChannel.stereo:
+        return Channel.stereo;
+      case NativeChannel.mono:
+        return Channel.mono;
+    }
+  }
+}
+
 /// Live streaming audio configuration.
 class AudioConfig {
   /// The video bitrate in bps
@@ -41,7 +72,7 @@ class AudioConfig {
   NativeAudioConfig toNative() {
     return NativeAudioConfig(
         bitrate: bitrate,
-        channel: channel,
+        channel: channel.toNative(),
         sampleRate: sampleRate,
         enableEchoCanceler: enableEchoCanceler,
         enableNoiseSuppressor: enableNoiseSuppressor);
@@ -52,7 +83,7 @@ class AudioConfig {
   static AudioConfig fromNative(NativeAudioConfig nativeAudioConfig) {
     return AudioConfig(
       bitrate: nativeAudioConfig.bitrate,
-      channel: nativeAudioConfig.channel,
+      channel: Channel.fromNative(nativeAudioConfig.channel),
       sampleRate: nativeAudioConfig.sampleRate,
       enableEchoCanceler: nativeAudioConfig.enableEchoCanceler,
       enableNoiseSuppressor: nativeAudioConfig.enableNoiseSuppressor,

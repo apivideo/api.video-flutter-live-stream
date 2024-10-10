@@ -1,7 +1,4 @@
-import 'package:apivideo_live_stream/src/listeners.dart';
-import 'package:apivideo_live_stream/src/platform/generated/live_stream_api.g.dart';
-import 'package:apivideo_live_stream/src/platform/mobile_platform.dart';
-import 'package:apivideo_live_stream/src/types/types.dart';
+import 'package:apivideo_live_stream/apivideo_live_stream.dart';
 import 'package:flutter/widgets.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
@@ -14,7 +11,7 @@ abstract class ApiVideoLiveStreamPlatform extends PlatformInterface {
   static ApiVideoLiveStreamPlatform _instance = _getDefaultPlatform();
 
   static ApiVideoLiveStreamPlatform _getDefaultPlatform() {
-    return ApiVideoMobileLiveStreamPlatform();
+    return ApiVideoMessengerLiveStreamPlatform();
   }
 
   /// The default instance of [ApiVideoLiveStreamPlatform] to use.
@@ -28,6 +25,13 @@ abstract class ApiVideoLiveStreamPlatform extends PlatformInterface {
   static set instance(ApiVideoLiveStreamPlatform instance) {
     PlatformInterface.verifyToken(instance, _token);
     _instance = instance;
+  }
+
+  /// Gets list of available cameras.
+  ///
+  /// This method returns an empty list when no cameras are available.
+  Future<List<CameraInfo>> getAvailableCameraInfos() {
+    throw UnimplementedError('getAvailableCameraInfos() is not implemented.');
   }
 
   /// Creates a new live stream instance
@@ -69,12 +73,13 @@ abstract class ApiVideoLiveStreamPlatform extends PlatformInterface {
     throw UnimplementedError('getIsStreaming() has not been implemented.');
   }
 
-  Future<CameraPosition> getCameraPosition() {
-    throw UnimplementedError('getCameraPosition() has not been implemented.');
+  Future<String> getCameraId() {
+    throw UnimplementedError(
+        'getCameraLensDirection() has not been implemented.');
   }
 
-  Future<void> setCameraPosition(CameraPosition cameraPosition) {
-    throw UnimplementedError('setCameraPosition() has not been implemented.');
+  Future<void> setCameraId(String name) {
+    throw UnimplementedError('setCameraName() has not been implemented.');
   }
 
   Future<bool> getIsMuted() {
@@ -89,16 +94,12 @@ abstract class ApiVideoLiveStreamPlatform extends PlatformInterface {
     throw UnimplementedError('getVideoSize() has not been implemented.');
   }
 
-  Future<void> setZoomRatio(double zoomRatio) {
-    throw UnimplementedError('setZoomRatio() has not been implemented.');
+  Future<CameraInfo> getCameraInfo() {
+    throw UnimplementedError('getCameraInfo() has not been implemented.');
   }
 
-  Future<double> getZoomRatio() {
-    throw UnimplementedError('getZoomRatio() has not been implemented.');
-  }
-
-  Future<double> getMaxZoomRatio() {
-    throw UnimplementedError('getMaxZoomRatio() has not been implemented.');
+  Future<CameraSettings> getCameraSettings() {
+    throw UnimplementedError('getCameraSettings() has not been implemented.');
   }
 
   /// Returns a Stream of [LiveStreamingEvent]s.

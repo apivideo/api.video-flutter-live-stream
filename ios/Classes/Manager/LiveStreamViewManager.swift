@@ -2,7 +2,7 @@ import ApiVideoLiveStream
 import AVFoundation
 import Foundation
 
-protocol FlutterLiveStreamViewDelegate {
+protocol LiveStreamViewManagerDelegate {
     func connectionSuccess()
     func connectionFailed(_: String)
     func disconnection()
@@ -10,11 +10,11 @@ protocol FlutterLiveStreamViewDelegate {
     func videoSizeChanged(_: CGSize)
 }
 
-class FlutterLiveStreamView: NSObject {
+class LiveStreamViewManager: NSObject {
     private let previewTexture: PreviewTexture
     private let liveStream: ApiVideoLiveStream
 
-    var delegate: FlutterLiveStreamViewDelegate?
+    var delegate: LiveStreamViewManagerDelegate?
 
     init(textureRegistry: FlutterTextureRegistry) throws {
         previewTexture = PreviewTexture(registry: textureRegistry)
@@ -67,21 +67,27 @@ class FlutterLiveStreamView: NSObject {
             liveStream.cameraPosition = newValue
         }
     }
-    
-    var zoomRatio: Double {
+
+    var camera: AVCaptureDevice? {
         get {
-            Double(liveStream.zoomRatio)
+            liveStream.camera
         }
         set {
-            liveStream.zoomRatio = newValue
+            liveStream.camera = newValue
         }
     }
-    
-    var maxZoomRatio: Double {
-        get {
-            Double(liveStream.zoomRatioRange.upperBound)
+
+    #if os(iOS)
+        /// Zoom on the video capture
+        public var zoomRatio: CGFloat {
+            get {
+                liveStream.zoomRatio
+            }
+            set(newValue) {
+                liveStream.zoomRatio = newValue
+            }
         }
-    }
+    #endif
 
     func dispose() {
         liveStream.stopStreaming()
@@ -109,7 +115,7 @@ class FlutterLiveStreamView: NSObject {
     }
 }
 
-extension FlutterLiveStreamView: ApiVideoLiveStreamDelegate {
+extension LiveStreamViewManager: ApiVideoLiveStreamDelegate {
     /// Called when the connection to the rtmp server is successful
     func connectionSuccess() {
         delegate?.connectionSuccess()

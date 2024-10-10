@@ -1,18 +1,19 @@
 import AVFoundation
 class LiveStreamHostApiImpl: LiveStreamHostApi {
+    private let instanceManager: InstanceManager
     private let textureRegistry: FlutterTextureRegistry
     private let liveStreamFlutterApi: LiveStreamFlutterApi
 
-    private var flutterView: FlutterLiveStreamView?
+    private var flutterView: LiveStreamViewManager?
 
-    init(textureRegistry: FlutterTextureRegistry, liveStreamFlutterApi: LiveStreamFlutterApi) {
+    init(instanceManager: InstanceManager, textureRegistry: FlutterTextureRegistry, liveStreamFlutterApi: LiveStreamFlutterApi) {
+        self.instanceManager = instanceManager
         self.textureRegistry = textureRegistry
         self.liveStreamFlutterApi = liveStreamFlutterApi
     }
 
     func create() throws -> Int64 {
-        flutterView?.dispose()
-        flutterView = try FlutterLiveStreamView(textureRegistry: textureRegistry)
+        flutterView = try instanceManager.create(textureRegistry: textureRegistry)
         flutterView!.delegate = self
         return flutterView!.textureId
     }
@@ -53,26 +54,12 @@ class LiveStreamHostApiImpl: LiveStreamHostApi {
         flutterView?.isStreaming ?? false
     }
 
-    func getCameraPosition() throws -> CameraPosition {
-        if flutterView!.cameraPosition == AVCaptureDevice.Position.back {
-            return CameraPosition.back
-        } else if flutterView!.cameraPosition == AVCaptureDevice.Position.front {
-            return CameraPosition.front
-        } else {
-            return CameraPosition.other
-        }
+    func getCameraId() throws -> String {
+        flutterView!.camera!.uniqueID
     }
 
-    func setCameraPosition(position: CameraPosition, completion: @escaping (Result<Void, any Error>) -> Void) {
-        switch position {
-        case .back:
-            flutterView!.cameraPosition = AVCaptureDevice.Position.back
-        case .front:
-            flutterView!.cameraPosition = AVCaptureDevice.Position.front
-        case .other:
-            completion(.failure(NSError(domain: "cameraPosition", code: 0, userInfo: ["message": "Invalid camera position"])))
-            return
-        }
+    func setCameraId(cameraId: String, completion: @escaping (Result<Void, Error>) -> Void) {
+        flutterView!.camera = DeviceProvider.getCamera(uniqueID: cameraId)
         completion(.success(()))
     }
 
@@ -87,21 +74,9 @@ class LiveStreamHostApiImpl: LiveStreamHostApi {
     func getVideoResolution() throws -> NativeResolution? {
         flutterView?.videoConfig.resolution.toNativeResolution()
     }
-    
-    func setZoomRatio(zoomRatio: Double) throws {
-        flutterView!.zoomRatio = zoomRatio
-    }
-    
-    func getZoomRatio() throws -> Double {
-        flutterView?.zoomRatio ?? 1.0
-    }
-    
-    func getMaxZoomRatio() throws -> Double {
-        flutterView?.maxZoomRatio ?? 1.0
-    }
 }
 
-extension LiveStreamHostApiImpl: FlutterLiveStreamViewDelegate {
+extension LiveStreamHostApiImpl: LiveStreamViewManagerDelegate {
     func connectionSuccess() {
         liveStreamFlutterApi.onIsConnectedChanged(isConnected: true, completion: { _ in })
     }

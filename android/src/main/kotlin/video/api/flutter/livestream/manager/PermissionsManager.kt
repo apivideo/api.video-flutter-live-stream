@@ -1,4 +1,4 @@
-package video.api.flutter.livestream
+package video.api.flutter.livestream.manager
 
 import android.app.Activity
 import android.content.Context

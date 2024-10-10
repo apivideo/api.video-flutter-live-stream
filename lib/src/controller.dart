@@ -5,17 +5,22 @@ import 'package:flutter/material.dart';
 import 'package:meta/meta.dart';
 
 import 'listeners.dart';
-import 'platform/platform_interface.dart';
+import 'platform_interface/platform_interface.dart';
 
 ApiVideoLiveStreamPlatform get _platform {
   return ApiVideoLiveStreamPlatform.instance;
+}
+
+/// Gets list of available cameras.
+Future<List<CameraInfo>> getAvailableCameraInfos() async {
+  return _platform.getAvailableCameraInfos();
 }
 
 /// Controller of the live streaming
 class ApiVideoLiveStreamController {
   final VideoConfig _initialVideoConfig;
   final AudioConfig _initialAudioConfig;
-  final CameraPosition _initialCameraPosition;
+  final String? _initialCameraId;
 
   static const int kUninitializedTextureId = -1;
   int _textureId = kUninitializedTextureId;
@@ -34,13 +39,14 @@ class ApiVideoLiveStreamController {
   List<ApiVideoLiveStreamWidgetListener> _widgetListeners = [];
 
   /// Creates a new [ApiVideoLiveStreamController] instance.
+  /// If [initialCameraId] is not provided, the first back camera will be used.
   ApiVideoLiveStreamController(
       {required AudioConfig initialAudioConfig,
       required VideoConfig initialVideoConfig,
-      CameraPosition initialCameraPosition = CameraPosition.back})
+      String? initialCameraId = null})
       : _initialVideoConfig = initialVideoConfig,
         _initialAudioConfig = initialAudioConfig,
-        _initialCameraPosition = initialCameraPosition {}
+        _initialCameraId = initialCameraId {}
 
   /// Creates a new live stream instance with initial audio and video configurations.
   Future<void> initialize() async {
@@ -51,7 +57,15 @@ class ApiVideoLiveStreamController {
       listener.onTextureReady();
     }
 
-    await setCameraPosition(_initialCameraPosition);
+    if (_initialCameraId == null) {
+      final cameraInfos = await getAvailableCameraInfos();
+      final cameraInfo = cameraInfos.firstWhere((cameraInfo) {
+        return cameraInfo.lensDirection == CameraLensDirection.back;
+      });
+      await setCameraInfo(cameraInfo);
+    } else {
+      await setCameraId(_initialCameraId!);
+    }
     await setVideoConfig(_initialVideoConfig);
     await setAudioConfig(_initialAudioConfig);
 
@@ -122,24 +136,43 @@ class ApiVideoLiveStreamController {
     return _platform.getIsStreaming();
   }
 
-  /// Changes current back/front camera to front/back camera
+  /// Toggle current back/front camera to front/back camera
   Future<void> toggleCamera() async {
-    final cameraPosition = await this.cameraPosition;
-    if (cameraPosition == CameraPosition.back) {
-      return setCameraPosition(CameraPosition.front);
+    final cameraPosition = (await this.camera).lensDirection;
+    if (cameraPosition == CameraLensDirection.back) {
+      return setCameraLensDirection(CameraLensDirection.front);
     } else {
-      return setCameraPosition(CameraPosition.back);
+      return setCameraLensDirection(CameraLensDirection.back);
     }
   }
 
-  /// Gets the current camera position
-  Future<CameraPosition> get cameraPosition {
-    return _platform.getCameraPosition();
+  /// Sets the current camera from its [lensDirection]
+  Future<void> setCameraLensDirection(CameraLensDirection lensDirection) async {
+    final camera = await getAvailableCameraInfos().then((cameras) {
+      return cameras
+          .firstWhere((camera) => camera.lensDirection == lensDirection);
+    });
+    return _platform.setCameraId(camera.id);
   }
 
-  /// Sets the current camera position
-  Future<void> setCameraPosition(CameraPosition position) {
-    return _platform.setCameraPosition(position);
+  /// Sets the current camera from its [cameraId]
+  Future<void> setCameraId(String cameraId) {
+    return _platform.setCameraId(cameraId);
+  }
+
+  /// Sets the current camera from its [cameraInfo]
+  Future<void> setCameraInfo(CameraInfo cameraInfo) {
+    return setCameraId(cameraInfo.id);
+  }
+
+  /// Gets the current camera and its information.
+  Future<CameraInfo> get camera async {
+    return _platform.getCameraInfo();
+  }
+
+  /// Gets the current camera settings.
+  Future<CameraSettings> get cameraSettings {
+    return _platform.getCameraSettings();
   }
 
   /// Toggle mutes/unmutes from the microphone. See [isMuted] and [setIsMuted].
@@ -161,26 +194,6 @@ class ApiVideoLiveStreamController {
   /// Gets the current video [Size].
   Future<Size?> get videoSize {
     return _platform.getVideoSize();
-  }
-
-  /// Sets the zoom ratio.
-  /// The value must be between [zoomRatioRange].
-  /// 1.0 means no zoom.
-  Future<void> setZoomRatio(double zoomRatio) {
-    return _platform.setZoomRatio(zoomRatio);
-  }
-
-  /// Gets the current zoom ratio.
-  Future<double> get zoomRatio {
-    return _platform.getZoomRatio();
-  }
-
-  /// Gets the maximum zoom ratio range.
-  /// If the device does not support zoom, it will return a range from 1.0 to 1.0.
-  /// When switching to another camera, you should call this method again.
-  Future<Range<double>> get zoomRatioRange async {
-    final max = await _platform.getMaxZoomRatio();
-    return Range(min: 1.0, max: max);
   }
 
   /// Builds the preview widget.

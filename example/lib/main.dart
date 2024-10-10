@@ -47,7 +47,7 @@ class LiveViewPage extends StatefulWidget {
 class _LiveViewPageState extends State<LiveViewPage>
     with WidgetsBindingObserver, ApiVideoLiveStreamEventsListener {
   final ButtonStyle buttonStyle =
-  ElevatedButton.styleFrom(textStyle: const TextStyle(fontSize: 20));
+      ElevatedButton.styleFrom(textStyle: const TextStyle(fontSize: 20));
   Params params = Params();
   late final ApiVideoLiveStreamController _controller;
   bool _isStreaming = false;
@@ -56,11 +56,14 @@ class _LiveViewPageState extends State<LiveViewPage>
   void initState() {
     WidgetsBinding.instance.addObserver(this);
 
-    _controller = createLiveStreamController();
+    getAvailableCameraInfos()
+        .then((cameraInfos) => print("Available cameras: $cameraInfos"));
 
+    _controller = createLiveStreamController();
     _controller.initialize().catchError((e) {
       showInSnackBar(e.toString());
     });
+
     super.initState();
   }
 
@@ -197,7 +200,7 @@ class _LiveViewPageState extends State<LiveViewPage>
           icon: const Icon(Icons.cameraswitch),
           color: apiVideoOrange,
           onPressed:
-          liveStreamController != null ? onSwitchCameraButtonPressed : null,
+              liveStreamController != null ? onSwitchCameraButtonPressed : null,
         ),
         IconButton(
           icon: const Icon(Icons.mic_off),
@@ -338,8 +341,8 @@ class _LiveViewPageState extends State<LiveViewPage>
   }
 }
 
-Future<void> _showDialog(BuildContext context, String title,
-    String description) async {
+Future<void> _showDialog(
+    BuildContext context, String title, String description) async {
   return showDialog<void>(
     context: context,
     barrierDismissible: false, // user must tap button!
